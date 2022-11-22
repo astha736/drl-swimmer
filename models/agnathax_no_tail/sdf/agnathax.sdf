@@ -1,0 +1,1259 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="world">
+    <model name="agnathax">
+      <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+      <link name="head">
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>0.0997536452290496 -0.0005641684191288805 -0.013936182486312603 0.0 0.0 0.0</pose>
+          <mass>0.17800000000000002</mass>
+          <inertia>
+            <ixx>0.0001235009062757234</ixx>
+            <ixy>-1.245185213856976e-06</ixy>
+            <ixz>-1.4217397981333442e-05</ixz>
+            <iyy>0.0002461561294905774</iyy>
+            <iyz>1.054136992222019e-06</iyz>
+            <izz>0.00026274202378511017</izz>
+          </inertia>
+        </inertial>
+        <collision name="head_collision">
+          <pose>0.0 0.0 -0.007 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/head.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="head_plate_below_collision">
+          <pose>0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="head_visual">
+          <pose>0.0 0.0 -0.007 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/head.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0 1</ambient>
+            <diffuse>1.0 0.5 0 1</diffuse>
+            <specular>1.0 0.5 0 1</specular>
+            <emissive>1.0 0.5 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="head_plate_below_visual">
+          <pose>0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_0">
+        <pose>-0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_0_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_0_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_0_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_0_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_0_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+            <emissive>0.05 0.05 0.05 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_0_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_0_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_0_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_1">
+        <pose>-0.09 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_1_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_1_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_1_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_1_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_1_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0 1</ambient>
+            <diffuse>1.0 0.5 0 1</diffuse>
+            <specular>1.0 0.5 0 1</specular>
+            <emissive>1.0 0.5 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_1_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_1_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_1_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_2">
+        <pose>-0.18 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_2_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_2_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_2_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_2_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_2_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+            <emissive>0.05 0.05 0.05 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_2_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_2_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_2_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_3">
+        <pose>-0.27 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_3_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_3_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_3_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_3_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_3_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0 1</ambient>
+            <diffuse>1.0 0.5 0 1</diffuse>
+            <specular>1.0 0.5 0 1</specular>
+            <emissive>1.0 0.5 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_3_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_3_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_3_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_4">
+        <pose>-0.36 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_4_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_4_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_4_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_4_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_4_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+            <emissive>0.05 0.05 0.05 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_4_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_4_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_4_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_5">
+        <pose>-0.44999999999999996 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_5_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_5_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_5_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_5_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_5_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0 1</ambient>
+            <diffuse>1.0 0.5 0 1</diffuse>
+            <specular>1.0 0.5 0 1</specular>
+            <emissive>1.0 0.5 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_5_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_5_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_5_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_6">
+        <pose>-0.54 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_6_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_6_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_6_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_6_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_6_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+            <emissive>0.05 0.05 0.05 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_6_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_6_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_6_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_7">
+        <pose>-0.63 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_7_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_7_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_7_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_7_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_7_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0 1</ambient>
+            <diffuse>1.0 0.5 0 1</diffuse>
+            <specular>1.0 0.5 0 1</specular>
+            <emissive>1.0 0.5 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_7_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_7_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_7_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_8">
+        <pose>-0.72 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_8_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_8_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_8_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_8_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_8_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.05 0.05 0.05 1</diffuse>
+            <specular>0.05 0.05 0.05 1</specular>
+            <emissive>0.05 0.05 0.05 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_8_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_8_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_8_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.2 0 1</ambient>
+            <diffuse>1.0 0.2 0 1</diffuse>
+            <specular>1.0 0.2 0 1</specular>
+            <emissive>1.0 0.2 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <link name="body_9">
+        <pose>-0.8099999999999999 0.0 0.0 0.0 0.0 0.0</pose>
+        <inertial>
+          <pose>-0.044241740214481594 0.0003986561842086563 -0.012118782323632159 0.0 0.0 0.0</pose>
+          <mass>0.10499999999999998</mass>
+          <inertia>
+            <ixx>6.738787396589143e-05</ixx>
+            <ixy>2.7115442377280257e-08</ixy>
+            <ixz>-2.9284494901002323e-07</ixz>
+            <iyy>7.248471950048604e-05</iyy>
+            <iyz>-2.4733061308549225e-08</iyz>
+            <izz>6.125161226651316e-05</izz>
+          </inertia>
+        </inertial>
+        <collision name="body_9_collision">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <collision name="body_9_plate_below_collision">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_9_plate_L_collision">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="body_9_plate_R_collision">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="body_9_visual">
+          <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+          <geometry>
+            <mesh>
+              <uri>meshes/body.obj</uri>
+              <scale>1.0 1.0 1.0</scale>
+            </mesh>
+          </geometry>
+          <material>
+            <ambient>1.0 0.5 0 1</ambient>
+            <diffuse>1.0 0.5 0 1</diffuse>
+            <specular>1.0 0.5 0 1</specular>
+            <emissive>1.0 0.5 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_9_plate_below_visual">
+          <pose>-0.045 0 -0.055 1.5707963267948966 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.002 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <emissive>0.1 0.1 0.1 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_9_plate_L_visual">
+          <pose>-0.045 0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+        <visual name="body_9_plate_R_visual">
+          <pose>-0.045 -0.032 -0.005 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.064 0.002 0.048</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>1.0 0.3 0 1</ambient>
+            <diffuse>1.0 0.3 0 1</diffuse>
+            <specular>1.0 0.3 0 1</specular>
+            <emissive>1.0 0.3 0 1</emissive>
+          </material>
+        </visual>
+      </link>
+      <joint name="joint_0" type="revolute">
+        <parent>head</parent>
+        <child>body_0</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="joint_1" type="revolute">
+        <parent>body_0</parent>
+        <child>body_1</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="joint_2" type="revolute">
+        <parent>body_1</parent>
+        <child>body_2</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="joint_3" type="revolute">
+        <parent>body_2</parent>
+        <child>body_3</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="joint_4" type="revolute">
+        <parent>body_3</parent>
+        <child>body_4</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="joint_5" type="revolute">
+        <parent>body_4</parent>
+        <child>body_5</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="joint_6" type="revolute">
+        <parent>body_5</parent>
+        <child>body_6</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="joint_7" type="revolute">
+        <parent>body_6</parent>
+        <child>body_7</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="joint_8" type="revolute">
+        <parent>body_7</parent>
+        <child>body_8</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+      <joint name="joint_9" type="revolute">
+        <parent>body_8</parent>
+        <child>body_9</child>
+        <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
+        <axis>
+          <xyz>0 0 1</xyz>
+          <limit>
+            <lower>-3.141592653589793</lower>
+            <upper>3.141592653589793</upper>
+            <effort>10000000000.0</effort>
+            <velocity>628.3185307179587</velocity>
+          </limit>
+        </axis>
+      </joint>
+    </model>
+  </world>
+</sdf>
