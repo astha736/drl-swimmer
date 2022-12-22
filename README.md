@@ -26,3 +26,15 @@
 - logs: log folder 
 - models: SDF model for environment 
 - scripts: Scripts for the project
+
+
+## Tensorboard use 
+
+```
+tensorboard --logdir_spec <run_name_id>:<exact_path_tensorbord_data>/.,<run_name_id>:<exact_path_tensorbord_data>/.
+```
+
+for instance:
+```
+tensorboard --logdir_spec obstacle_sin_p:/data/asgupta/Projects/rl-obstacle-based-locomotion/logs/2022-12-22/sCaudalNP_Rall_Obs10_Act9_ideal_P/.,obstacle_np:/data/asgupta/Projects/rl-obstacle-based-locomotion/logs/2022-12-22/sCaudalNP_Rall_Obs10_Act9_ideal_P_correct/.
+```
