@@ -173,7 +173,7 @@ class FarmsGym(gym.Env):
         )
         if end_episode:
             print("episode should be done")
-        self.done = True if env_step.step_type == StepType.LAST else False
+        self.done = True if (env_step.step_type == StepType.LAST) or end_episode else False
         return self.observation, self.reward, self.done, self.info
     
     def reset(self):
