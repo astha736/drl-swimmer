@@ -15,3 +15,16 @@ obstacle/*
 
 # pycache 
 scripts/__pycache__/*
+ultils/__pycache__/*
+rlgym/__pycache__/*
+agnathax_control/__pycache__/*
+
+rl_obstacle.egg-info/
+
+
+# build
+build/*
+agnathax_control/ode.cpython-38-x86_64-linux-gnu.so
+agnathax_control/ode.c
+*/*.cpython-38-x86_64-linux-gnu.so
+*/*.c
