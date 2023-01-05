@@ -189,7 +189,7 @@ class FarmsGym(gym.Env):
         animat_options = self.sim.task.animat_options 
         LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
         # random at every instance
-        LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
+        # LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
 
         # apply spawn changes
         base_link = self.sim._mjcf_model.worldbody.body[-1]
