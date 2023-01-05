@@ -111,7 +111,7 @@ class FarmsGym(gym.Env):
     
     def set_action(action, robot_parameters, test_type):
         """ Apply the computed action to the concerned variables"""
-        action = action*30
+        action = action*60
         for elem in action:
             if elem is None or elem is np.NaN or abs(elem) is np.inf:
                 print("not right")
