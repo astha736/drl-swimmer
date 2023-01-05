@@ -38,3 +38,6 @@ for instance:
 ```
 tensorboard --logdir_spec obstacle_sin_p:/data/asgupta/Projects/rl-obstacle-based-locomotion/logs/2022-12-22/sCaudalNP_Rall_Obs10_Act9_ideal_P/.,obstacle_np:/data/asgupta/Projects/rl-obstacle-based-locomotion/logs/2022-12-22/sCaudalNP_Rall_Obs10_Act9_ideal_P_correct/.
 ```
+
+```tensorboard --logdir_spec obstacle_np_rd_esp:/data/asgupta/Projects/rl-obstacle-based-locomotion/logs/2022-12-22/sCaudalNP_Rall_Obs10_Act9_randomInitPoseOsc/.
+```
