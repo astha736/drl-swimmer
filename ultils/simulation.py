@@ -3,29 +3,19 @@
 import os
 from datetime import date
 from re import X
-# import time
 from typing import Union
 import numpy as np
 
 
 from farms_core import pylog
-# from farms_core.io.yaml import pyobject2yaml
-# from farms_core.utils.profile import profile
 from farms_core.simulation.options import Simulator
 from farms_mujoco.simulation.simulation import Simulation as MuJoCoSimulation
 from farms_sim.utils.parse_args import sim_parse_args
 from farms_sim.simulation import (
-    # setup_from_clargs,
-    # run_simulation,
     simulation_setup,
-    # postprocessing_from_clargs,
 )
 
 from farms_amphibious.callbacks import setup_callbacks
-# from farms_amphibious.model.options import (
-#     AmphibiousOptions,
-#     AmphibiousArenaOptions,
-# )
 from farms_amphibious.data.data import (
     AmphibiousData,
     AmphibiousKinematicsData,
@@ -64,8 +54,8 @@ def reset_clargs(config_dir, logs_dir):
     clargs.animat_config = os.path.join(config_dir,'animat.yaml')
     clargs.arena_config=os.path.join(config_dir,'arena.yaml')
     clargs.simulation_config=os.path.join(config_dir,'simulation.yaml')
-    clargs.log_path=os.path.join(logs_dir, '{}'.format(str(date.today())))
-    # clargs.log_path=os.path.join(logs_dir, '2022-12-08')
+    # clargs.log_path=os.path.join(logs_dir, '{}'.format(str(date.today())))
+    clargs.log_path=os.path.join(logs_dir, '2022-12-22')
     clargs.profile=os.path.join(logs_dir, 'simulation.profile')
     clargs.prompt=False
     clargs.simulator='MUJOCO'
@@ -78,7 +68,7 @@ def create_simulation(
         arena_options: ArenaOptions,
         **kwargs,
 ) -> Union[MuJoCoSimulation, AmphibiousPybulletSimulation]:
-    """ Create simulation object
+    """ Create simulation object. Called by setup_simulation below. 
 
     Args:
         animat_options (AnimatOptions): animat_options 
@@ -104,7 +94,7 @@ def create_simulation(
 
 
 def setup_simulation(animat_options, arena_options, sim_options, simulator, callbacks):
-    """_summary_
+    """ setup the simulation with agnathax_control network and odes
 
     Args:
         animat_options (AnimatOptions): animat options variable from class
@@ -126,7 +116,6 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
 
     # Network
     if isinstance(animat_data, AmphibiousData):
-        # animat_network = NetworkODE(animat_data, max_step=sim_options.timestep)
         animat_network = NetworkODETEST(animat_data, max_step=sim_options.timestep)
         controller_args = {'animat_network': animat_network}
     else:
