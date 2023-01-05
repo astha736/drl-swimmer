@@ -14,6 +14,7 @@ from dm_env import TimeStep, StepType
 from farms_core import pylog
 from farms_mujoco.simulation.application import FarmsApplication
 from farms_mujoco.simulation.task import TaskCallback
+from farms_mujoco.simulation.mjcf import euler2mjcquat
 
 import gym
 from gym import spaces
@@ -28,6 +29,8 @@ from stable_baselines3.common.callbacks import BaseCallback
 import csv
 
 from .rl_reward import FarmsReward
+from ultils.limbless_init_condition import LimblessExperimentRobotState
+from ultils.limbless_oscillator import LimblessExperimentOscillator
 
 # from cmc.salamandra_simulation.test import wrap_2pi
 
@@ -114,9 +117,6 @@ class FarmsGym(gym.Env):
                 print("not right")
         
         # action = 1/2 of robot_parameters
-        # while i in range(len(action)):
-        #     robot_parameters[i] = action_val
-        #     robot_parameters[]
         for i,action_val in enumerate(action):
             robot_parameters[i*2+0] = action_val
             robot_parameters[i*2+1] = action_val*-1
@@ -176,26 +176,59 @@ class FarmsGym(gym.Env):
         self.done = True if (env_step.step_type == StepType.LAST) or end_episode else False
         return self.observation, self.reward, self.done, self.info
     
+    def randomize_robot_state(self):
+        """Randomize the robot state at each rest
+
+        Robot state:
+            Spawn: pose and orientation 
+            Joints: initial position and velocity(default to 0)
+            
+        """
+
+        # get new changes (joint and spawn) via animat_options
+        animat_options = self.sim.task.animat_options 
+        LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+        # random at every instance
+        LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
+
+        # apply spawn changes
+        base_link = self.sim._mjcf_model.worldbody.body[-1]
+        base_link.pos = [pos for pos in  animat_options.spawn.pose[:3]]
+        base_link.quat = euler2mjcquat( animat_options.spawn.pose[3:])
+
+        return
+
+
     def reset(self):
+        """reset episode procedure
+
+        Description:  This is used as an opportunity to set the new changes for episode. 
+        This will help in randomizing episode for robust training
+
+        Note: There are two kind of changes, one that happens to the sdf's (mjcf_model) [mujoco]
+        and other that happens to the state of the system [farms]. For the state of the system, 
+        the animat_option needs to be changed and then a reset() needs to called on sim._env 
+
+        sim._env.reset() calls reset on the task and environment wrapper. check initialize_episode()
+        (most likely in ExperimentTask or Environment)
+        as the function is called through sim._env.reset() calls
+
+        """
+        # reset the variables for robot state 
+        self.randomize_robot_state()
+        # apply motor pos & oscillator changes along with reset
+        self.sim._env.reset() 
+
+        self.observation = FarmsGym.get_observations(
+            data_sensors=self.sim.task.data.sensors,
+            data_states=self.sim.task.data.state,
+            iteration=0)
+        
+        # for internal use? 
         self.info = {}
         self.done = False
         self.reward = 0
-        self.observation = np.array([0.0]*self.n_obs, dtype=np.float32)
-        data_state_copy = np.array(self.sim.task.data.state.array[0,:])
-        # self.sim.task.iteration = 0
-        self.sim._env.reset()
-        self.sim.task.data.sensors.contacts.array[:] = 0.0
-        self.sim.task.data.sensors.joints.array[:] = 0.0
-        self.sim.task.data.sensors.links.array[:] = 0.0
-        self.sim.task.data.sensors.xfrc.array[:] = 0.0
-        self.sim.task.data.state.array[:] = 0.0 
 
-        # self.sim.task.data.reset()
-        # initial_phases_r = None if self.initial_phase_generator is None else self.initial_phase_generator()
-        # if initial_phases_r is None:
-        #     raise ValueError("Cannot be none")
-        # self.sim.task._controller.network.reset(initial_phases_r)
-        self.sim.task.data.state.array[0,:] = data_state_copy
         return self.observation  # reward, done, info can't be included
     
     def render(self, mode='rgb_array', height=480, width=480, camera_id=0):
@@ -230,6 +263,8 @@ class GymTestCallback(TaskCallback):
         # default action if model is none
         self.action = np.zeros(self.n_act) if self.model is None else None
         self.notion = notion
+        self.sim = None
+        self.debug_random_cond = kwargs.pop('debug_random_cond', True)
 
     def initialize_episode(self, task, physics):
         """Initialize episode"""
@@ -242,16 +277,21 @@ class GymTestCallback(TaskCallback):
 
     def before_step(self, task, action, physics):
         """Take Action based on previous observation"""
-        if self.model is not None:
+        if self.debug_random_cond:
+            # skip the action
+            return
+        else:
+            if self.model is None:
+                raise ValueError("model cannot be none")
+            # t1 = task.data.network.joints2osc_map.connections
+            # t2 = task.data.network.joints2osc_map.weights.array
             self.action, _states = self.model.predict(self.observations )
-        # t1 = task.data.network.joints2osc_map.connections
-        # t2 = task.data.network.joints2osc_map.weights
-        # FarmsGym.set_action(
-        #     action=self.action,
-        #     # robot_parameters=self.notion,
-        #     robot_parameters=task.data.network.joints2osc_map.weights.array,
-        #     test_type=None,
-        # )
+            FarmsGym.set_action(
+                action=self.action,
+                # robot_parameters=self.notion,
+                robot_parameters=task.data.network.joints2osc_map.weights.array,
+                test_type=None,
+            )
         return
 
     def after_step(self, task, physics):
@@ -278,10 +318,40 @@ class GymTestCallback(TaskCallback):
             debug=True,
         )
         if episode_limit:
-            print("episode limit........................")
+            self.reset()
+        if self.debug_random_cond and iteration > 1000:
+            self.reset()
         return
     
     def reset(self):
         """Reset the observations"""
-        self.observations = np.array([0.0]*self.n_obs, dtype=np.float32)
-        return
+        self.info = {}
+        self.done = False
+        self.reward = 0
+        if self.debug_random_cond:
+            animat_options = self.sim.task.animat_options 
+            LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+            LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
+            # apply spawn changes
+            base_link = self.sim._mjcf_model.worldbody.body[-1]
+            base_link.pos = [pos for pos in animat_options.spawn.pose[:3]]
+            base_link.quat = euler2mjcquat(animat_options.spawn.pose[3:])
+            # apply motor pose & oscillator changes with env's reset
+            self.sim._env.reset()
+
+            # only for visuals 
+            self.sim.task._app._restart_runtime()
+            self.sim.task._app._perform_deferred_reload()
+
+        self.observation = FarmsGym.get_observations(
+            data_sensors=self.sim.task.data.sensors,
+            data_states=self.sim.task.data.state,
+            iteration=0)
+
+        return self.observation  # reward, done, info can't be included
+
+    def set_mujoco_model(self, sim):
+        self.sim = sim
+
+if __name__ == '__main__':
+    raise ValueError("Not a file that is supposed to be run")
