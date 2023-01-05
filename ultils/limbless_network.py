@@ -261,3 +261,6 @@ class LimblessExperimentNetwork:
         ]
         network_joint2osc += stretch_conn_rostral
         return stretch_conn_rostral
+
+if __name__ == '__main__':
+    raise ValueError("Not a file that is supposed to be run")
