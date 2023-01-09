@@ -76,7 +76,8 @@ class FarmsGym(gym.Env):
         self.info = None
         self.done = None
         self.observation = None
-        self.notion = notion 
+        self.notion = notion
+        self.random_times = 0
 
     def get_observations(data_sensors, data_states, iteration):
         """get observation
@@ -185,12 +186,18 @@ class FarmsGym(gym.Env):
             
         """
 
-        # get new changes (joint and spawn) via animat_options
         animat_options = self.sim.task.animat_options 
-        LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
-        # random at every instance
-        # LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
 
+        # get new changes (joint and spawn) via animat_options
+        if (self.random_times % 10) == 0:
+            LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+            LimblessExperimentOscillator.ideal_oscillator_phase(animat_options=animat_options)
+            self.random_times = 0 #reset
+        else:
+            LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+            LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
+        
+        self.random_times =+ 1
         # apply spawn changes
         base_link = self.sim._mjcf_model.worldbody.body[-1]
         base_link.pos = [pos for pos in  animat_options.spawn.pose[:3]]

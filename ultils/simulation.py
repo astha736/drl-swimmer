@@ -54,8 +54,8 @@ def reset_clargs(config_dir, logs_dir):
     clargs.animat_config = os.path.join(config_dir,'animat.yaml')
     clargs.arena_config=os.path.join(config_dir,'arena.yaml')
     clargs.simulation_config=os.path.join(config_dir,'simulation.yaml')
-    # clargs.log_path=os.path.join(logs_dir, '{}'.format(str(date.today())))
-    clargs.log_path=os.path.join(logs_dir, '2022-12-22')
+    clargs.log_path=os.path.join(logs_dir, '{}'.format(str(date.today())))
+    # clargs.log_path=os.path.join(logs_dir, '2022-12-22')
     clargs.profile=os.path.join(logs_dir, 'simulation.profile')
     clargs.prompt=False
     clargs.simulator='MUJOCO'
