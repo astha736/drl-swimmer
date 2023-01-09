@@ -7,6 +7,7 @@ import warnings
 import traceback
 
 import numpy as np
+import random
 
 from dm_control.rl.control import Environment, PhysicsError
 from dm_env import TimeStep, StepType
@@ -190,7 +191,11 @@ class FarmsGym(gym.Env):
 
         # get new changes (joint and spawn) via animat_options
         if (self.random_times % 10) == 0:
-            LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+            # LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+            random_state = random.choice(['Parallel', 'Diagonal'])
+            random_pose = random.choice(LimblessExperimentRobotState.robot_pose_list)
+            LimblessExperimentRobotState.set_shape_and_pose_static(animat_options=animat_options, shape=random_state, pose=random_pose)
+
             LimblessExperimentOscillator.ideal_oscillator_phase(animat_options=animat_options)
             self.random_times = 0 #reset
         else:
