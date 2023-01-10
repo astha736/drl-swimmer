@@ -97,7 +97,7 @@ class FarmsGym(gym.Env):
         # reward_phase = .1*FarmsReward.reward_phases(data_states, iteration, debug)
         reward_pc = .01*FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
         reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration, debug)
-        reward_df = FarmsReward.reward_distance_forward(timestep, data_sensors, iteration, 0, debug)
+        reward_df = FarmsReward.reward_distance_forward(timestep, data_sensors, iteration, prev_iteration, debug)
         reward_dft = FarmsReward.reward_distance_forward_tracking(timestep, data_sensors, iteration, 0, debug)
         reward_ct = FarmsReward.reward_contacts_test(timestep, data_sensors, iteration, 0, debug)
         reward_sft = FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration, debug)
@@ -166,7 +166,8 @@ class FarmsGym(gym.Env):
             data_sensors=self.sim.task.data.sensors,
             data_states=self.sim.task.data.state,
             iteration=iteration,
-            prev_iteration=iteration - 500)
+            prev_iteration=(iteration - int(1/self.timestep)),
+            )
         end_episode = FarmsGym.arena_limit_reached(
             timestep=self.timestep,
             data_sensors=self.sim.task.data.sensors,
@@ -190,18 +191,21 @@ class FarmsGym(gym.Env):
         animat_options = self.sim.task.animat_options 
 
         # get new changes (joint and spawn) via animat_options
-        if (self.random_times % 10) == 0:
-            # LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
-            random_state = random.choice(['Parallel', 'Diagonal'])
-            random_pose = random.choice(LimblessExperimentRobotState.robot_pose_list)
-            LimblessExperimentRobotState.set_shape_and_pose_static(animat_options=animat_options, shape=random_state, pose=random_pose)
+        # if (self.random_times % 10) == 0:
+        #     # LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+        #     random_state = random.choice(['Parallel', 'Diagonal'])
+        #     random_pose = random.choice(LimblessExperimentRobotState.robot_pose_list)
+        #     LimblessExperimentRobotState.set_shape_and_pose_static(animat_options=animat_options, shape=random_state, pose=random_pose)
 
-            LimblessExperimentOscillator.ideal_oscillator_phase(animat_options=animat_options)
-            self.random_times = 0 #reset
-        else:
-            LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
-            LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
-        
+        #     LimblessExperimentOscillator.ideal_oscillator_phase(animat_options=animat_options)
+        #     self.random_times = 0 #reset
+        # else:
+        #     LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+        #     LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
+
+        LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+        LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
+
         self.random_times =+ 1
         # apply spawn changes
         base_link = self.sim._mjcf_model.worldbody.body[-1]
@@ -319,7 +323,7 @@ class GymTestCallback(TaskCallback):
             data_sensors=task.data.sensors,
             data_states=task.data.state,
             iteration=iteration,
-            prev_iteration=iteration - 100,
+            prev_iteration=(iteration - int(1/self.timestep)),
             debug=True,
         )
         episode_limit = FarmsGym.arena_limit_reached(
