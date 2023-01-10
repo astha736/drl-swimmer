@@ -95,12 +95,14 @@ class FarmsGym(gym.Env):
         if prev_iteration < 0:
             return reward
         # reward_phase = .1*FarmsReward.reward_phases(data_states, iteration, debug)
+        
         reward_pc = .01*FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
-        reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration, debug)
         reward_df = FarmsReward.reward_distance_forward(timestep, data_sensors, iteration, prev_iteration, debug)
         reward_dft = FarmsReward.reward_distance_forward_tracking(timestep, data_sensors, iteration, 0, debug)
         reward_ct = FarmsReward.reward_contacts_test(timestep, data_sensors, iteration, 0, debug)
-        reward_sft = FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration, debug)
+        prev_iteration_speed = (iteration - int(0.5/timestep))
+        reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration_speed, debug)
+        reward_sft = FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration_speed, debug)
         if debug:
             print('Reward PC        : {}'.format(reward_pc))
             print('Reward SF        : {}'.format(reward_sf))

@@ -12,7 +12,8 @@ Folder Date:
 
 |SN|runName								|RandomPoseMotorPos 	| RandomOscPhase 	| sCaudalWeight | Range | fileName											|
 |--|------------------------------------|-----------------------|-------------------|---------------|-------|---------------------------------------------------|
-|01| rPose_rOsc10_w0_r60_rewardScaled	|&#x2611;	**Y**		| &#x2611; **Y** 90%| 0.0			| 60	|scaled reward (contact), distance with prev_itr	|
+|01| rPose_rOsc10_w0_r60_rewardScaled	|&#x2611;	**Y**		| &#x2611; **Y** 	| 0.0			| 60	|scaled reward (contact), distance with prev_itr	|
+|02| rPose_w0_r60_rewardScaled			|&#x2611;	**Y**		| &#x2611; **Y** 	| 0.0			| 60	|Speed forward: exponential, tracking speed 0.7		|
 
 <hr/>
 <hr/>
