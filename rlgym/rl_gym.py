@@ -96,22 +96,24 @@ class FarmsGym(gym.Env):
             return reward
         # reward_phase = .1*FarmsReward.reward_phases(data_states, iteration, debug)
         
-        reward_pc = .01*FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
+        reward_pc = .1*FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
         reward_df = FarmsReward.reward_distance_forward(timestep, data_sensors, iteration, prev_iteration, debug)
         reward_dft = FarmsReward.reward_distance_forward_tracking(timestep, data_sensors, iteration, 0, debug)
         reward_ct = FarmsReward.reward_contacts_test(timestep, data_sensors, iteration, 0, debug)
         prev_iteration_speed = (iteration - int(0.5/timestep))
         reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration_speed, debug)
         reward_sft = FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration_speed, debug)
+        r_sum = (reward_pc + reward_sf + reward_df + reward_dft + reward_ct + reward_sft)
         if debug:
             print('Reward PC        : {}'.format(reward_pc))
-            print('Reward SF        : {}'.format(reward_sf))
             print('Reward DF        : {}'.format(reward_df))
             print('Reward DFT       : {}'.format(reward_dft))
             print('Reward CT        : {}'.format(reward_ct))
-            print('Reward SFT       : {}'.format(reward_sft))
+            print('Reward Speed F   : {}'.format(reward_sf))
+            print('Reward Speed FT  : {}'.format(reward_sft))
+            print('SUM************  : {}'.format(r_sum))
 
-        return (reward_pc + reward_sf + reward_df + reward_dft + reward_ct + reward_sft)
+        return r_sum
     
     def set_action(action, robot_parameters, test_type):
         """ Apply the computed action to the concerned variables"""
