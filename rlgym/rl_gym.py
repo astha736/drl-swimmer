@@ -51,10 +51,12 @@ class FarmsGym(gym.Env):
         # stretch feedback
         self.observation_space = spaces.Box(
             low=np.array(
-                [-np.inf]*(n_obs)
+                [-np.inf]*(10)
+                + [-np.inf]*(10+1)
                 ),
             high=np.array(
-                [np.inf]*(n_obs)
+                [np.inf]*(10)
+                + [np.inf]*(10+1)
                 ),
         )
 
@@ -64,7 +66,7 @@ class FarmsGym(gym.Env):
             low=np.array([-1]*n_act),
             high=np.array([1]*n_act),
         )
-        self.n_obs = n_obs
+        self.n_obs = 2*10 + 1
         self.n_act = n_act
         self.sim = sim
         self.init_com_position = np.array(kwargs.pop('init_com_position', None))
@@ -87,7 +89,14 @@ class FarmsGym(gym.Env):
 
         """
         joints_pos = np.array(data_sensors.joints.positions(iteration=iteration))
-        return joints_pos
+        data_reaction_forces = np.array(data_sensors.contacts.array[iteration,:,0:2])
+        isNan = np.isnan(data_reaction_forces).any()
+        if isNan:
+            raise ValueError("Nan values found")
+        data_reaction_forces_norm = np.linalg.norm(data_reaction_forces, axis=1)
+        obs = np.append(joints_pos, data_reaction_forces_norm)
+        # return joints_pos
+        return obs
 
 
     def compute_reward(timestep, data_sensors, data_states, iteration, prev_iteration, debug=False):
