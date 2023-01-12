@@ -102,8 +102,9 @@ class FarmsGym(gym.Env):
         reward_ct = FarmsReward.reward_contacts_test(timestep, data_sensors, iteration, 0, debug)
         prev_iteration_speed = (iteration - int(0.5/timestep))
         reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration_speed, debug)
-        reward_sft = FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration_speed, debug)
-        r_sum = (reward_pc + reward_sf + reward_df + reward_dft + reward_ct + reward_sft)
+        reward_cot = 3*FarmsReward.cost_of_transport(timestep, data_sensors, iteration, prev_iteration_speed, debug)
+        reward_sft = 3*FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration_speed, debug)
+        r_sum = (reward_pc + reward_sf + reward_df + reward_dft + reward_ct + reward_sft + reward_cot)
         if debug:
             print('Reward PC        : {}'.format(reward_pc))
             print('Reward DF        : {}'.format(reward_df))
@@ -111,6 +112,7 @@ class FarmsGym(gym.Env):
             print('Reward CT        : {}'.format(reward_ct))
             print('Reward Speed F   : {}'.format(reward_sf))
             print('Reward Speed FT  : {}'.format(reward_sft))
+            print('Reward COT       : {}'.format(reward_cot))
             print('SUM************  : {}'.format(r_sum))
 
         return r_sum
