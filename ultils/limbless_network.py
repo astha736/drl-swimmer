@@ -6,6 +6,7 @@ class LimblessExperimentNetwork:
         Aim: test different networks with different network types 
             in both open and closed loop
      """
+    agnathax_links = ['head','body_0','body_1','body_2','body_3','body_4','body_5','body_6','body_7','body_8','body_9']
 
     def __init__(self, c_intra=10, c_inter=None, s_local=None, s_rostl=None, s_caudl=None, **kwargs):
         """_summary_
@@ -49,6 +50,7 @@ class LimblessExperimentNetwork:
         self.s_local_array = None
         self.s_rostl_array = None
         self.s_caudl_array = None
+        self.contact_local_array = None
 
 
         def conn_type(senstivity):
@@ -70,6 +72,9 @@ class LimblessExperimentNetwork:
         self.s_local_senstivity = conn_type(kwargs.pop('s_local_senstivity', None))
         self.s_rostl_senstivity = conn_type(kwargs.pop('s_rostl_senstivity', None))
         self.s_caudl_senstivity = conn_type(kwargs.pop('s_caudl_senstivity', None))
+
+        self.contact_local = kwargs.pop('contact_local', None)
+        self.contact_local_senstivity = conn_type(kwargs.pop('contact_local_senstivity', 'REACTION2FREQ'))
     
     def setup(self, animat_options):
         """ setup the network desired by changing the animat_options
@@ -79,6 +84,7 @@ class LimblessExperimentNetwork:
         """
         animat_options.control.network.osc2osc = []
         animat_options.control.network.joint2osc = []
+        animat_options.control.network.contact2osc = []
 
         if self.c_intra is not None:
             self.c_intra_array = LimblessExperimentNetwork.add_intra_segmental_conn(
@@ -108,6 +114,13 @@ class LimblessExperimentNetwork:
                 conn_type=self.s_caudl_senstivity,
                 weight=self.s_caudl,
             )
+        if self.contact_local is not None:
+            self.contact_local_array = LimblessExperimentNetwork.add_contact_conn(
+                network_contact2osc=animat_options.control.network.contact2osc,
+                conn_type=self.contact_local_senstivity,
+                weight=self.contact_local,
+            )
+        # animat_options.control.network.contact2osc
         return 
 
     def add_intra_segmental_conn(network_osc2osc, weight=10):
@@ -264,6 +277,30 @@ class LimblessExperimentNetwork:
         ]
         network_joint2osc += stretch_conn_rostral
         return stretch_conn_rostral
+
+    def add_contact_conn(network_contact2osc, conn_type, weight=10):
+        
+        # left osc
+        network_contact2osc += [
+            {
+                'in':'osc_body_{}_L'.format(i),
+                'out': LimblessExperimentNetwork.agnathax_links[i],
+                'type': conn_type, #'REACTION2FREQ',
+                'weight': weight,
+            } for i in range(0,10)
+        ]
+
+        # right osc
+        network_contact2osc += [
+            {
+                'in':'osc_body_{}_R'.format(i),
+                'out': LimblessExperimentNetwork.agnathax_links[i],
+                'type': conn_type, #'REACTION2FREQ',
+                'weight': weight*-1,
+            } for i in range(0,10)
+        ]
+        return 
+        
 
 if __name__ == '__main__':
     raise ValueError("Not a file that is supposed to be run")
