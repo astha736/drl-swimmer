@@ -187,20 +187,6 @@ class LimblessExperimentRobotState:
         Raises:
             ValueError: _description_
         """
-        # if self.condition_shape == 'Lshape':
-        #     LimblessExperimentRobotState.set_initial_conditions_Lshape(animat_options, self.pose)
-        # elif self.condition_shape == 'Sshape':
-        #     LimblessExperimentRobotState.set_initial_conditions_Sshape(animat_options, self.pose)
-        # elif self.condition_shape == 'Ushape':
-        #     LimblessExperimentRobotState.set_initial_conditions_Ushape(animat_options, self.pose)
-        # elif self.condition_shape == 'Parallel':
-        #     LimblessExperimentRobotState.set_initial_conditions_parallel(animat_options, self.pose)
-        # elif self.condition_shape == 'Diagonal':
-        #     LimblessExperimentRobotState.set_initial_conditions_diagonal(animat_options, self.pose)
-        # elif self.condition_shape == 'test':
-        #     LimblessExperimentRobotState.set_initial_conditions_test(animat_options, self.pose)
-        # else:
-        #     raise ValueError(' condition_shape value {}, not found. Please check again'.format(self.condition_shape))
         LimblessExperimentRobotState.set_shape_and_pose_static(animat_options=animat_options, shape=self.condition_shape, pose=self.pose)
         return 
 
@@ -226,6 +212,7 @@ class LimblessExperimentRobotState:
     def set_random_shape_pose(animat_options):
         random_state = random.choice(LimblessExperimentRobotState.robot_state_list)
         random_pose = random.choice(LimblessExperimentRobotState.robot_pose_list)
+        print("[set_random_shape_pose] random_state: {}, random_pose: {}".format(random_state, random_pose))
         LimblessExperimentRobotState.set_shape_and_pose_static(animat_options=animat_options, shape=random_state, pose=random_pose)
         return 
 

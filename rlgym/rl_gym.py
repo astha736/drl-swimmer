@@ -35,8 +35,24 @@ from ultils.limbless_oscillator import LimblessExperimentOscillator
 
 # from cmc.salamandra_simulation.test import wrap_2pi
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 class FarmsGym(gym.Env):
     """Simulation"""
+
+    # exponential filtering for action
+    prev_action = None
+    action_weight = 0.1
+    action_scale = 60
 
     def __init__(
             self,
@@ -81,63 +97,77 @@ class FarmsGym(gym.Env):
         self.observation = None
         self.notion = notion
         self.random_times = 0
+        FarmsGym.prev_action = np.zeros(n_act)
 
     def get_observations(data_sensors, data_states, iteration):
         """get observation
-        
-        AgnathaX: stretch(joint angles) : observation
 
+        AgnathaX: Observation space of stretch & contact forces
+            stretch(joint angles) : observation
+            contact(reaction forces): observation
         """
         joints_pos = np.array(data_sensors.joints.positions(iteration=iteration))
         data_reaction_forces = np.array(data_sensors.contacts.array[iteration,:,0:2])
-        isNan = np.isnan(data_reaction_forces).any()
-        if isNan:
-            raise ValueError("Nan values found")
+        isNaN = np.isnan(data_reaction_forces).any()
+        if isNaN:
+            warnings.warn(bcolors.WARNING + "NaN values in contact forces at itr {}".format(iteration) + bcolors.ENDC)
+        np.nan_to_num(data_reaction_forces,copy=False, nan=0.0, posinf=0.0, neginf=-0.0)
         data_reaction_forces_norm = np.linalg.norm(data_reaction_forces, axis=1)
         obs = np.append(joints_pos, data_reaction_forces_norm)
-        # return joints_pos
-        return obs
+        return obs, isNaN
 
 
     def compute_reward(timestep, data_sensors, data_states, iteration, prev_iteration, debug=False):
         reward = 0
         if prev_iteration < 0:
             return reward
-        # reward_phase = .1*FarmsReward.reward_phases(data_states, iteration, debug)
         
-        reward_pc = .1*FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
-        reward_df = FarmsReward.reward_distance_forward(timestep, data_sensors, iteration, prev_iteration, debug)
+        # reward_pc = .1*FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
+        # reward_df = FarmsReward.reward_distance_forward(timestep, data_sensors, iteration, prev_iteration, debug)
         reward_dft = FarmsReward.reward_distance_forward_tracking(timestep, data_sensors, iteration, 0, debug)
-        reward_ct = FarmsReward.reward_contacts_test(timestep, data_sensors, iteration, 0, debug)
+        # reward_ct = FarmsReward.reward_contacts_test(timestep, data_sensors, iteration, 0, debug)
         prev_iteration_speed = (iteration - int(0.5/timestep))
-        reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration_speed, debug)
-        reward_cot = 3*FarmsReward.cost_of_transport(timestep, data_sensors, iteration, prev_iteration_speed, debug)
-        reward_sft = 3*FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration_speed, debug)
-        r_sum = (reward_pc + reward_sf + reward_df + reward_dft + reward_ct + reward_sft + reward_cot)
+        # reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration_speed, debug)
+        # reward_cot = 3*FarmsReward.cost_of_transport(timestep, data_sensors, iteration, prev_iteration_speed, debug)
+        # reward_sft = 3*FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration_speed, debug)
+        # r_sum = (reward_pc + reward_sf + reward_df + reward_dft + reward_ct + reward_sft + reward_cot)
+        r_sum = reward_dft
         if debug:
-            print('Reward PC        : {}'.format(reward_pc))
-            print('Reward DF        : {}'.format(reward_df))
+            # print('Reward PC        : {}'.format(reward_pc))
+            # print('Reward DF        : {}'.format(reward_df))
             print('Reward DFT       : {}'.format(reward_dft))
-            print('Reward CT        : {}'.format(reward_ct))
-            print('Reward Speed F   : {}'.format(reward_sf))
-            print('Reward Speed FT  : {}'.format(reward_sft))
-            print('Reward COT       : {}'.format(reward_cot))
+            # print('Reward CT        : {}'.format(reward_ct))
+            # print('Reward Speed F   : {}'.format(reward_sf))
+            # print('Reward Speed FT  : {}'.format(reward_sft))
+            # print('Reward COT       : {}'.format(reward_cot))
             print('SUM************  : {}'.format(r_sum))
 
         return r_sum
     
     def set_action(action, robot_parameters, test_type):
         """ Apply the computed action to the concerned variables"""
-        action = action*60
-        for elem in action:
+        isNaN = np.isnan(action).any()
+        if isNaN:
+            warnings.warn(bcolors.WARNING + "NaN values in action" + bcolors.ENDC)
+        # np.nan_to_num(action, copy=False, nan=0.0, posinf=0.0, neginf=-0.0)
+        if (action > 1).any() or (action < -1).any():
+            warnings.warn(bcolors.WARNING + "NaN action values not in range" + bcolors.ENDC)
+        
+        action_curr = FarmsGym.action_weight*(action) + (1 - FarmsGym.action_weight)*FarmsGym.prev_action
+        action_curr = action_curr*FarmsGym.action_scale
+
+        if (action_curr > FarmsGym.action_scale).any() or (action < -FarmsGym.action_scale).any():
+            warnings.warn(bcolors.WARNING + "weights value not in range" + bcolors.ENDC)
+
+        for elem in action_curr:
             if elem is None or elem is np.NaN or abs(elem) is np.inf:
                 print("not right")
+         
+        for i,action_val in enumerate(action_curr):
+            robot_parameters[i*2+0] = action_val    # left oscillator assignment 
+            robot_parameters[i*2+1] = action_val*-1 # right oscillator assignment
         
-        # action = 1/2 of robot_parameters
-        for i,action_val in enumerate(action):
-            robot_parameters[i*2+0] = action_val
-            robot_parameters[i*2+1] = action_val*-1
-
+        FarmsGym.prev_action = action
         return
     
     def arena_limit_reached(timestep, data_sensors, data_states, iteration, debug=False):
@@ -166,12 +196,11 @@ class FarmsGym(gym.Env):
         
         FarmsGym.set_action(
             action=action,
-            # robot_parameters=self.sim.task._controller.network,
             robot_parameters=self.sim.task.data.network.joints2osc_map.weights.array,
             test_type=None,
             )
         env_step = self.sim._env.step(action=None)
-        self.observation = FarmsGym.get_observations(
+        self.observation, isNaN = FarmsGym.get_observations(
             data_sensors=self.sim.task.data.sensors,
             data_states=self.sim.task.data.state,
             iteration=iteration)
@@ -206,20 +235,8 @@ class FarmsGym(gym.Env):
         animat_options = self.sim.task.animat_options 
 
         # get new changes (joint and spawn) via animat_options
-        # if (self.random_times % 10) == 0:
-        #     # LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
-        #     random_state = random.choice(['Parallel', 'Diagonal'])
-        #     random_pose = random.choice(LimblessExperimentRobotState.robot_pose_list)
-        #     LimblessExperimentRobotState.set_shape_and_pose_static(animat_options=animat_options, shape=random_state, pose=random_pose)
-
-        #     LimblessExperimentOscillator.ideal_oscillator_phase(animat_options=animat_options)
-        #     self.random_times = 0 #reset
-        # else:
-        #     LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
-        #     LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
-
-        LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
-        LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
+        # LimblessExperimentRobotState.set_random_shape_pose(animat_options=animat_options)
+        # LimblessExperimentOscillator.random_oscillator_phase(animat_options=animat_options)
 
         self.random_times =+ 1
         # apply spawn changes
@@ -250,7 +267,7 @@ class FarmsGym(gym.Env):
         # apply motor pos & oscillator changes along with reset
         self.sim._env.reset() 
 
-        self.observation = FarmsGym.get_observations(
+        self.observation, isNan = FarmsGym.get_observations(
             data_sensors=self.sim.task.data.sensors,
             data_states=self.sim.task.data.state,
             iteration=0)
@@ -296,10 +313,11 @@ class GymTestCallback(TaskCallback):
         self.notion = notion
         self.sim = None
         self.debug_random_cond = kwargs.pop('debug_random_cond', True)
+        FarmsGym.prev_action = np.zeros(self.n_act)
 
     def initialize_episode(self, task, physics):
         """Initialize episode"""
-        self.observations = FarmsGym.get_observations(
+        self.observations, isNan = FarmsGym.get_observations(
             data_sensors=task.data.sensors,
             data_states=task.data.state,
             iteration=0,
@@ -314,12 +332,9 @@ class GymTestCallback(TaskCallback):
         else:
             if self.model is None:
                 raise ValueError("model cannot be none")
-            # t1 = task.data.network.joints2osc_map.connections
-            # t2 = task.data.network.joints2osc_map.weights.array
             self.action, _states = self.model.predict(self.observations )
             FarmsGym.set_action(
                 action=self.action,
-                # robot_parameters=self.notion,
                 robot_parameters=task.data.network.joints2osc_map.weights.array,
                 test_type=None,
             )
@@ -328,7 +343,7 @@ class GymTestCallback(TaskCallback):
     def after_step(self, task, physics):
         """After each step"""
         iteration = task.iteration -1
-        self.observations = FarmsGym.get_observations(
+        self.observations, isNaN = FarmsGym.get_observations(
             data_sensors=task.data.sensors,
             data_states=task.data.state,
             iteration=iteration,
@@ -374,7 +389,7 @@ class GymTestCallback(TaskCallback):
             self.sim.task._app._restart_runtime()
             self.sim.task._app._perform_deferred_reload()
 
-        self.observation = FarmsGym.get_observations(
+        self.observation, isNaN = FarmsGym.get_observations(
             data_sensors=self.sim.task.data.sensors,
             data_states=self.sim.task.data.state,
             iteration=0)

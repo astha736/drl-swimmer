@@ -51,8 +51,10 @@ class LimblessExperimentOscillator:
         Args:
             animat_options (_type_): animat_option object
         """
-        initial_phase_l = np.random.random_sample(10)*(2*np.pi)
-        initial_phase_r = np.random.random_sample(10)*(2*np.pi) - np.pi
+        # initial_phase_l = np.random.random_sample(10)*(2*np.pi)
+        # initial_phase_r = np.random.random_sample(10)*(2*np.pi) - np.pi
+        initial_phase_l = np.random.random_sample(10)*(np.pi/2)
+        initial_phase_r = np.random.random_sample(10)*(np.pi/2)
         LimblessExperimentOscillator.set_oscillator_phase(
             animat_options=animat_options, 
             initial_phase_l=initial_phase_l,
