@@ -60,10 +60,13 @@ class LimblessExperimentNetwork:
                 conn_type = 'STRETCH2FREQTEGOTAE'
             elif senstivity == 'nonperiod':
                 conn_type = 'STRETCH2FREQ'
+            elif senstivity == 'SignalNone':
+                conn_type = 'STRETCH2AMP'
             else:
                 raise ValueError("Can be cos, sin, nonperiod. Provided {}".format(senstivity))
             return conn_type
 
+        # choose the senstivity for a given connection type
         self.s_local_senstivity = conn_type(kwargs.pop('s_local_senstivity', None))
         self.s_rostl_senstivity = conn_type(kwargs.pop('s_rostl_senstivity', None))
         self.s_caudl_senstivity = conn_type(kwargs.pop('s_caudl_senstivity', None))

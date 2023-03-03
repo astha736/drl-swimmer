@@ -122,24 +122,24 @@ class FarmsGym(gym.Env):
         if prev_iteration < 0:
             return reward
         
-        reward_pc = FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
+        # reward_pc = FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
         # reward_df = FarmsReward.reward_distance_forward(timestep, data_sensors, iteration, prev_iteration, debug)
         reward_dft = FarmsReward.reward_distance_forward_tracking(timestep, data_sensors, iteration, 0, debug)
-        # reward_ct = FarmsReward.reward_contacts_test(timestep, data_sensors, iteration, 0, debug)
+        reward_ct = FarmsReward.reward_contacts_test(timestep, data_sensors, iteration, 0, debug)
         prev_iteration_speed = (iteration - int(0.5/timestep))
         # reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration_speed, debug)
-        # reward_cot = 3*FarmsReward.cost_of_transport(timestep, data_sensors, iteration, prev_iteration_speed, debug)
+        reward_cot = 3*FarmsReward.cost_of_transport(timestep, data_sensors, iteration, prev_iteration_speed, debug)
         # reward_sft = 3*FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration_speed, debug)
         # r_sum = (reward_pc + reward_sf + reward_df + reward_dft + reward_ct + reward_sft + reward_cot)
-        r_sum = reward_dft + reward_pc
+        r_sum = reward_dft + reward_dft + reward_ct + reward_cot
         if debug:
-            print('Reward PC        : {}'.format(reward_pc))
+            # print('Reward PC        : {}'.format(reward_pc))
             # print('Reward DF        : {}'.format(reward_df))
             print('Reward DFT       : {}'.format(reward_dft))
-            # print('Reward CT        : {}'.format(reward_ct))
+            print('Reward CT        : {}'.format(reward_ct))
             # print('Reward Speed F   : {}'.format(reward_sf))
             # print('Reward Speed FT  : {}'.format(reward_sft))
-            # print('Reward COT       : {}'.format(reward_cot))
+            print('Reward COT       : {}'.format(reward_cot))
             print('SUM************  : {}'.format(r_sum))
 
         return r_sum
