@@ -1,16 +1,37 @@
+from enum import Enum
 import numpy as np
 import random 
 
-class LimblessExperimentRobotState:
+class RobotInitialShape(Enum):
+    S_SHAPE = 0
+    L_SHAPE = 1
+    U_SHAPE = 2
+    PARALLEL = 3
+    DIAGONAL = 4
+    TEST = 5
+
+
+class RobotInitialState:
     """Get the options for Initialization"""
     # static attribute of the class
-    robot_state_list = ['Sshape', 'Lshape', 'Ushape', 'Parallel', 'Diagonal']
-    robot_pose_list = [0, 1, 2]
+    _robot_state_list = [
+        RobotInitialShape.S_SHAPE,
+        RobotInitialShape.L_SHAPE,
+        RobotInitialShape.U_SHAPE,
+        RobotInitialShape.PARALLEL,
+        RobotInitialShape.DIAGONAL]
+    _robot_pose_list = [0, 1, 2]
 
-    def __init__(self, condition_shape, pose):
+    def __init__(self, condition_shape: RobotInitialShape, pose: int):
         self.condition_shape = condition_shape
         self.pose  = pose
 
+    def get_init_robot_state_list():
+        return RobotInitialState._robot_state_list
+    
+    def get_init_robot_pose_list():
+        return RobotInitialState._robot_pose_list
+    
     def set_initial_conditions_Lshape(animat_options, pose=0):
         """ Initial condition with L shape
             Shape of the robot is defined with the for loop
@@ -187,33 +208,45 @@ class LimblessExperimentRobotState:
         Raises:
             ValueError: _description_
         """
-        LimblessExperimentRobotState.set_shape_and_pose_static(animat_options=animat_options, shape=self.condition_shape, pose=self.pose)
+        RobotInitialState.set_shape_and_pose_static(animat_options=animat_options, shape=self.condition_shape, pose=self.pose)
         return 
 
     @staticmethod
-    def set_shape_and_pose_static(shape, pose, animat_options):
-        if shape == 'Lshape':
-            LimblessExperimentRobotState.set_initial_conditions_Lshape(animat_options, pose)
-        elif shape == 'Sshape':
-            LimblessExperimentRobotState.set_initial_conditions_Sshape(animat_options, pose)
-        elif shape == 'Ushape':
-            LimblessExperimentRobotState.set_initial_conditions_Ushape(animat_options, pose)
-        elif shape == 'Parallel':
-            LimblessExperimentRobotState.set_initial_conditions_parallel(animat_options, pose)
-        elif shape == 'Diagonal':
-            LimblessExperimentRobotState.set_initial_conditions_diagonal(animat_options, pose)
-        elif shape == 'test':
-            LimblessExperimentRobotState.set_initial_conditions_test(animat_options, pose)
+    def set_shape_and_pose_static(shape: RobotInitialShape, pose: int, animat_options):
+        """ Change the shape and pose of the robot in animat options
+
+        TODO: typing animat_options class
+
+        Args:
+            shape (RobotInitialShape): _description_
+            pose (int): _description_
+            animat_options (_type_): _description_
+
+        Raises:
+            ValueError: _description_
+        """
+        if shape == RobotInitialShape.L_SHAPE:
+            RobotInitialState.set_initial_conditions_Lshape(animat_options, pose)
+        elif shape == RobotInitialShape.S_SHAPE:
+            RobotInitialState.set_initial_conditions_Sshape(animat_options, pose)
+        elif shape == RobotInitialShape.U_SHAPE:
+            RobotInitialState.set_initial_conditions_Ushape(animat_options, pose)
+        elif shape == RobotInitialShape.PARALLEL:
+            RobotInitialState.set_initial_conditions_parallel(animat_options, pose)
+        elif shape == RobotInitialShape.DIAGONAL:
+            RobotInitialState.set_initial_conditions_diagonal(animat_options, pose)
+        elif shape == RobotInitialShape.TEST:
+            RobotInitialState.set_initial_conditions_test(animat_options, pose)
         else:
             raise ValueError(' condition_shape value {}, not found. Please check again'.format(shape))
         return
     
     @staticmethod
     def set_random_shape_pose(animat_options):
-        random_state = random.choice(LimblessExperimentRobotState.robot_state_list)
-        random_pose = random.choice(LimblessExperimentRobotState.robot_pose_list)
+        random_state = random.choice(RobotInitialState._robot_state_list)
+        random_pose = random.choice(RobotInitialState._robot_pose_list)
         print("[set_random_shape_pose] random_state: {}, random_pose: {}".format(random_state, random_pose))
-        LimblessExperimentRobotState.set_shape_and_pose_static(animat_options=animat_options, shape=random_state, pose=random_pose)
+        RobotInitialState.set_shape_and_pose_static(animat_options=animat_options, shape=random_state, pose=random_pose)
         return 
 
 

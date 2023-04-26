@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Simulation utils for gym environment"""
-import os
-from datetime import date
+# import os
+# from datetime import date
 from re import X
 from typing import Union
 import numpy as np
@@ -10,7 +10,7 @@ import numpy as np
 from farms_core import pylog
 from farms_core.simulation.options import Simulator
 from farms_mujoco.simulation.simulation import Simulation as MuJoCoSimulation
-from farms_sim.utils.parse_args import sim_parse_args
+# from farms_sim.utils.parse_args import sim_parse_args
 from farms_sim.simulation import (
     simulation_setup,
 )
@@ -43,24 +43,6 @@ try:
 except ImportError as err:
     AmphibiousPybulletSimulation = None
     pybullet_simulation_kwargs = None
-
-def reset_clargs(config_dir, logs_dir):
-    """ Reset clargs option according config files in config folder
-
-    Returns:
-        clargs: object with configuration details for the experiment
-    """
-    clargs = sim_parse_args( )
-    clargs.animat_config = os.path.join(config_dir,'animat.yaml')
-    clargs.arena_config=os.path.join(config_dir,'arena.yaml')
-    clargs.simulation_config=os.path.join(config_dir,'simulation.yaml')
-    clargs.log_path=os.path.join(logs_dir, '{}'.format(str(date.today())))
-    clargs.profile=os.path.join(logs_dir, 'simulation.profile')
-    clargs.prompt=False
-    clargs.simulator='MUJOCO'
-    clargs.test_configs=False
-    clargs.verify_save=False
-    return clargs
 
 def create_simulation(
         animat_options: AnimatOptions,
@@ -106,12 +88,14 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
         animat_data: animat data object
     """
     # Data
+    pylog.debug("Check")
     animat_data: Union[AmphibiousData, AmphibiousKinematicsData] = (
         get_amphibious_data(
             animat_options=animat_options,
             simulation_options=sim_options,
         )
     )
+    pylog.debug("Animat data created")
 
     # Network
     if isinstance(animat_data, AmphibiousData):
@@ -119,6 +103,7 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
         controller_args = {'animat_network': animat_network}
     else:
         controller_args = {}
+    pylog.debug("Controller network created")
 
     # Controller
     animat_controller: Union[AmphibiousController, KinematicsController] = (
@@ -129,6 +114,7 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
             **controller_args,
         )
     )
+    pylog.debug("Controller created")
 
     # Additional engine-specific options
     options = {}

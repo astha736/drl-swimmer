@@ -15,7 +15,7 @@ obstacle/*
 
 # pycache 
 scripts/__pycache__/*
-ultils/__pycache__/*
+utils/__pycache__/*
 rlgym/__pycache__/*
 agnathax_control/__pycache__/*
 

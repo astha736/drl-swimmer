@@ -1,19 +1,44 @@
+from enum import Enum
 import numpy as np
 
-class LimblessExperimentNetwork:
-    """ Complete reset of the network 
+class RobotFeedbackSenstivity(Enum):
+    COS = 0
+    SIN = 1
+    NONPERIOD = 2
+    SIGNONE = 3
+    
+    @staticmethod
+    def conn_type(senstivity):
+        if senstivity == None:
+            conn_type = None
+        elif senstivity == RobotFeedbackSenstivity.COS:
+            conn_type = 'STRETCH2AMPTEGOTAE'
+        elif senstivity == RobotFeedbackSenstivity.SIN:
+            conn_type = 'STRETCH2FREQTEGOTAE'
+        elif senstivity == RobotFeedbackSenstivity.NONPERIOD:
+            conn_type = 'STRETCH2FREQ'
+        elif senstivity == RobotFeedbackSenstivity.SIGNONE:
+            conn_type = 'STRETCH2AMP'
+        else:
+            raise ValueError("Value has to be of enum RobotFeedbackSenstivity. Provided {} Type {}".format(senstivity, type(senstivity)))
+        return conn_type
+        
+class RobotInitialNetwork:
+    """ Simulation network design and parameter options
+    
+        Warning: Using this class will completely reset the network 
 
         Aim: test different networks with different network types 
             in both open and closed loop
      """
     agnathax_links = ['head','body_0','body_1','body_2','body_3','body_4','body_5','body_6','body_7','body_8','body_9']
 
-    def __init__(self, c_intra=10, c_inter=None, s_local=None, s_rostl=None, s_caudl=None, **kwargs):
+    def __init__(self, c_intra: int=10, c_inter: int=None, s_local: int=None, s_rostl: int=None, s_caudl: int=None, **kwargs):
         """_summary_
 
         Args:
-            c_intra (int, optional): osc2osc connectivity. Defaults to 10.
-            c_inter (int, optional): osc2osc connectivity. Defaults to None.
+            c_intra (int, optional): osc2osc connectivity. Defaults to 10. Lateral oscillator. 
+            c_inter (int, optional): osc2osc connectivity. Defaults to None. Rostral and Caudal oscillator.
             s_local (int, optional): joint2osc connectivity. Defaults to None.
             s_rostl (int, optional): joint2osc connectivity. Defaults to None.
             s_caudl (int, optional): joint2osc connectivity. Defaults to None.
@@ -34,9 +59,9 @@ class LimblessExperimentNetwork:
             s_caudl: stretch feedback towards the tail. 1 segment below
         
         In limbless experiment we repurpose the types of stretch feedback
-            'cos'      -> 'STRETCH2AMPTEGOTAE'      -> freq equation
-            'sin'      -> 'STRETCH2FREQTEGOTAE'     -> freq equation
-            'nonperiod'-> 'STRETCH2FREQ'            -> freq equation
+            RobotFeedbackSenstivity.COS      -> 'STRETCH2AMPTEGOTAE'      -> freq equation
+            RobotFeedbackSenstivity.SIN      -> 'STRETCH2FREQTEGOTAE'     -> freq equation
+            RobotFeedbackSenstivity.NONPERIOD-> 'STRETCH2FREQ'            -> freq equation
         """
         self.c_intra = c_intra
         self.c_inter = c_inter
@@ -50,31 +75,15 @@ class LimblessExperimentNetwork:
         self.s_local_array = None
         self.s_rostl_array = None
         self.s_caudl_array = None
-        self.contact_local_array = None
-
-
-        def conn_type(senstivity):
-            if senstivity == None:
-                conn_type = None
-            elif senstivity == 'cos':
-                conn_type = 'STRETCH2AMPTEGOTAE'
-            elif senstivity == 'sin':
-                conn_type = 'STRETCH2FREQTEGOTAE'
-            elif senstivity == 'nonperiod':
-                conn_type = 'STRETCH2FREQ'
-            elif senstivity == 'SignalNone':
-                conn_type = 'STRETCH2AMP'
-            else:
-                raise ValueError("Can be cos, sin, nonperiod. Provided {}".format(senstivity))
-            return conn_type
+        self.reaction_local_array= None
 
         # choose the senstivity for a given connection type
-        self.s_local_senstivity = conn_type(kwargs.pop('s_local_senstivity', None))
-        self.s_rostl_senstivity = conn_type(kwargs.pop('s_rostl_senstivity', None))
-        self.s_caudl_senstivity = conn_type(kwargs.pop('s_caudl_senstivity', None))
+        self.s_local_senstivity = RobotFeedbackSenstivity.conn_type(kwargs.pop('s_local_senstivity', None))
+        self.s_rostl_senstivity = RobotFeedbackSenstivity.conn_type(kwargs.pop('s_rostl_senstivity', None))
+        self.s_caudl_senstivity = RobotFeedbackSenstivity.conn_type(kwargs.pop('s_caudl_senstivity', None))
 
-        self.contact_local = kwargs.pop('contact_local', None)
-        self.contact_local_senstivity = conn_type(kwargs.pop('contact_local_senstivity', 'REACTION2FREQ'))
+        self.reaction_local = kwargs.pop('reaction_local', None)
+        self.reaction_local_senstivity = kwargs.pop('reaction_local_senstivity', 'REACTION2FREQ')
     
     def setup(self, animat_options):
         """ setup the network desired by changing the animat_options
@@ -87,38 +96,38 @@ class LimblessExperimentNetwork:
         animat_options.control.network.contact2osc = []
 
         if self.c_intra is not None:
-            self.c_intra_array = LimblessExperimentNetwork.add_intra_segmental_conn(
+            self.c_intra_array = RobotInitialNetwork.add_intra_segmental_conn(
                 network_osc2osc=animat_options.control.network.osc2osc,
                 weight=self.c_intra,
                 )
         if self.c_inter is not None:
-            self.c_inter_array = LimblessExperimentNetwork.add_inter_segmental_conn(
+            self.c_inter_array = RobotInitialNetwork.add_inter_segmental_conn(
                 network_osc2osc=animat_options.control.network.osc2osc,
                 weight=self.c_inter,
                 )
         if self.s_local is not None:
-            self.s_local_array = LimblessExperimentNetwork.add_stretch_conn_local(
+            self.s_local_array = RobotInitialNetwork.add_stretch_conn_local(
                 network_joint2osc=animat_options.control.network.joint2osc,
                 conn_type=self.s_local_senstivity,
                 weight=self.s_local,
                 )
         if self.s_rostl is not None:
-            self.s_rostl_array = LimblessExperimentNetwork.add_stretch_conn_rostral(
+            self.s_rostl_array = RobotInitialNetwork.add_stretch_conn_rostral(
                 network_joint2osc=animat_options.control.network.joint2osc,
                 conn_type=self.s_rostl_senstivity,
                 weight=self.s_rostl,
                 )
         if self.s_caudl is  not None:
-            self.s_caudl_array = LimblessExperimentNetwork.add_stretch_conn_caudal(
+            self.s_caudl_array = RobotInitialNetwork.add_stretch_conn_caudal(
                 network_joint2osc=animat_options.control.network.joint2osc,
                 conn_type=self.s_caudl_senstivity,
                 weight=self.s_caudl,
             )
-        if self.contact_local is not None:
-            self.contact_local_array = LimblessExperimentNetwork.add_contact_conn(
+        if self.reaction_local is not None:
+            self.reaction_local_array= RobotInitialNetwork.add_reaction_conn(
                 network_contact2osc=animat_options.control.network.contact2osc,
-                conn_type=self.contact_local_senstivity,
-                weight=self.contact_local,
+                conn_type=self.reaction_local_senstivity,
+                weight=self.reaction_local,
             )
         # animat_options.control.network.contact2osc
         return 
@@ -278,13 +287,20 @@ class LimblessExperimentNetwork:
         network_joint2osc += stretch_conn_rostral
         return stretch_conn_rostral
 
-    def add_contact_conn(network_contact2osc, conn_type, weight=10):
+    def add_reaction_conn(network_contact2osc, conn_type, weight=10):
+        """Reaction force feedback
+        
+        TODO: check which reaction element is being taken, 
+        ideall x,y and a subtraction of these should be used for computing 
+        this feedback
+
+        """
         
         # left osc
         network_contact2osc += [
             {
                 'in':'osc_body_{}_L'.format(i),
-                'out': LimblessExperimentNetwork.agnathax_links[i],
+                'out': tuple((RobotInitialNetwork.agnathax_links[i+1], '')),
                 'type': conn_type, #'REACTION2FREQ',
                 'weight': weight,
             } for i in range(0,10)
@@ -294,7 +310,7 @@ class LimblessExperimentNetwork:
         network_contact2osc += [
             {
                 'in':'osc_body_{}_R'.format(i),
-                'out': LimblessExperimentNetwork.agnathax_links[i],
+                'out': tuple((RobotInitialNetwork.agnathax_links[i+1], '')),
                 'type': conn_type, #'REACTION2FREQ',
                 'weight': weight*-1,
             } for i in range(0,10)
