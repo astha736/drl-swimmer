@@ -70,7 +70,7 @@ setup(
     ext_modules=cythonize(
         [
             Extension(
-                f'rl_obstacle.*',
+                f'ode',
                 sources=[f'agnathax_control/*.pyx'],
                 extra_compile_args=['-O3'],  # , '-fopenmp'
                 extra_link_args=['-O3']  # , '-fopenmp'
