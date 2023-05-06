@@ -27,13 +27,16 @@ class RobotInitialConditions:
         initial_exp: RobotInitialState,
         osc_exp: RobotInitialOscillator = None,
     ):
-        self.network_exp = network_exp
-        self.domain_exp = domain_exp
-        self.initial_exp = initial_exp
-        self.osc_exp = RobotInitialOscillator(cond=0) if osc_exp is None else osc_exp
+        self.network_exp = network_exp  # of class RobotInitialNetwork
+        self.domain_exp = domain_exp  # of class RobotInitialDomain
+        self.initial_exp = initial_exp  # of class RobotInitialState
+        self.osc_exp = (
+            RobotInitialOscillator(cond=0) if osc_exp is None else osc_exp
+        )  # of class RobotInitialOscillator
         self.sim_n = None  # keeping track of the simulations with a number
 
     def setup(self, animat_options: AnimatOptions):
+        # call corresponding setup functions
         self.network_exp.setup(animat_options)
         self.domain_exp.setup(animat_options)
         self.initial_exp.setup(animat_options)
