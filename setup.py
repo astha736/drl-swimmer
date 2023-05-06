@@ -5,14 +5,14 @@ from setuptools import setup, find_packages
 from setuptools.extension import Extension
 from setuptools import dist
 
-dist.Distribution().fetch_build_eggs(['numpy'])
+dist.Distribution().fetch_build_eggs(["numpy"])
 import numpy as np  # pylint: disable=wrong-import-position
 
-dist.Distribution().fetch_build_eggs(['Cython>=0.15.1'])
+dist.Distribution().fetch_build_eggs(["Cython>=0.15.1"])
 from Cython.Build import cythonize  # pylint: disable=wrong-import-position
 from Cython.Compiler import Options  # pylint: disable=wrong-import-position
 
-dist.Distribution().fetch_build_eggs(['farms_core'])
+dist.Distribution().fetch_build_eggs(["farms_core"])
 from farms_core import get_include_paths  # pylint: disable=wrong-import-position
 
 
@@ -38,9 +38,9 @@ Options.closure_freelist_size = 8
 
 
 setup(
-    name='rl_obstacle',
-    version='0.1',
-    author='astha',
+    name="rl_obstacle",
+    version="0.1",
+    author="astha",
     # author_email='biorob-farms@groupes.epfl.ch',
     # description='FARMS package for amphibious simulations',
     # license='BSD-3',
@@ -59,8 +59,8 @@ setup(
     #     'farms_amphibious/templates/*',
     #     'farms_amphibious/config/*'
     # ]},
-    package_dir={'rl_obstacle': 'agnathax_control'},
-    package_data={'rl_obstacle': [ 'agnathax_control/*.pxd']},
+    package_dir={"rl_obstacle": "agnathax_control"},
+    package_data={"rl_obstacle": ["agnathax_control/*.pxd"]},
     # package_data={'rl_obstacle': [
     #     f'{folder}/*.pxd'
     #     for folder in ['data', 'control']
@@ -70,57 +70,57 @@ setup(
     ext_modules=cythonize(
         [
             Extension(
-                f'ode',
-                sources=[f'agnathax_control/*.pyx'],
-                extra_compile_args=['-O3'],  # , '-fopenmp'
-                extra_link_args=['-O3']  # , '-fopenmp'
+                f"ode",
+                sources=[f"agnathax_control/*.pyx"],
+                extra_compile_args=["-O3"],  # , '-fopenmp'
+                extra_link_args=["-O3"],  # , '-fopenmp'
             )
             # for folder in ['data', 'control']
         ],
         include_path=[np.get_include()] + get_include_paths(),
         compiler_directives={
             # Directives
-            'binding': False,
-            'embedsignature': True,
-            'cdivision': True,
-            'language_level': 3,
-            'infer_types': True,
-            'profile': True,
-            'wraparound': False,
-            'boundscheck': DEBUG,
-            'nonecheck': DEBUG,
-            'initializedcheck': DEBUG,
-            'overflowcheck': DEBUG,
-            'overflowcheck.fold': DEBUG,
-            'cdivision_warnings': DEBUG,
-            'always_allow_keywords': DEBUG,
-            'linetrace': DEBUG,
+            "binding": False,
+            "embedsignature": True,
+            "cdivision": True,
+            "language_level": 3,
+            "infer_types": True,
+            "profile": True,
+            "wraparound": False,
+            "boundscheck": DEBUG,
+            "nonecheck": DEBUG,
+            "initializedcheck": DEBUG,
+            "overflowcheck": DEBUG,
+            "overflowcheck.fold": DEBUG,
+            "cdivision_warnings": DEBUG,
+            "always_allow_keywords": DEBUG,
+            "linetrace": DEBUG,
             # Optimisations
-            'optimize.use_switch': True,
-            'optimize.unpack_method_calls': True,
+            "optimize.use_switch": True,
+            "optimize.unpack_method_calls": True,
             # Warnings
-            'warn.undeclared': True,
-            'warn.unreachable': True,
-            'warn.maybe_uninitialized': True,
-            'warn.unused': True,
-            'warn.unused_arg': True,
-            'warn.unused_result': True,
-            'warn.multiple_declarators': True,
-        }
+            "warn.undeclared": True,
+            "warn.unreachable": True,
+            "warn.maybe_uninitialized": True,
+            "warn.unused": True,
+            "warn.unused_arg": True,
+            "warn.unused_result": True,
+            "warn.multiple_declarators": True,
+        },
     ),
     zip_safe=False,
     install_requires=[
-        'farms_core',
-        'farms_mujoco',
-        'farms_sim',
-        'cython',
-        'numpy',
-        'scipy',
-        'matplotlib',
-        'tqdm',
-        'pyyaml',
-        'trimesh',
-        'imageio',
-        'simple_pid',
+        "farms_core",
+        "farms_mujoco",
+        "farms_sim",
+        "cython",
+        "numpy",
+        "scipy",
+        "matplotlib",
+        "tqdm",
+        "pyyaml",
+        "trimesh",
+        "imageio",
+        "simple_pid",
     ],
 )

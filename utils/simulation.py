@@ -10,6 +10,7 @@ import numpy as np
 from farms_core import pylog
 from farms_core.simulation.options import Simulator
 from farms_mujoco.simulation.simulation import Simulation as MuJoCoSimulation
+
 # from farms_sim.utils.parse_args import sim_parse_args
 from farms_sim.simulation import (
     simulation_setup,
@@ -39,28 +40,30 @@ try:
         AmphibiousPybulletSimulation,
         pybullet_simulation_kwargs,
     )
+
     ENGINE_BULLET = True
 except ImportError as err:
     AmphibiousPybulletSimulation = None
     pybullet_simulation_kwargs = None
 
+
 def create_simulation(
-        animat_options: AnimatOptions,
-        arena_options: ArenaOptions,
-        **kwargs,
+    animat_options: AnimatOptions,
+    arena_options: ArenaOptions,
+    **kwargs,
 ) -> Union[MuJoCoSimulation, AmphibiousPybulletSimulation]:
-    """ Create simulation object. Called by setup_simulation below. 
+    """Create simulation object. Called by setup_simulation below.
 
     Args:
-        animat_options (AnimatOptions): animat_options 
-        arena_options (ArenaOptions): arena_options 
+        animat_options (AnimatOptions): animat_options
+        arena_options (ArenaOptions): arena_options
 
     options are usually created by setup_from_clargs()
-        parameters 
+        parameters
         (
-            clargs=clargs,                              # setup from user 
-            animat_options_loader=AmphibiousOptions,    # passing class which is used to load 
-            arena_options_loader=AmphibiousArenaOptions,# passing class which is used to load 
+            clargs=clargs,                              # setup from user
+            animat_options_loader=AmphibiousOptions,    # passing class which is used to load
+            arena_options_loader=AmphibiousArenaOptions,# passing class which is used to load
         )
 
     Returns:
@@ -68,14 +71,14 @@ def create_simulation(
                     created and passed as output
     """
     # Instatiate simulation
-    pylog.info('Creating simulation')
-    simulator = kwargs.get('simulator', Simulator.MUJOCO)
+    pylog.info("Creating simulation")
+    simulator = kwargs.get("simulator", Simulator.MUJOCO)
     sim = simulation_setup(animat_options, arena_options, **kwargs)
     return sim
 
 
 def setup_simulation(animat_options, arena_options, sim_options, simulator, callbacks):
-    """ setup the simulation with agnathax_control network and odes
+    """setup the simulation with agnathax_control network and odes
 
     Args:
         animat_options (AnimatOptions): animat options variable from class
@@ -89,47 +92,45 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
     """
     # Data
     pylog.debug("Check")
-    animat_data: Union[AmphibiousData, AmphibiousKinematicsData] = (
-        get_amphibious_data(
-            animat_options=animat_options,
-            simulation_options=sim_options,
-        )
+    animat_data: Union[AmphibiousData, AmphibiousKinematicsData] = get_amphibious_data(
+        animat_options=animat_options,
+        simulation_options=sim_options,
     )
     pylog.debug("Animat data created")
 
     # Network
     if isinstance(animat_data, AmphibiousData):
         animat_network = NetworkODETEST(animat_data, max_step=sim_options.timestep)
-        controller_args = {'animat_network': animat_network}
+        controller_args = {"animat_network": animat_network}
     else:
         controller_args = {}
     pylog.debug("Controller network created")
 
     # Controller
-    animat_controller: Union[AmphibiousController, KinematicsController] = (
-        get_amphibious_controller(
-            animat_data=animat_data,
-            animat_options=animat_options,
-            sim_options=sim_options,
-            **controller_args,
-        )
+    animat_controller: Union[
+        AmphibiousController, KinematicsController
+    ] = get_amphibious_controller(
+        animat_data=animat_data,
+        animat_options=animat_options,
+        sim_options=sim_options,
+        **controller_args,
     )
     pylog.debug("Controller created")
 
     # Additional engine-specific options
     options = {}
     if simulator == Simulator.MUJOCO:
-        options['callbacks'] = setup_callbacks(animat_options)
+        options["callbacks"] = setup_callbacks(animat_options)
         if sim_options.record:
             camera = CameraCallback(
-                timestep=sim_options['timestep'],
-                n_iterations= sim_options['n_iterations'],
+                timestep=sim_options["timestep"],
+                n_iterations=sim_options["n_iterations"],
                 fps=30,
                 camera_id=1,
             )
-            options['callbacks'] += [camera]
+            options["callbacks"] += [camera]
         for callback in callbacks:
-            options['callbacks'] += [callback]
+            options["callbacks"] += [callback]
     elif simulator == Simulator.PYBULLET:
         options.update(
             pybullet_simulation_kwargs(
@@ -138,10 +139,9 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
                 sim_options=sim_options,
             )
         )
-    
 
     # Simulation
-    pylog.info('Creating simulation environment')
+    pylog.info("Creating simulation environment")
     sim: Union[MuJoCoSimulation, AmphibiousPybulletSimulation] = create_simulation(
         animat_data=animat_data,
         animat_options=animat_options,

@@ -22,11 +22,14 @@
 }
 ```
 
-- Packages you need to install additionally:
+- Packages you need to install additionally (to be done with pip):
 	- gym@0.21.0
 	- sb3-contrib@1.8.0
 	- stable-baselines3@1.8.0
 	- tensorboard@2.13.0
+	- black@23.3.0
+
+- This project uses [black](https://github.com/psf/black) as the default python formatter. Please install black w/ pip and the corresponding VSCode extension.
 
 ## Folders
 - farms: Where farms repo are clone and installed 
