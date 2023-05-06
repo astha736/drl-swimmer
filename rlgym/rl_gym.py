@@ -329,6 +329,8 @@ class FarmsGym(gym.Env):
     
     @brief: This class is the main class for the gym environment. It is used to create the environment and to step through it.
 
+    @description: Used for training only (no testing); it is a wrapper around everything in farms; implements a custom step-function
+
     @todo: Add reward as a choice as well
 
     """
@@ -444,7 +446,7 @@ class FarmsGym(gym.Env):
         return limit_reached
 
     def step(self, action):
-        """Given the action change the control command ?"""
+        """Performs a step on the environment"""
 
         # iteration changes after the env step
         iteration = self.sim.task.iteration
@@ -458,12 +460,13 @@ class FarmsGym(gym.Env):
             iteration=iteration,
         )
         
-        env_step = self.sim._env.step(action=None)
+        env_step = self.sim._env.step(action=None) # Take control of the env; used instead of sim.run
         self.observation = FarmsGym.get_observations(
             data_sensors=self.sim.task.data.sensors,
             data_states=self.sim.task.data.state,
             iteration=iteration, 
-            observation_choice=self.observation_choice)
+            observation_choice=self.observation_choice
+        )
         
         self.reward = FarmsGym.compute_reward(
             timestep=self.timestep,
@@ -471,13 +474,16 @@ class FarmsGym(gym.Env):
             data_states=self.sim.task.data.state,
             iteration=iteration,
             prev_iteration=(iteration - int(1/self.timestep)),
-            )
+        )
+
+        # Add Termination criteria here
         end_episode = FarmsGym.arena_limit_reached(
             timestep=self.timestep,
             data_sensors=self.sim.task.data.sensors,
             data_states=self.sim.task.data.state,
             iteration=iteration,
         )
+
         if end_episode:
             print("episode should be done")
         self.done = True if (env_step.step_type == StepType.LAST) or end_episode else False
@@ -551,7 +557,11 @@ class FarmsGym(gym.Env):
         pass
 
 class GymTestCallback(TaskCallback):
-    """GymTestCallback callback"""
+    """GymTestCallback callback
+    
+    @brief: Testing class; control of the environment is within farms; the TaskCallback is inerited from farms
+    
+    """
 
     def __init__(
             self,
@@ -565,7 +575,7 @@ class GymTestCallback(TaskCallback):
         super().__init__()
         self.timestep = timestep
         self.n_iterations = n_iterations
-        self.model = model
+        self.model = model #policy
         self.observations = None
         self.observation_choice = observation_choice
         self.action_choice = action_choice
@@ -606,6 +616,7 @@ class GymTestCallback(TaskCallback):
         pylog.debug("observations: {}".format(self.observations))
         pylog.debug("action: {}".format(self.action))
         
+        # sim is mujoco simulation object
         FarmsGym.set_action(
             action=self.action,
             network_parameters=self.sim.task.data.network,
