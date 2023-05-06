@@ -28,3 +28,6 @@ agnathax_control/ode.cpython-38-x86_64-linux-gnu.so
 agnathax_control/ode.c
 */*.cpython-38-x86_64-linux-gnu.so
 */*.c
+
+# eggs
+.eggs/*
