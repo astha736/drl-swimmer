@@ -9,7 +9,7 @@ from scipy.integrate._ode import ode as ODE
 
 from farms_core.model.data import AnimatData
 
-from .ode import ode_oscillators_sparse
+from ode import ode_oscillators_sparse
 
 
 class AnimatNetwork(ABC):
