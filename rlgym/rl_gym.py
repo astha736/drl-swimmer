@@ -140,6 +140,7 @@ class ActionChoice:
             # LOG PRINT OBSERVE
             robot_parameters[i * 2 + 0] = action_val  # left oscillator assignment
             robot_parameters[i * 2 + 1] = action_val * -1  # right oscillator assignment
+
         pass
 
     def set_action_CONTACT(self, action, network_parameters, iteration):
@@ -156,6 +157,8 @@ class ActionChoice:
         pass
 
     def set_action_switch(self, observation: ActionType):
+        # that a simulated switch case with a dict. Basically, the corresponding action in the
+        # dict is called
         # that a simulated switch case with a dict. Basically, the corresponding action in the
         # dict is called
         switcher = {
@@ -470,10 +473,8 @@ class FarmsGym(gym.Env):
             )
 
         # @ASTHA RANDOM RESCALING?
-<<<<<<< Updated upstream
         # @ASTHA: What is the max reward for the learning?
-=======
->>>>>>> Stashed changes
+
         action_curr = (
             FarmsGym.action_weight * (action)
             + (1 - FarmsGym.action_weight) * FarmsGym.prev_action
@@ -516,6 +517,7 @@ class FarmsGym(gym.Env):
             iteration=iteration,
         )
 
+        # @ASTHA what does the following do?
         # @ASTHA what does the following do?
         env_step = self.sim._env.step(
             action=None
