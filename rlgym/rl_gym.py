@@ -470,7 +470,10 @@ class FarmsGym(gym.Env):
             )
 
         # @ASTHA RANDOM RESCALING?
+<<<<<<< Updated upstream
         # @ASTHA: What is the max reward for the learning?
+=======
+>>>>>>> Stashed changes
         action_curr = (
             FarmsGym.action_weight * (action)
             + (1 - FarmsGym.action_weight) * FarmsGym.prev_action
