@@ -3,11 +3,12 @@ import pickle
 from enum import Enum
 
 from rlgym.rl_gym import FarmsGym, GymTestCallback
+from stable_baselines3.common.env_checker import check_env
 
 # from simulation import *  #setup_simulation
 # import simulation as engine  #setup_simulation
 # from simulation import
-from . import simulation as engine  # setup_simulation
+from . import simulation  # setup_simulation
 from rlgym.rl_gym import ActionChoice, ObservationChoice
 
 from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
@@ -17,6 +18,9 @@ from stable_baselines3.common.callbacks import (
     CheckpointCallback,
     EvalCallback,
 )
+
+import torch as th
+from torch import nn
 
 
 class TrainTestOption(Enum):
@@ -100,7 +104,7 @@ class TrainTestClass:
         """
 
         # setup simulation
-        sim, animat_data = engine.setup_simulation(
+        sim, animat_data = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
             self.sim_options,
@@ -113,7 +117,7 @@ class TrainTestClass:
             timestep=self.sim_options.timestep,
             observation_choice=self.observation_choice,
             action_choice=self.action_choice,
-            sim=sim,
+            sim=sim,  # thats my agent @ASTHA?
         )
 
         # load semi-trained model
@@ -138,7 +142,7 @@ class TrainTestClass:
         """
 
         # setup simulation
-        sim, animat_data = engine.setup_simulation(
+        sim, animat_data = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
             self.sim_options,
@@ -154,18 +158,14 @@ class TrainTestClass:
             sim=sim,
         )
 
+        # check_env(gym_env, warn=True)
+
         # Create the Model
+        policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[256, 256])
         model = RecurrentPPO(
             "MlpLstmPolicy",
             gym_env,
-            n_steps=1000,
-            batch_size=500,
-            verbose=2,
-            # ent_coef=0.3,
-            # learning_rate=0.03,
-            clip_range=0.5,
-            #  clip_range_vf=20,
-            # gamma=0.99,
+            policy_kwargs=policy_kwargs,
             tensorboard_log=self.log_dir,
         )
 
@@ -173,9 +173,8 @@ class TrainTestClass:
         new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
         callback = CheckPointCallbacks.callbacks_list(log_dir=self.log_dir)
         model.set_logger(new_logger)
-
         # train
-        model.learn(total_timesteps=self.learn_total_timesteps, callback=callback)
+        model.learn(total_timesteps=2500000, callback=callback)
         model.save(os.path.join(str(self.log_dir), str(model_filename)))
 
     def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
@@ -199,7 +198,7 @@ class TrainTestClass:
         callbacks = [gymTestCallback]
 
         # setup simulation
-        sim, animat_data = engine.setup_simulation(
+        sim, animat_data = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
             self.sim_options,
@@ -235,7 +234,7 @@ class TrainTestClass:
         @brief: This function is used to check the options for FARMS and Notions(ExperimentOptions)
         """
         callbacks = []
-        sim, _ = engine.setup_simulation(
+        sim, _ = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
             self.sim_options,

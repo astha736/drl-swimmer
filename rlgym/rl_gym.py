@@ -129,20 +129,24 @@ class ActionChoice:
         return spaces.Box(low=low_bound, high=high_bound), np.shape(low_bound)[0]
 
     def set_action_STRETCH(self, action, network_parameters, iteration):
-
+        # @ASTHA PPO OUTPUTS ACTION IN [-1,1]?
+        # @ASTHA: WHERE DOES SCALING FACTORS COME FROM?
+        action_old = action
         action = action * ActionChoice.action_output_scale[ActionType.STRETCH]
+        # @ASTHA: WHAT DOES FOLLOWIGN LINE DO?
         robot_parameters = network_parameters.joints2osc_map.weights.array
 
         for i, action_val in enumerate(action):
+            # LOG PRINT OBSERVE
             robot_parameters[i * 2 + 0] = action_val  # left oscillator assignment
             robot_parameters[i * 2 + 1] = action_val * -1  # right oscillator assignment
-
         pass
 
     def set_action_CONTACT(self, action, network_parameters, iteration):
 
         action = action * ActionChoice.action_output_scale[ActionType.STRETCH]
 
+        # ASTHA BUG FIX
         robot_parameters = network_parameters.contact2osc_map.weights.array
 
         for i, action_val in enumerate(action):
@@ -152,6 +156,8 @@ class ActionChoice:
         pass
 
     def set_action_switch(self, observation: ActionType):
+        # that a simulated switch case with a dict. Basically, the corresponding action in the
+        # dict is called
         switcher = {
             ActionType.STRETCH: self.set_action_STRETCH,
             ActionType.CONTACT: self.set_action_CONTACT,
@@ -351,6 +357,7 @@ class FarmsGym(gym.Env):
     @brief: This class is the main class for the gym environment. It is used to create the environment and to step through it.
 
     @description: Used for training only (no testing); it is a wrapper around everything in farms; implements a custom step-function
+    https://stable-baselines.readthedocs.io/en/master/guide/custom_env.html
 
     @todo: Add reward as a choice as well
 
@@ -377,7 +384,7 @@ class FarmsGym(gym.Env):
         self.action_space = action_choice.action_space
         self.n_act = action_choice.n_act
         self.timestep = timestep
-        self.sim = sim
+        self.sim = sim  # sim contains the farms simulation object, e.g. the agent @ASTHA is this correct?
         # self.initial_phase_generator = kwargs.pop('initial_phase_generator', None)
 
         # Old code?
@@ -412,13 +419,16 @@ class FarmsGym(gym.Env):
     def compute_reward(
         timestep, data_sensors, data_states, iteration, prev_iteration, debug=False
     ):
+        # @ASTHA: data_sensor vs data_states?
         """TODO: cleanup reward"""
         reward = 0
         if prev_iteration < 0:
             return reward
 
         # reward_pc = FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
-        # reward_df = FarmsReward.reward_distance_forward(timestep, data_sensors, iteration, prev_iteration, debug)
+        # reward_df = FarmsReward.reward_distance_forward(
+        #     timestep, data_sensors, iteration, prev_iteration, debug
+        # )
         reward_dft = FarmsReward.reward_distance_forward_tracking(
             timestep, data_sensors, iteration, 0, debug
         )
@@ -459,6 +469,8 @@ class FarmsGym(gym.Env):
                 bcolors.WARNING + "NaN action values not in range" + bcolors.ENDC
             )
 
+        # @ASTHA RANDOM RESCALING?
+        # @ASTHA: What is the max reward for the learning?
         action_curr = (
             FarmsGym.action_weight * (action)
             + (1 - FarmsGym.action_weight) * FarmsGym.prev_action
@@ -501,6 +513,7 @@ class FarmsGym(gym.Env):
             iteration=iteration,
         )
 
+        # @ASTHA what does the following do?
         env_step = self.sim._env.step(
             action=None
         )  # Take control of the env; used instead of sim.run
