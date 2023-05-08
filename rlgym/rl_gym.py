@@ -140,7 +140,6 @@ class ActionChoice:
             # LOG PRINT OBSERVE
             robot_parameters[i * 2 + 0] = action_val  # left oscillator assignment
             robot_parameters[i * 2 + 1] = action_val * -1  # right oscillator assignment
-
         pass
 
     def set_action_CONTACT(self, action, network_parameters, iteration):
@@ -517,7 +516,6 @@ class FarmsGym(gym.Env):
             iteration=iteration,
         )
 
-        # @ASTHA what does the following do?
         # @ASTHA what does the following do?
         env_step = self.sim._env.step(
             action=None
