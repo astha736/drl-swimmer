@@ -488,7 +488,7 @@ class FarmsGym(gym.Env):
         #     FarmsGym.action_weight * (action)
         #     + (1 - FarmsGym.action_weight) * FarmsGym.prev_action
         # )
-        # FarmsGym.prev_action = action
+        FarmsGym.prev_action = action
 
         action_choice.set_action(action, network_parameters, iteration)
         return
