@@ -176,7 +176,7 @@ class TrainTestClass:
         )
 
         # configure logger
-        new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
+        new_logger = configure(self.log_dir, ["csv", "tensorboard"])
         callback = CheckPointCallbacks.callbacks_list(log_dir=self.log_dir)
         model.set_logger(new_logger)
         # train
