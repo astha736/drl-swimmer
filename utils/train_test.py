@@ -2,16 +2,16 @@ import os
 import pickle
 from enum import Enum
 
-from rlgym.rl_gym import FarmsGym, GymTestCallback
-from stable_baselines3.common.env_checker import check_env
+from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationChoice
 
 # from simulation import *  #setup_simulation
 # import simulation as engine  #setup_simulation
 # from simulation import
 from . import simulation  # setup_simulation
-from rlgym.rl_gym import ActionChoice, ObservationChoice
 
-from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
+# from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
+from stable_baselines3 import PPO
+from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.callbacks import (
     CallbackList,
@@ -19,8 +19,7 @@ from stable_baselines3.common.callbacks import (
     EvalCallback,
 )
 
-import torch as th
-from torch import nn
+import torch
 
 
 class TrainTestOption(Enum):
@@ -70,6 +69,7 @@ class TrainTestClass:
         action_choice: ActionChoice,
         observation_choice: ObservationChoice,
         learn_total_timesteps: int,
+        experiment_args,
     ):
         """Constructor for TrainTestClass
 
@@ -90,6 +90,7 @@ class TrainTestClass:
         self.action_choice = action_choice
         self.observation_choice = observation_choice
         self.learn_total_timesteps = learn_total_timesteps
+        self.experiment_args = experiment_args
 
     def exp_train_cont(
         self, model_filename_original: str, model_filename_to_cont: str
@@ -127,7 +128,7 @@ class TrainTestClass:
         )
 
         # configure logger
-        new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
+        new_logger = configure(self.log_dir, ["csv", "tensorboard"])
         callback = CheckPointCallbacks.callbacks_list(log_dir=self.log_dir)
         model.set_logger(new_logger)
 
@@ -158,12 +159,17 @@ class TrainTestClass:
             sim=sim,
         )
 
+        # @ASTHA this throws error
         # check_env(gym_env, warn=True)
 
-        # Create the Model
-        policy_kwargs = dict(activation_fn=th.nn.ReLU, net_arch=[256, 256])
-        model = RecurrentPPO(
-            "MlpLstmPolicy",
+        policy_kwargs = dict(
+            activation_fn=getattr(
+                torch.nn, self.experiment_args["policy_network"]["activation"]
+            ),
+            net_arch=self.experiment_args["policy_network"]["arch"],
+        )
+        model = PPO(
+            self.experiment_args["policy_network"]["policy_type"],
             gym_env,
             policy_kwargs=policy_kwargs,
             tensorboard_log=self.log_dir,
@@ -174,7 +180,7 @@ class TrainTestClass:
         callback = CheckPointCallbacks.callbacks_list(log_dir=self.log_dir)
         model.set_logger(new_logger)
         # train
-        model.learn(total_timesteps=2500000, callback=callback)
+        model.learn(total_timesteps=self.learn_total_timesteps, callback=callback)
         model.save(os.path.join(str(self.log_dir), str(model_filename)))
 
     def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:

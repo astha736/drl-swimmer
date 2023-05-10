@@ -421,9 +421,18 @@ class FarmsGym(gym.Env):
     def compute_reward(
         timestep, data_sensors, data_states, iteration, prev_iteration, debug=False
     ):
+        # @ASTHA dont use exp reward
         # @ASTHA: data_sensor vs data_states?
+        # Idea: use only sine-function to check max reward
         """TODO: cleanup reward"""
         reward = 0
+        # @OLI plotting example
+        # if iteration == 999:
+        #     fig = data_sensors.links.plot_base_p(np.array([1, 2, 3, 4]))
+        #     fig.savefig("test.pdf", format="pdf")
+        #     print("done ")
+        #     print("done")
+
         if prev_iteration < 0:
             return reward
 
@@ -444,15 +453,15 @@ class FarmsGym(gym.Env):
         )
         # reward_sft = 3*FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration_speed, debug)
         # r_sum = (reward_pc + reward_sf + reward_df + reward_dft + reward_ct + reward_sft + reward_cot)
-        r_sum = reward_dft + reward_ct + reward_cot
+        r_sum = reward_dft * 20 + reward_cot / 30000  # + reward_ct
         if debug:
             # print('Reward PC        : {}'.format(reward_pc))
             # print('Reward DF        : {}'.format(reward_df))
-            print("Reward DFT       : {}".format(reward_dft))
-            print("Reward CT        : {}".format(reward_ct))
+            print("Reward DFT       : {}".format(reward_dft * 20))
+            # print("Reward CT        : {}".format(reward_ct))
             # print('Reward Speed F   : {}'.format(reward_sf))
             # print('Reward Speed FT  : {}'.format(reward_sft))
-            print("Reward COT       : {}".format(reward_cot))
+            print("Reward COT       : {}".format(reward_cot / 30000))
             print("SUM************  : {}".format(r_sum))
 
         return r_sum
@@ -473,14 +482,15 @@ class FarmsGym(gym.Env):
 
         # @ASTHA RANDOM RESCALING?
         # @ASTHA: What is the max reward for the learning?
+        # filter action, so that action is smaller, else forces get high and force gives NaN
+        # is because of instability
+        # action_curr = (
+        #     FarmsGym.action_weight * (action)
+        #     + (1 - FarmsGym.action_weight) * FarmsGym.prev_action
+        # )
+        # FarmsGym.prev_action = action
 
-        action_curr = (
-            FarmsGym.action_weight * (action)
-            + (1 - FarmsGym.action_weight) * FarmsGym.prev_action
-        )
-        FarmsGym.prev_action = action
-
-        action_choice.set_action(action_curr, network_parameters, iteration)
+        action_choice.set_action(action, network_parameters, iteration)
         return
 
     def arena_limit_reached(
@@ -516,10 +526,11 @@ class FarmsGym(gym.Env):
             iteration=iteration,
         )
 
-        # @ASTHA what does the following do?
+        # @ASTHA makes simulation go forward # @CHECK
         env_step = self.sim._env.step(
             action=None
         )  # Take control of the env; used instead of sim.run
+
         self.observation = FarmsGym.get_observations(
             data_sensors=self.sim.task.data.sensors,
             data_states=self.sim.task.data.state,
