@@ -428,10 +428,11 @@ class FarmsGym(gym.Env):
         reward = 0
         # @OLI plotting example
         # if iteration == 999:
-        #     fig = data_sensors.links.plot_base_p(np.array([1, 2, 3, 4]))
-        #     fig.savefig("test.pdf", format="pdf")
-        #     print("done ")
-        #     print("done")
+        #     data_sensors.links.com_position(1, 1)
+        # fig = data_sensors.links.plot_base_position(np.array(range(1, 999)))
+        # fig.savefig("test.pdf", format="pdf")
+        # print("done ")
+        # print("done")
 
         if prev_iteration < 0:
             return reward
@@ -443,9 +444,9 @@ class FarmsGym(gym.Env):
         reward_dft = FarmsReward.reward_distance_forward_tracking(
             timestep, data_sensors, iteration, 0, debug
         )
-        reward_ct = FarmsReward.reward_contacts_test(
-            timestep, data_sensors, iteration, 0, debug
-        )
+        # reward_ct = FarmsReward.reward_contacts_test(
+        #     timestep, data_sensors, iteration, 0, debug
+        # )
         prev_iteration_speed = iteration - int(0.5 / timestep)
         # reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration_speed, debug)
         reward_cot = 3 * FarmsReward.cost_of_transport(
@@ -538,13 +539,34 @@ class FarmsGym(gym.Env):
             observation_choice=self.observation_choice,
         )
 
-        self.reward = FarmsGym.compute_reward(
-            timestep=self.timestep,
-            data_sensors=self.sim.task.data.sensors,
-            data_states=self.sim.task.data.state,
-            iteration=iteration,
-            prev_iteration=(iteration - int(1 / self.timestep)),
-        )
+        # self.reward = FarmsGym.compute_reward(
+        #     timestep=self.timestep,
+        #     data_sensors=self.sim.task.data.sensors,
+        #     data_states=self.sim.task.data.state,
+        #     iteration=iteration,
+        #     prev_iteration=(iteration - int(1 / self.timestep)),
+        # )
+
+        fwd = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[
+            0
+        ]
+
+        if iteration == 0:
+            x_vel = 0
+        else:
+            x_prev = np.array(
+                self.sim.task.data.sensors.links.global_com_position(iteration - 1)
+            )[0]
+            x_pos = np.array(
+                self.sim.task.data.sensors.links.global_com_position(iteration)
+            )[0]
+            x_vel = x_pos - x_prev
+
+        self.reward = fwd * 10 + x_vel * 100000
+
+        print(fwd)
+        print(x_vel)
+        print("####")
 
         # Add Termination criteria here
         end_episode = FarmsGym.arena_limit_reached(

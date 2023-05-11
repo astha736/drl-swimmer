@@ -9,7 +9,7 @@ from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationCho
 # from simulation import
 from . import simulation  # setup_simulation
 
-# from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
+from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.logger import configure
@@ -168,7 +168,8 @@ class TrainTestClass:
             ),
             net_arch=self.experiment_args["policy_network"]["arch"],
         )
-        model = PPO(
+
+        model = RecurrentPPO(
             self.experiment_args["policy_network"]["policy_type"],
             gym_env,
             policy_kwargs=policy_kwargs,
@@ -190,7 +191,9 @@ class TrainTestClass:
         @param debug_random_cond (bool): If true, the animat is tested in random conditions.
         """
         # load trained model
-        model = RecurrentPPO.load(os.path.join(self.log_dir, model_filename))
+        model = PPO.load(
+            "logs/experiment_01/10-05-2023_14:43:36/sRobotFeedbackSenstivity.NONPERIOD_sW0_caW10_sCaudal_ncCPG/rl_model_1150000_steps.zip"
+        )
 
         # callback on trained model for testing
         gymTestCallback = GymTestCallback(
