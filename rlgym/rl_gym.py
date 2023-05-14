@@ -551,6 +551,12 @@ class FarmsGym(gym.Env):
             0
         ]
 
+        # if iteration == 9999:
+        #     fig = self.sim.task.data.sensors.links.plot_global_com_positions(
+        #         range(0, 9999)
+        #     )
+        #     fig.savefig("com_position.png")
+
         if iteration == 0:
             x_vel = 0
         else:
@@ -564,9 +570,9 @@ class FarmsGym(gym.Env):
 
         self.reward = fwd * 10 + x_vel * 100000
 
-        print(fwd)
-        print(x_vel)
-        print("####")
+        # @IDEA
+        # add directional reward: the sum of all angles should be zero, or sth like that
+        # so that the robot actually swims forward!
 
         # Add Termination criteria here
         end_episode = FarmsGym.arena_limit_reached(

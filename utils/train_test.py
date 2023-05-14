@@ -20,6 +20,7 @@ from stable_baselines3.common.callbacks import (
 )
 
 import torch
+import matplotlib.pyplot as plt
 
 
 class TrainTestOption(Enum):
@@ -192,7 +193,7 @@ class TrainTestClass:
         """
         # load trained model
         model = PPO.load(
-            "logs/experiment_01/10-05-2023_14:43:36/sRobotFeedbackSenstivity.NONPERIOD_sW0_caW10_sCaudal_ncCPG/rl_model_1150000_steps.zip"
+            "logs/experiment_01/10-05-2023_22:15:36/sRobotFeedbackSenstivity.NONPERIOD_sW0_caW10_sCaudal_ncCPG/rl_model_1150000_steps.zip"
         )
 
         # callback on trained model for testing
@@ -218,6 +219,14 @@ class TrainTestClass:
         gymTestCallback.set_mujoco_model(sim)
         # run simulation
         sim.run()
+
+        # plots
+        fig = sim.task.data.sensors.links.plot_global_com_positions(
+            range(0, self.sim_options.n_iterations - 1)
+        )
+        fig.savefig("test_10.pdf", format="pdf")
+
+        sim.task.data.sensors.links.get_performance_metrics_links()
 
         if self.save_test_data:
             self.exp_save_run(sim, animat_data)
