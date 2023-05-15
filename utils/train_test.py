@@ -226,6 +226,9 @@ class TrainTestClass:
         )
         fig.savefig("test_10.pdf", format="pdf")
 
+        fig = sim.task.data.sensors.joints.plot_position_sum_all()
+        fig.savefig("test_11.pdf", format="pdf")
+
         sim.task.data.sensors.links.get_performance_metrics_links()
 
         if self.save_test_data:
