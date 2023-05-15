@@ -230,6 +230,7 @@ class TrainTestClass:
         fig.savefig("test_11.pdf", format="pdf")
 
         sim.task.data.sensors.links.get_performance_metrics_links()
+        sim.task.data.sensors.joints.get_performance_metrics_joints()
 
         if self.save_test_data:
             self.exp_save_run(sim, animat_data)

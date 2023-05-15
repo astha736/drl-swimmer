@@ -507,9 +507,9 @@ class FarmsGym(gym.Env):
         y_limit = np.abs(com_position[1]) > 2
 
         limit_reached = x_limit or y_limit
-        if debug:
-            print("[episode info] COM   : {}".format(com_position[0:2]))
-            print("[episode info] limit : {}".format(limit_reached))
+        # if debug:
+        #     print("[episode info] COM   : {}".format(com_position[0:2]))
+        #     print("[episode info] limit : {}".format(limit_reached))
         return limit_reached
 
     def step(self, action):
@@ -710,7 +710,9 @@ class GymTestCallback(TaskCallback):
 
         if self.model is None:
             raise ValueError("model cannot be none")
-        self.action, _states = self.model.predict(self.observations)
+        self.action, _states = self.model.predict(
+            self.observations, deterministic=False
+        )
 
         pylog.debug("observations: {}".format(self.observations))
         pylog.debug("action: {}".format(self.action))
