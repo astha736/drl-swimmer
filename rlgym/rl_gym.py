@@ -582,11 +582,10 @@ class FarmsGym(gym.Env):
             iteration=iteration,
         )
 
-        if end_episode:
-            print("episode should be done")
         self.done = (
             True if (env_step.step_type == StepType.LAST) or end_episode else False
         )
+
         return self.observation, self.reward, self.done, self.info
 
     def randomize_robot_state(self):
@@ -714,8 +713,8 @@ class GymTestCallback(TaskCallback):
             self.observations, deterministic=False
         )
 
-        pylog.debug("observations: {}".format(self.observations))
-        pylog.debug("action: {}".format(self.action))
+        # pylog.debug("observations: {}".format(self.observations))
+        # pylog.debug("action: {}".format(self.action))
 
         # sim is mujoco simulation object
         FarmsGym.set_action(

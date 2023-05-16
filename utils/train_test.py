@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pickle
 from enum import Enum
 
@@ -17,6 +18,7 @@ from stable_baselines3.common.callbacks import (
     CallbackList,
     CheckpointCallback,
     EvalCallback,
+    BaseCallback,
 )
 
 import torch
@@ -93,50 +95,6 @@ class TrainTestClass:
         self.learn_total_timesteps = learn_total_timesteps
         self.experiment_args = experiment_args
 
-    def exp_train_cont(
-        self, model_filename_original: str, model_filename_to_cont: str
-    ) -> None:
-        """Continue experiment training on saved models
-
-        @note: original model and continued model are saved in the same directory. The directory is named according to the
-        date of the original model.
-
-        @param model_filename_original (str): Name of the original saved model.
-        @param model_filename_to_cont (str): Name of the further trained model.
-        """
-
-        # setup simulation
-        sim, animat_data = simulation.setup_simulation(
-            self.animat_options,
-            self.arena_options,
-            self.sim_options,
-            self.simulator,
-            callbacks=[],
-        )
-
-        # setup gym: create the environment with mujoco sim
-        gym_env = FarmsGym(
-            timestep=self.sim_options.timestep,
-            observation_choice=self.observation_choice,
-            action_choice=self.action_choice,
-            sim=sim,  # thats my agent @ASTHA?
-        )
-
-        # load semi-trained model
-        model_log_dir = os.path.join(self.log_dir, "..", model_filename_original)
-        model = RecurrentPPO.load(
-            os.path.join(model_log_dir, model_filename_original), env=gym_env
-        )
-
-        # configure logger
-        new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
-        callback = CheckPointCallbacks.callbacks_list(log_dir=self.log_dir)
-        model.set_logger(new_logger)
-
-        # continue training
-        model.learn(total_timesteps=self.learn_total_timesteps, callback=callback)
-        model.save(os.path.join(self.log_dir, model_filename_to_cont))
-
     def exp_training(self, model_filename: str) -> None:
         """Experiment training
 
@@ -170,7 +128,7 @@ class TrainTestClass:
             net_arch=self.experiment_args["policy_network"]["arch"],
         )
 
-        model = RecurrentPPO(
+        model = PPO(
             self.experiment_args["policy_network"]["policy_type"],
             gym_env,
             policy_kwargs=policy_kwargs,
@@ -179,10 +137,16 @@ class TrainTestClass:
 
         # configure logger
         new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
-        callback = CheckPointCallbacks.callbacks_list(log_dir=self.log_dir)
         model.set_logger(new_logger)
         # train
-        model.learn(total_timesteps=self.learn_total_timesteps, callback=callback)
+        eval_callback = EvalCallback(
+            gym_env,
+            log_path="./logs/",
+            eval_freq=50000,
+            deterministic=True,
+            render=False,
+        )
+        model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
         model.save(os.path.join(str(self.log_dir), str(model_filename)))
 
     def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
@@ -220,17 +184,31 @@ class TrainTestClass:
         # run simulation
         sim.run()
 
-        # plots
-        fig = sim.task.data.sensors.links.plot_global_com_positions(
-            range(0, self.sim_options.n_iterations - 1)
-        )
-        fig.savefig("test_10.pdf", format="pdf")
+        ### collect all relevant metrics and save in expriment folder
+        links = sim.task.data.sensors.links
+        joints = sim.task.data.sensors.joints
 
-        fig = sim.task.data.sensors.joints.plot_position_sum_all()
-        fig.savefig("test_11.pdf", format="pdf")
+        plots = links.plots(times=range(0, self.sim_options.n_iterations - 1))
+        for name, plot in plots.items():
+            plot.savefig(f"{name}.pdf", format="pdf")
 
-        sim.task.data.sensors.links.get_performance_metrics_links()
-        sim.task.data.sensors.joints.get_performance_metrics_joints()
+        metrics = links.performance_metrics()
+        f = open(f"performance_metrics.txt", "w")
+        for name, metric in metrics.items():
+            print(name)
+            f.write(f"{name}: {metric}\n")
+        f.close()
+
+        plots = joints.plots(times=range(0, self.sim_options.n_iterations - 1))
+        for name, plot in plots.items():
+            plot.savefig(f"{name}.pdf", format="pdf")
+
+        metrics = joints.performance_metrics()
+        f = open(f"performance_metrics.txt", "w")
+        for name, metric in metrics.items():
+            print(name)
+            f.write(f"{name}: {metric}\n")
+        f.close()
 
         if self.save_test_data:
             self.exp_save_run(sim, animat_data)
@@ -267,18 +245,33 @@ class TrainTestClass:
         return
 
 
-class CheckPointCallbacks:
-    @staticmethod
-    def callbacks_list(log_dir):
-        """Create and retun checkpoint callback for gym training
+class TensorboardCallback(BaseCallback):
+    """
+    Custom callback for plotting additional values in tensorboard.
+    """
 
-        Args:
-            log_dir (string): abs path for log dir
+    def __init__(self, verbose=0):
+        super().__init__(verbose)
 
-        Returns:
-            list: list containing checkpoint callback
+    def _on_step(self) -> bool:
+        # Log scalar value (here a random variable)
+
+        env = self.model.env.envs[0].env
+
+        self.logger.record(
+            "test_step",
+            env.sim.task.data.sensors.links.com_distance_travelled_in_axis(),
+        )
+        return True
+
+    def _on_rollout_end(self) -> None:
         """
-        checkpoint_callback = CheckpointCallback(save_freq=50000, save_path=log_dir)
-        callback = CallbackList([checkpoint_callback])
+        This event is triggered before updating the policy.
+        """
+        env = self.model.env.envs[0].env
 
-        return callback
+        self.logger.record(
+            "test_rollout",
+            env.sim.task.data.sensors.links.com_distance_travelled_in_axis(),
+        )
+        pass
