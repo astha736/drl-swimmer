@@ -142,9 +142,10 @@ class TrainTestClass:
         eval_callback = EvalCallback(
             gym_env,
             log_path="./logs/",
-            eval_freq=50000,
+            eval_freq=500,
             deterministic=True,
             render=False,
+            callback_after_eval=evaluteWithFiguresCB(),
         )
         model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
         model.save(os.path.join(str(self.log_dir), str(model_filename)))
@@ -275,3 +276,11 @@ class TensorboardCallback(BaseCallback):
             env.sim.task.data.sensors.links.com_distance_travelled_in_axis(),
         )
         pass
+
+
+class evaluteWithFiguresCB(BaseCallback):
+    def __init__(self, verbose=0):
+        super().__init__(verbose)
+
+    def _on_step(self) -> bool:
+        print("in here")
