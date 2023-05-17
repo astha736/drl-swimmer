@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pickle
 from enum import Enum
+from matplotlib.backends.backend_pdf import PdfPages
 
 from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationChoice
 
@@ -20,7 +21,6 @@ from stable_baselines3.common.callbacks import (
 
 import torch
 from farms_sim.simulation import postprocessing_from_clargs
-
 from farms_amphibious.data.data import AmphibiousData
 
 
@@ -182,32 +182,6 @@ class TrainTestClass:
         # run simulation
         sim.run()
 
-        ### collect all relevant metrics and save in expriment folder
-        links = sim.task.data.sensors.links
-        joints = sim.task.data.sensors.joints
-
-        plots = links.plots(times=range(0, self.sim_options.n_iterations - 1))
-        for name, plot in plots.items():
-            plot.savefig(f"{name}.pdf", format="pdf")
-
-        metrics = links.performance_metrics()
-        f = open(f"performance_metrics.txt", "w")
-        for name, metric in metrics.items():
-            print(name)
-            f.write(f"{name}: {metric}\n")
-        f.close()
-
-        plots = joints.plots(times=range(0, self.sim_options.n_iterations - 1))
-        for name, plot in plots.items():
-            plot.savefig(f"{name}.pdf", format="pdf")
-
-        metrics = joints.performance_metrics()
-        f = open(f"performance_metrics.txt", "w")
-        for name, metric in metrics.items():
-            print(name)
-            f.write(f"{name}: {metric}\n")
-        f.close()
-
         if self.save_test_data:
             self.exp_save_run(sim, animat_data)
         return
@@ -241,13 +215,26 @@ class TrainTestClass:
         )
         sim.run()
 
-        postprocessing_from_clargs(
-            sim=sim,
-            clargs=self.clargs,
-            simulator=self.simulator,
-            animat_data_loader=AmphibiousData,
-            video_name="test.mp4",
-        )
+        # get and save plots and data
+        # TODO fix show time and not timesteps in plot
+        _times = range(0, self.sim_options.n_iterations - 1)
+        plots = {
+            **sim.task.data.sensors.links.plots(times=_times),
+            **sim.task.data.sensors.joints.plots(times=_times),
+        }
+        with PdfPages(os.path.join(self.log_dir, "performance_plots.pdf")) as pdf:
+            for name, plot in plots.items():
+                plot.suptitle(name.replace("_", " "))
+                pdf.savefig(plot.figure, bbox_inches="tight")
+
+        metrics = {
+            **sim.task.data.sensors.links.performance_metrics(),
+            **sim.task.data.sensors.joints.performance_metrics(),
+        }
+        f = open(os.path.join(self.log_dir, "performance_metrics.txt"), "w")
+        for name, metric in metrics.items():
+            f.write(f"{name}: {metric}\n")
+        f.close()
 
         return
 
