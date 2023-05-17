@@ -18,7 +18,7 @@ from utils.train_test import TrainTestClass
 # Load experiment config and setup *_DIRs
 with open("./experiments/experiment_01/" + "experiment_01.yaml") as exp_config:
     args = yaml.full_load(exp_config)
-LOGS_DIR = (
+LOG_DIR = (
     "./experiments/experiment_"
     + args["experiment_id"]
     + "/logs/"
@@ -33,12 +33,16 @@ def main() -> None:
     clargs.animat_config = args["configs"]["animat_config"]
     clargs.arena_config = args["configs"]["arena_config"]
     clargs.simulation_config = args["configs"]["simulation_config"]
-    clargs.profile = os.path.join(LOGS_DIR, "simulation.profile")
-    clargs.log_path = LOGS_DIR
+    clargs.profile = os.path.join(LOG_DIR, "simulation.profile")
+    clargs.log_path = LOG_DIR
     clargs.prompt = False
     clargs.simulator = "MUJOCO"
     clargs.test_configs = False
     clargs.verify_save = False
+
+    # create log dir if not existing
+    if not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR)
 
     # Load options from yaml files
     (
@@ -67,7 +71,7 @@ def main() -> None:
 
     # Set simulation options
     sim_options.fast = True
-    sim_options.headless = False
+    sim_options.headless = True
     sim_options.n_iterations = args["simulation"][
         "n_iterations"
     ]  # timesteps per episode

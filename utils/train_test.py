@@ -216,8 +216,12 @@ class TrainTestClass:
         sim.run()
 
         # get and save plots and data
-        # TODO fix show time and not timesteps in plot
-        _times = range(0, self.sim_options.n_iterations - 1)
+        _times = np.arange(
+            0,
+            self.sim_options.timestep * self.sim_options.n_iterations
+            - 1 * self.sim_options.timestep,
+            self.sim_options.timestep,
+        )
         plots = {
             **sim.task.data.sensors.links.plots(times=_times),
             **sim.task.data.sensors.joints.plots(times=_times),
