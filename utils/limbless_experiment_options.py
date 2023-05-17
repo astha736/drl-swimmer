@@ -217,7 +217,9 @@ class ExperimentConditions:
             ),
             domain_exp=RobotInitialDomain(friction=friction),
             initial_exp=RobotInitialState(condition_shape=robot_shape, pose=robot_pose),
-            osc_exp=RobotInitialOscillator(cond=0),  # ideal
+            osc_exp=RobotInitialOscillator(
+                cond=0
+            ),  # ideal is 0; random is 1. Ideal means that the phase difference of the oscillators is set well
         )
 
         if debug:

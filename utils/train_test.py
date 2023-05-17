@@ -5,10 +5,7 @@ from enum import Enum
 
 from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationChoice
 
-# from simulation import *  #setup_simulation
-# import simulation as engine  #setup_simulation
-# from simulation import
-from . import simulation  # setup_simulation
+from . import simulation
 
 from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
 from stable_baselines3 import PPO
@@ -22,13 +19,9 @@ from stable_baselines3.common.callbacks import (
 )
 
 import torch
-import matplotlib.pyplot as plt
+from farms_sim.simulation import postprocessing_from_clargs
 
-
-class TrainTestOption(Enum):
-    TRAIN = 0
-    TEST = 1
-    CONT = 2
+from farms_amphibious.data.data import AmphibiousData
 
 
 class TrainTestClass:
@@ -73,6 +66,7 @@ class TrainTestClass:
         observation_choice: ObservationChoice,
         learn_total_timesteps: int,
         experiment_args,
+        clargs=None,
     ):
         """Constructor for TrainTestClass
 
@@ -94,6 +88,7 @@ class TrainTestClass:
         self.observation_choice = observation_choice
         self.learn_total_timesteps = learn_total_timesteps
         self.experiment_args = experiment_args
+        self.clargs = clargs
 
     def exp_training(self, model_filename: str) -> None:
         """Experiment training
@@ -123,13 +118,13 @@ class TrainTestClass:
 
         policy_kwargs = dict(
             activation_fn=getattr(
-                torch.nn, self.experiment_args["policy_network"]["activation"]
+                torch.nn, self.experiment_args["RL"]["policy_network"]["activation"]
             ),
-            net_arch=self.experiment_args["policy_network"]["arch"],
+            net_arch=self.experiment_args["RL"]["policy_network"]["arch"],
         )
 
         model = PPO(
-            self.experiment_args["policy_network"]["policy_type"],
+            self.experiment_args["RL"]["policy_network"]["policy_type"],
             gym_env,
             policy_kwargs=policy_kwargs,
             tensorboard_log=self.log_dir,
@@ -147,7 +142,9 @@ class TrainTestClass:
             render=False,
             callback_after_eval=evaluteWithFiguresCB(),
         )
-        model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
+        model.learn(
+            total_timesteps=self.learn_total_timesteps,
+        )
         model.save(os.path.join(str(self.log_dir), str(model_filename)))
 
     def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
@@ -235,7 +232,7 @@ class TrainTestClass:
         @brief: This function is used to check the options for FARMS and Notions(ExperimentOptions)
         """
         callbacks = []
-        sim, _ = simulation.setup_simulation(
+        sim, animat_data = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
             self.sim_options,
@@ -243,6 +240,15 @@ class TrainTestClass:
             callbacks=callbacks,
         )
         sim.run()
+
+        postprocessing_from_clargs(
+            sim=sim,
+            clargs=self.clargs,
+            simulator=self.simulator,
+            animat_data_loader=AmphibiousData,
+            video_name="test.mp4",
+        )
+
         return
 
 

@@ -4,8 +4,7 @@ config/*.yaml
 joint2osc.yaml
 
 # logs
-experiments/*
-logs/*
+**/logs/
 
 # setup 
 farms/farms_*
