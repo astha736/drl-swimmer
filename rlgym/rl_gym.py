@@ -31,9 +31,12 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 import csv
 
-from .rl_reward import FarmsReward
+# from .rl_reward import FarmsReward
 from utils.limbless_spawn import RobotInitialState
 from utils.limbless_oscillator import RobotInitialOscillator
+
+from utils import utils
+
 
 # from cmc.salamandra_simulation.test import wrap_2pi
 
@@ -365,17 +368,14 @@ class FarmsGym(gym.Env):
 
     """
 
-    # exponential filtering for action
-    prev_action = None
-    action_weight = 0.1
-    action_scale = 60
-
     def __init__(
         self,
         timestep,
         observation_choice: ObservationChoice,
         action_choice: ActionChoice,
         sim,
+        log_dir,
+        is_test_env: bool = False,
         **kwargs,
     ):
         super().__init__()
@@ -386,15 +386,7 @@ class FarmsGym(gym.Env):
         self.action_space = action_choice.action_space
         self.n_act = action_choice.n_act
         self.timestep = timestep
-        self.sim = sim  # sim contains the farms simulation object, e.g. the agent @ASTHA is this correct?
-        # self.initial_phase_generator = kwargs.pop('initial_phase_generator', None)
-
-        # Old code?
-        # self.init_com_position = np.array(kwargs.pop('init_com_position', None))
-        # self.init_com_orientation = np.array(kwargs.pop('init_com_orientation', None))
-        # assert self.init_com_position is not None, "ERROR: init_com_position should be set"
-        # assert self.init_com_orientation is not None, "ERROR: init_com_orientation should be set"
-
+        self.sim = sim
         self.reward = None
         self.info = None
         self.done = None
@@ -403,7 +395,8 @@ class FarmsGym(gym.Env):
 
         self.notion = kwargs.pop("notion", None)
 
-        FarmsGym.prev_action = np.zeros(self.n_act)
+        self.is_test_env = is_test_env
+        self.log_dir = log_dir
 
     def get_observations(
         data_sensors, data_states, iteration: int, observation_choice: ObservationChoice
@@ -421,110 +414,35 @@ class FarmsGym(gym.Env):
     def compute_reward(
         timestep, data_sensors, data_states, iteration, prev_iteration, debug=False
     ):
-        # @ASTHA dont use exp reward
-        # @ASTHA: data_sensor vs data_states?
-        # Idea: use only sine-function to check max reward
-        """TODO: cleanup reward"""
-        reward = 0
-        # @OLI plotting example
-        # if iteration == 999:
-        #     data_sensors.links.com_position(1, 1)
-        # fig = data_sensors.links.plot_base_position(np.array(range(1, 999)))
-        # fig.savefig("test.pdf", format="pdf")
-        # print("done ")
-        # print("done")
-
-        if prev_iteration < 0:
-            return reward
-
-        # reward_pc = FarmsReward.reward_phase_lag_const(timestep, data_states, iteration, debug)
-        # reward_df = FarmsReward.reward_distance_forward(
-        #     timestep, data_sensors, iteration, prev_iteration, debug
-        # )
-        reward_dft = FarmsReward.reward_distance_forward_tracking(
-            timestep, data_sensors, iteration, 0, debug
-        )
-        # reward_ct = FarmsReward.reward_contacts_test(
-        #     timestep, data_sensors, iteration, 0, debug
-        # )
-        prev_iteration_speed = iteration - int(0.5 / timestep)
-        # reward_sf = FarmsReward.reward_speed_forward(timestep, data_sensors, iteration, prev_iteration_speed, debug)
-        reward_cot = 3 * FarmsReward.cost_of_transport(
-            timestep, data_sensors, iteration, prev_iteration_speed, debug
-        )
-        # reward_sft = 3*FarmsReward.reward_speed_forward_tracking(timestep, data_sensors, iteration, prev_iteration_speed, debug)
-        # r_sum = (reward_pc + reward_sf + reward_df + reward_dft + reward_ct + reward_sft + reward_cot)
-        r_sum = reward_dft * 20 + reward_cot / 30000  # + reward_ct
-        if debug:
-            # print('Reward PC        : {}'.format(reward_pc))
-            # print('Reward DF        : {}'.format(reward_df))
-            print("Reward DFT       : {}".format(reward_dft * 20))
-            # print("Reward CT        : {}".format(reward_ct))
-            # print('Reward Speed F   : {}'.format(reward_sf))
-            # print('Reward Speed FT  : {}'.format(reward_sft))
-            print("Reward COT       : {}".format(reward_cot / 30000))
-            print("SUM************  : {}".format(r_sum))
-
-        return r_sum
+        """used for training and testing"""
+        return 0
 
     def set_action(
         action, network_parameters, action_choice: ActionChoice, iteration: int
     ):
         """Apply the computed action to the concerned variables"""
-        isNaN = np.isnan(action).any()
-        if isNaN:
-            warnings.warn(bcolors.WARNING + "NaN values in action" + bcolors.ENDC)
-        # np.nan_to_num(action, copy=False, nan=0.0, posinf=0.0, neginf=-0.0)
-        # print(type(action))
-        if (action > 1).any() or (action < -1).any():
-            warnings.warn(
-                bcolors.WARNING + "NaN action values not in range" + bcolors.ENDC
-            )
+        if np.isnan(action).any():
+            raise ValueError("Action is nan")
 
-        # @ASTHA RANDOM RESCALING?
-        # @ASTHA: What is the max reward for the learning?
-        # filter action, so that action is smaller, else forces get high and force gives NaN
-        # is because of instability
-        # action_curr = (
-        #     FarmsGym.action_weight * (action)
-        #     + (1 - FarmsGym.action_weight) * FarmsGym.prev_action
-        # )
-        FarmsGym.prev_action = action
+        if (action > 1).any() or (action < -1).any():
+            raise ValueError("Action is out of bounce")
+
+        if action is None:
+            raise ValueError("should not be allowed")
 
         action_choice.set_action(action, network_parameters, iteration)
         return
-
-    def arena_limit_reached(
-        timestep, data_sensors, data_states, iteration, debug=False
-    ):
-        com_position = np.array(
-            data_sensors.links.com_position(
-                iteration=iteration,
-                link_i=0,
-            )
-        )
-        x_limit = com_position[0] > 3 or com_position[0] < -1
-        y_limit = np.abs(com_position[1]) > 2
-
-        limit_reached = x_limit or y_limit
-        # if debug:
-        #     print("[episode info] COM   : {}".format(com_position[0:2]))
-        #     print("[episode info] limit : {}".format(limit_reached))
-        return limit_reached
 
     def step(self, action):
         """Performs a step on the environment"""
 
         # iteration changes after the env step
-        iteration = self.sim.task.iteration
-        if action is None:
-            print("should not be allowed")
 
         FarmsGym.set_action(
             action=action,
             network_parameters=self.sim.task.data.network,
             action_choice=self.action_choice,
-            iteration=iteration,
+            iteration=self.sim.task.iteration,
         )
 
         # @ASTHA makes simulation go forward # @CHECK
@@ -535,56 +453,45 @@ class FarmsGym(gym.Env):
         self.observation = FarmsGym.get_observations(
             data_sensors=self.sim.task.data.sensors,
             data_states=self.sim.task.data.state,
-            iteration=iteration,
+            iteration=self.sim.task.iteration,
             observation_choice=self.observation_choice,
         )
 
-        # self.reward = FarmsGym.compute_reward(
-        #     timestep=self.timestep,
-        #     data_sensors=self.sim.task.data.sensors,
-        #     data_states=self.sim.task.data.state,
-        #     iteration=iteration,
-        #     prev_iteration=(iteration - int(1 / self.timestep)),
-        # )
+        # compute reward
+        fwd = np.array(
+            self.sim.task.data.sensors.links.global_com_position(
+                self.sim.task.iteration
+            )
+        )[0]
 
-        fwd = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[
-            0
-        ]
-
-        # if iteration == 9999:
-        #     fig = self.sim.task.data.sensors.links.plot_global_com_positions(
-        #         range(0, 9999)
-        #     )
-        #     fig.savefig("com_position.png")
-
-        if iteration == 0:
+        if self.sim.task.iteration == 0:
             x_vel = 0
         else:
             x_prev = np.array(
-                self.sim.task.data.sensors.links.global_com_position(iteration - 1)
+                self.sim.task.data.sensors.links.global_com_position(
+                    self.sim.task.iteration - 1
+                )
             )[0]
             x_pos = np.array(
-                self.sim.task.data.sensors.links.global_com_position(iteration)
+                self.sim.task.data.sensors.links.global_com_position(
+                    self.sim.task.iteration
+                )
             )[0]
             x_vel = x_pos - x_prev
 
         self.reward = fwd * 10 + x_vel * 100000
 
-        # @IDEA
-        # add directional reward: the sum of all angles should be zero, or sth like that
-        # so that the robot actually swims forward!
-
         # Add Termination criteria here
-        end_episode = FarmsGym.arena_limit_reached(
-            timestep=self.timestep,
-            data_sensors=self.sim.task.data.sensors,
-            data_states=self.sim.task.data.state,
-            iteration=iteration,
-        )
 
         self.done = (
             True if (env_step.step_type == StepType.LAST) or end_episode else False
         )
+
+        # save performance metrics when done and is_test_env
+        if self.done and self.is_test_env:
+            utils.save_performance_metrics(
+                self.sim, self.log_dir, self.timestep, self.sim.task.iteration
+            )
 
         return self.observation, self.reward, self.done, self.info
 
@@ -742,14 +649,11 @@ class GymTestCallback(TaskCallback):
             prev_iteration=(iteration - int(1 / self.timestep)),
             debug=True,
         )
-        episode_limit = FarmsGym.arena_limit_reached(
-            timestep=self.timestep,
-            data_sensors=task.data.sensors,
-            data_states=task.data.state,
-            iteration=iteration,
-            debug=True,
-        )
-        if episode_limit:
+
+        # add termination condition here
+        done = False
+
+        if done:
             self.reset()
         if self.debug_random_cond and iteration > 1000:
             self.reset()

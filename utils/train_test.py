@@ -2,7 +2,6 @@ import os
 import numpy as np
 import pickle
 from enum import Enum
-from matplotlib.backends.backend_pdf import PdfPages
 
 from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationChoice
 
@@ -22,6 +21,8 @@ from stable_baselines3.common.callbacks import (
 import torch
 from farms_sim.simulation import postprocessing_from_clargs
 from farms_amphibious.data.data import AmphibiousData
+
+from . import utils
 
 
 class TrainTestClass:
@@ -111,10 +112,8 @@ class TrainTestClass:
             observation_choice=self.observation_choice,
             action_choice=self.action_choice,
             sim=sim,
+            log_dir=self.log_dir,
         )
-
-        # @ASTHA this throws error
-        # check_env(gym_env, warn=True)
 
         policy_kwargs = dict(
             activation_fn=getattr(
@@ -133,19 +132,41 @@ class TrainTestClass:
         # configure logger
         new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
         model.set_logger(new_logger)
+
         # train
         eval_callback = EvalCallback(
             gym_env,
             log_path="./logs/",
-            eval_freq=500,
+            eval_freq=20000,
             deterministic=True,
-            render=False,
-            callback_after_eval=evaluteWithFiguresCB(),
+            warn=True,
+            verbose=1,
         )
-        model.learn(
-            total_timesteps=self.learn_total_timesteps,
+        # model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
+        model.learn(total_timesteps=10000, callback=eval_callback)
+
+        from stable_baselines3.common.evaluation import evaluate_policy
+
+        rew, len_ = evaluate_policy(
+            model,
+            gym_env,
+            n_eval_episodes=10,
+            deterministic=True,
+            return_episode_rewards=True,
+            warn=True,
         )
+
         model.save(os.path.join(str(self.log_dir), str(model_filename)))
+
+        vec_env = model.get_env()
+        obs = vec_env.reset()
+        for i in range(1000):
+            action, _state = model.predict(obs, deterministic=False)
+            obs, reward, done, info = vec_env.step(action)
+
+        print("ok")
+
+        print("test")
 
     def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
         """Experiment testing
@@ -167,38 +188,18 @@ class TrainTestClass:
             action_choice=self.action_choice,
             debug_random_cond=debug_random_cond,
         )
-        callbacks = [gymTestCallback]
 
-        # setup simulation
         sim, animat_data = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
             self.sim_options,
             self.simulator,
-            callbacks=callbacks,
+            callbacks=[gymTestCallback],
         )
-        # setup callback for testing model
+
         gymTestCallback.set_mujoco_model(sim)
-        # run simulation
+
         sim.run()
-
-        if self.save_test_data:
-            self.exp_save_run(sim, animat_data)
-        return
-
-    def exp_save_run(self, sim, animat_data) -> None:
-        """Save simulation data
-
-        @param sim (_type_): simulation object
-        @param animat_data (_type_): animat data object
-        """
-        filename = "{}/test_simulation.{}"
-        animat_data.to_file(filename.format(self.log_dir, "h5"), sim.iteration)
-        with open(filename.format(self.log_dir, "pickle"), "wb") as param_file:
-            pickle.dump(self.sim_options, param_file)
-        print(filename.format(self.log_dir, "h5"))
-        print(filename.format(self.log_dir, "pickle"))
-        return
 
     def arch_testing(self) -> None:
         """Test the architecture of farms
@@ -215,30 +216,18 @@ class TrainTestClass:
         )
         sim.run()
 
-        # get and save plots and data
-        _times = np.arange(
-            0,
-            self.sim_options.timestep * self.sim_options.n_iterations
-            - 1 * self.sim_options.timestep,
-            self.sim_options.timestep,
-        )
-        plots = {
-            **sim.task.data.sensors.links.plots(times=_times),
-            **sim.task.data.sensors.joints.plots(times=_times),
-        }
-        with PdfPages(os.path.join(self.log_dir, "performance_plots.pdf")) as pdf:
-            for name, plot in plots.items():
-                plot.suptitle(name.replace("_", " "))
-                pdf.savefig(plot.figure, bbox_inches="tight")
+        # postprocessing_from_clargs(
+        #     sim=sim,
+        #     clargs=self.clargs,
+        #     simulator=self.simulator,
+        #     animat_data_loader=AmphibiousData,
+        #     video_name="name.mp4",
+        # )
 
-        metrics = {
-            **sim.task.data.sensors.links.performance_metrics(),
-            **sim.task.data.sensors.joints.performance_metrics(),
-        }
-        f = open(os.path.join(self.log_dir, "performance_metrics.txt"), "w")
-        for name, metric in metrics.items():
-            f.write(f"{name}: {metric}\n")
-        f.close()
+        # get and save plots and data
+        utils.save_performance_metrics(
+            sim, self.log_dir, self.sim_options.timestep, self.sim_options.n_iterations
+        )
 
         return
 
@@ -273,11 +262,3 @@ class TensorboardCallback(BaseCallback):
             env.sim.task.data.sensors.links.com_distance_travelled_in_axis(),
         )
         pass
-
-
-class evaluteWithFiguresCB(BaseCallback):
-    def __init__(self, verbose=0):
-        super().__init__(verbose)
-
-    def _on_step(self) -> bool:
-        print("in here")
