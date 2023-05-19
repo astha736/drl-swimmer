@@ -212,7 +212,7 @@ class ExperimentConditions:
                 c_inter=0.0,
                 s_local=None,
                 s_rostl=None,
-                s_caudl=s_caudl_weight,
+                s_caudl=0,  # s_caudl_weight, #set to zero for only swimming
                 s_caudl_senstivity=s_caudl_senstivity,
             ),
             domain_exp=RobotInitialDomain(friction=friction),
