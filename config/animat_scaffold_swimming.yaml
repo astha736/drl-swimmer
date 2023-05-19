@@ -1,0 +1,1565 @@
+sdf: ./models/agnathax_no_tail/sdf/agnathax.sdf
+spawn:
+  loader: 0
+  pose:
+  - 0.025
+  - -0.0
+  - .1
+  - 0.0
+  - 0.0
+  - 0.0
+  velocity:
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+  - 0.0
+morphology:
+  links:
+  - name: head
+    collisions: true
+    friction:
+    - 0.1
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_0
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_1
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_2
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_3
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_4
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_5
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_6
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_7
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_8
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  - name: body_9
+    collisions: true
+    friction:
+    - 0.5
+    - 0
+    - 0
+    extras:
+      restitution: 0.0
+      linearDamping: 0
+      angularDamping: 0
+    density: 900.0
+    swimming: true
+    drag_coefficients:
+    - - -0.1
+      - -10.0
+      - -10.0
+    - - -0.001
+      - -0.001
+      - -0.001
+    mass_multiplier: 1
+  self_collisions:
+  - - head
+    - body_2
+  - - head
+    - body_3
+  - - head
+    - body_4
+  - - head
+    - body_5
+  - - head
+    - body_6
+  - - head
+    - body_7
+  - - head
+    - body_8
+  - - head
+    - body_9
+  - - body_0
+    - body_3
+  - - body_0
+    - body_4
+  - - body_0
+    - body_5
+  - - body_0
+    - body_6
+  - - body_0
+    - body_7
+  - - body_0
+    - body_8
+  - - body_0
+    - body_9
+  - - body_1
+    - body_4
+  - - body_1
+    - body_5
+  - - body_1
+    - body_6
+  - - body_1
+    - body_7
+  - - body_1
+    - body_8
+  - - body_1
+    - body_9
+  - - body_2
+    - head
+  - - body_2
+    - body_5
+  - - body_2
+    - body_6
+  - - body_2
+    - body_7
+  - - body_2
+    - body_8
+  - - body_2
+    - body_9
+  - - body_3
+    - head
+  - - body_3
+    - body_0
+  - - body_3
+    - body_6
+  - - body_3
+    - body_7
+  - - body_3
+    - body_8
+  - - body_3
+    - body_9
+  - - body_4
+    - head
+  - - body_4
+    - body_0
+  - - body_4
+    - body_1
+  - - body_4
+    - body_7
+  - - body_4
+    - body_8
+  - - body_4
+    - body_9
+  - - body_5
+    - head
+  - - body_5
+    - body_0
+  - - body_5
+    - body_1
+  - - body_5
+    - body_2
+  - - body_5
+    - body_8
+  - - body_5
+    - body_9
+  - - body_6
+    - head
+  - - body_6
+    - body_0
+  - - body_6
+    - body_1
+  - - body_6
+    - body_2
+  - - body_6
+    - body_3
+  - - body_6
+    - body_9
+  - - body_7
+    - head
+  - - body_7
+    - body_0
+  - - body_7
+    - body_1
+  - - body_7
+    - body_2
+  - - body_7
+    - body_3
+  - - body_7
+    - body_4
+  - - body_8
+    - head
+  - - body_8
+    - body_0
+  - - body_8
+    - body_1
+  - - body_8
+    - body_2
+  - - body_8
+    - body_3
+  - - body_8
+    - body_4
+  - - body_8
+    - body_5
+  - - body_9
+    - head
+  - - body_9
+    - body_0
+  - - body_9
+    - body_1
+  - - body_9
+    - body_2
+  - - body_9
+    - body_3
+  - - body_9
+    - body_4
+  - - body_9
+    - body_5
+  - - body_9
+    - body_6
+  joints:
+  - name: joint_0
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  - name: joint_1
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  - name: joint_2
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  - name: joint_3
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  - name: joint_4
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  - name: joint_5
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  - name: joint_6
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  - name: joint_7
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  - name: joint_8
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  - name: joint_9
+    initial:
+    - 0
+    - 0
+    limits:
+    - - -.inf
+      - .inf
+    - - -.inf
+      - .inf
+    stiffness: 0
+    damping: 0
+    extras: {}
+  n_joints_body: 10
+  n_dof_legs: 0
+  n_legs: 0
+control:
+  sensors:
+    links:
+    - head
+    - body_0
+    - body_1
+    - body_2
+    - body_3
+    - body_4
+    - body_5
+    - body_6
+    - body_7
+    - body_8
+    - body_9
+    joints:
+    - joint_0
+    - joint_1
+    - joint_2
+    - joint_3
+    - joint_4
+    - joint_5
+    - joint_6
+    - joint_7
+    - joint_8
+    - joint_9
+    contacts:
+    - !!python/tuple
+      - head
+      - ''
+    - !!python/tuple
+      - body_0
+      - ''
+    - !!python/tuple
+      - body_1
+      - ''
+    - !!python/tuple
+      - body_2
+      - ''
+    - !!python/tuple
+      - body_3
+      - ''
+    - !!python/tuple
+      - body_4
+      - ''
+    - !!python/tuple
+      - body_5
+      - ''
+    - !!python/tuple
+      - body_6
+      - ''
+    - !!python/tuple
+      - body_7
+      - ''
+    - !!python/tuple
+      - body_8
+      - ''
+    - !!python/tuple
+      - body_9
+      - ''
+    xfrc:
+    - head
+    - body_0
+    - body_1
+    - body_2
+    - body_3
+    - body_4
+    - body_5
+    - body_6
+    - body_7
+    - body_8
+    - body_9
+  motors:
+  - joint_name: joint_0
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  - joint_name: joint_1
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  - joint_name: joint_2
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  - joint_name: joint_3
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  - joint_name: joint_4
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  - joint_name: joint_5
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  - joint_name: joint_6
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  - joint_name: joint_7
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  - joint_name: joint_8
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  - joint_name: joint_9
+    control_types:
+    - velocity
+    - torque
+    limits_torque:
+    - -2.0
+    - 2.0
+    gains:
+    - 0.005
+    - 5.0e-05
+    equation: ekeberg_muscle
+    transform:
+      gain: 1
+      bias: 0
+    offsets:
+      gain: 0
+      bias: 0
+      low: 1
+      high: 5
+      saturation: 0
+      rate: 2
+    passive:
+      is_passive: false
+      stiffness_coefficient: 0
+      damping_coefficient: 0
+      friction_coefficient: 0
+  network:
+    drive_config: ''
+    drives:
+    - name: Drive_0
+      initial_value: 4.0
+    - name: Drive_1
+      initial_value: 4.0
+    oscillators:
+    - name: osc_body_0_L
+      initial_phase: 1.0489005911736253
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_0_R
+      initial_phase: 1.2337115749736818
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_1_L
+      initial_phase: 4.747766515832612
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_1_R
+      initial_phase: 4.572819680058671
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_2_L
+      initial_phase: 5.529666057064743
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_2_R
+      initial_phase: 0.9464964111636742
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_3_L
+      initial_phase: 1.721650741802697
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_3_R
+      initial_phase: 5.5584513332392405
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_4_L
+      initial_phase: 4.262488416591463
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_4_R
+      initial_phase: 2.5290135370566857
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_5_L
+      initial_phase: 3.7024196032113244
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_5_R
+      initial_phase: 2.072024457537818
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_6_L
+      initial_phase: 2.679816490638252
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_6_R
+      initial_phase: 1.5368773160954263
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_7_L
+      initial_phase: 4.961373390012836
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_7_R
+      initial_phase: 6.171646600468776
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_8_L
+      initial_phase: 1.5913984596024344
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_8_R
+      initial_phase: 2.0651600442432243
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_9_L
+      initial_phase: 0.4284779578146891
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    - name: osc_body_9_R
+      initial_phase: 3.9264701097265498
+      initial_amplitude: 0.0
+      frequency_gain: 0.9424777960769379
+      frequency_bias: 0.0
+      frequency_low: 1
+      frequency_high: 5
+      frequency_saturation: 0
+      amplitude_gain: 0.1
+      amplitude_bias: 0.0
+      amplitude_low: 1
+      amplitude_high: 5
+      amplitude_saturation: 0
+      rate: 10.0
+      modular_phase: 0.0
+      modular_amplitude: 0.0
+    single_osc_body: false
+    single_osc_legs: false
+    osc2osc:
+    - in: osc_body_0_R
+      out: osc_body_0_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_0_L
+      out: osc_body_0_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_1_R
+      out: osc_body_1_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_1_L
+      out: osc_body_1_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_2_R
+      out: osc_body_2_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_2_L
+      out: osc_body_2_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_3_R
+      out: osc_body_3_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_3_L
+      out: osc_body_3_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_4_R
+      out: osc_body_4_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_4_L
+      out: osc_body_4_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_5_R
+      out: osc_body_5_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_5_L
+      out: osc_body_5_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_6_R
+      out: osc_body_6_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_6_L
+      out: osc_body_6_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_7_R
+      out: osc_body_7_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_7_L
+      out: osc_body_7_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_8_R
+      out: osc_body_8_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_8_L
+      out: osc_body_8_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_9_R
+      out: osc_body_9_L
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    - in: osc_body_9_L
+      out: osc_body_9_R
+      type: OSC2OSC
+      weight: 10.0
+      phase_bias: 3.141592653589793
+    joint2osc:
+    - in: osc_body_0_L
+      out: joint_0
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_0_R
+      out: joint_0
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_1_L
+      out: joint_1
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_1_R
+      out: joint_1
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_2_L
+      out: joint_2
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_2_R
+      out: joint_2
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_3_L
+      out: joint_3
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_3_R
+      out: joint_3
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_4_L
+      out: joint_4
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_4_R
+      out: joint_4
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_5_L
+      out: joint_5
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_5_R
+      out: joint_5
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_6_L
+      out: joint_6
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_6_R
+      out: joint_6
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_7_L
+      out: joint_7
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_7_R
+      out: joint_7
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_8_L
+      out: joint_8
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_8_R
+      out: joint_8
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_9_L
+      out: joint_9
+      type: STRETCH2AMPTEGOTAE
+      weight: 1.0
+    - in: osc_body_9_R
+      out: joint_9
+      type: STRETCH2AMPTEGOTAE
+      weight: -1.0
+    - in: osc_body_1_L
+      out: joint_0
+      type: STRETCH2FREQTEGOTAE
+      weight: -10.0
+    - in: osc_body_1_R
+      out: joint_0
+      type: STRETCH2FREQTEGOTAE
+      weight: 10.0
+    - in: osc_body_2_L
+      out: joint_1
+      type: STRETCH2FREQTEGOTAE
+      weight: -10.0
+    - in: osc_body_2_R
+      out: joint_1
+      type: STRETCH2FREQTEGOTAE
+      weight: 10.0
+    - in: osc_body_3_L
+      out: joint_2
+      type: STRETCH2FREQTEGOTAE
+      weight: -10.0
+    - in: osc_body_3_R
+      out: joint_2
+      type: STRETCH2FREQTEGOTAE
+      weight: 10.0
+    - in: osc_body_4_L
+      out: joint_3
+      type: STRETCH2FREQTEGOTAE
+      weight: -10.0
+    - in: osc_body_4_R
+      out: joint_3
+      type: STRETCH2FREQTEGOTAE
+      weight: 10.0
+    - in: osc_body_5_L
+      out: joint_4
+      type: STRETCH2FREQTEGOTAE
+      weight: -10.0
+    - in: osc_body_5_R
+      out: joint_4
+      type: STRETCH2FREQTEGOTAE
+      weight: 10.0
+    - in: osc_body_6_L
+      out: joint_5
+      type: STRETCH2FREQTEGOTAE
+      weight: -10.0
+    - in: osc_body_6_R
+      out: joint_5
+      type: STRETCH2FREQTEGOTAE
+      weight: 10.0
+    - in: osc_body_7_L
+      out: joint_6
+      type: STRETCH2FREQTEGOTAE
+      weight: -10.0
+    - in: osc_body_7_R
+      out: joint_6
+      type: STRETCH2FREQTEGOTAE
+      weight: 10.0
+    - in: osc_body_8_L
+      out: joint_7
+      type: STRETCH2FREQTEGOTAE
+      weight: -10.0
+    - in: osc_body_8_R
+      out: joint_7
+      type: STRETCH2FREQTEGOTAE
+      weight: 10.0
+    - in: osc_body_9_L
+      out: joint_8
+      type: STRETCH2FREQTEGOTAE
+      weight: -10.0
+    - in: osc_body_9_R
+      out: joint_8
+      type: STRETCH2FREQTEGOTAE
+      weight: 10.0
+    contact2osc: []
+    xfrc2osc: []
+    drive2osc:
+    - 0
+    - 1
+    - 0
+    - 1
+    - 0
+    - 1
+    - 0
+    - 1
+    - 0
+    - 1
+    - 0
+    - 1
+    - 0
+    - 1
+    - 0
+    - 1
+    - 0
+    - 1
+    - 0
+    - 1
+    drive2joint:
+    - - 0
+      - 1
+    - - 0
+      - 1
+    - - 0
+      - 1
+    - - 0
+      - 1
+    - - 0
+      - 1
+    - - 0
+      - 1
+    - - 0
+      - 1
+    - - 0
+      - 1
+    - - 0
+      - 1
+    - - 0
+      - 1
+  muscles:
+  - joint_name: joint_0
+    osc1: osc_body_0_L
+    osc2: osc_body_0_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+  - joint_name: joint_1
+    osc1: osc_body_1_L
+    osc2: osc_body_1_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+  - joint_name: joint_2
+    osc1: osc_body_2_L
+    osc2: osc_body_2_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+  - joint_name: joint_3
+    osc1: osc_body_3_L
+    osc2: osc_body_3_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+  - joint_name: joint_4
+    osc1: osc_body_4_L
+    osc2: osc_body_4_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+  - joint_name: joint_5
+    osc1: osc_body_5_L
+    osc2: osc_body_5_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+  - joint_name: joint_6
+    osc1: osc_body_6_L
+    osc2: osc_body_6_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+  - joint_name: joint_7
+    osc1: osc_body_7_L
+    osc2: osc_body_7_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+  - joint_name: joint_8
+    osc1: osc_body_8_L
+    osc2: osc_body_8_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+  - joint_name: joint_9
+    osc1: osc_body_9_L
+    osc2: osc_body_9_R
+    alpha: 2.0
+    beta: 1.0e-06
+    gamma: 2000000.0
+    delta: 0.1
+    epsilon: 0
+name: Animat
+physics:
+  drag: true
+  sph: false
+  buoyancy: true
+  viscosity: 1.0
+  water_height: 0.1
+  water_density: 1000.0
+  water_velocity:
+  - 0.0
+  - 0.0
+  - 0.0
+  water_maps: []
+show_xfrc: false
+scale_xfrc: 10
+mujoco: {}

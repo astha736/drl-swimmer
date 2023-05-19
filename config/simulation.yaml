@@ -1,0 +1,37 @@
+units:
+  meters: 1.0
+  seconds: 1.0
+  kilograms: 1.0
+timestep: 0.01
+n_iterations: 35001
+play: true
+rtl: 1.0
+fast: true
+headless: false
+show_progress: true
+zoom: 1
+free_camera: false
+top_camera: false
+rotating_camera: false
+record: true
+fps: 30
+video_name: video
+video_yaw: 0
+video_pitch: -30
+video_distance: 1
+video_filter: null
+gravity: !!python/tuple
+- 0
+- 0
+- -9.81
+opengl2: false
+lcp: dantzig
+n_solver_iters: 100
+cfm: 0
+erp: 0
+contact_erp: 0
+friction_erp: 0
+num_sub_steps: 0
+max_num_cmd_per_1ms: 1000000000
+residual_threshold: 1.0e-08
+report_solver_analytics: 0

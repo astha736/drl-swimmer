@@ -1,13 +1,6 @@
 
-# generated config files 
-config/*.yaml
-joint2osc.yaml
-
 # logs
 **/logs/
-
-# setup 
-farms/farms_*
 
 # env
 obstacle/*

@@ -483,9 +483,7 @@ class FarmsGym(gym.Env):
 
         # Add Termination criteria here
 
-        self.done = (
-            True if (env_step.step_type == StepType.LAST) or end_episode else False
-        )
+        self.done = True if (env_step.step_type == StepType.LAST) else False
 
         # save performance metrics when done and is_test_env
         if self.done and self.is_test_env:

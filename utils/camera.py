@@ -83,7 +83,7 @@ class CameraCallback(TaskCallback):
         fig = plt.figure("Recording", figsize=(size, size * self.height / self.width))
         fig_ax = plt.gca()
         ims = None
-        with writer.saving(fig, filename, dpi=self.width / size):
+        with writer.saving(fig, filename, dpi=(self.width / size) * 2):
             for frame in tqdm(data):
                 ims = render_matplotlib_image(fig_ax, frame, ims=ims)
                 writer.grab_frame()

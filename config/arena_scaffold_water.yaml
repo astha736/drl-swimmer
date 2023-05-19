@@ -1,0 +1,30 @@
+sdf: ./models/scaffold_large/sdf/scaffold.sdf
+spawn:
+  loader: 0
+  pose:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  velocity:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+water:
+  sdf: './models/arena_water_v0/sdf/arena_water.sdf'
+  height: 0.1
+  velocity:
+  - 0
+  - 0
+  - 0
+  viscosity: 1.0
+  maps:
+  - ''
+  - ''
+ground_height: null
+

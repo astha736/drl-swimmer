@@ -28,6 +28,7 @@
 	- stable-baselines3@1.8.0
 	- tensorboard@2.13.0
 	- black@23.3.0
+	- ffmpeg: https://stackoverflow.com/questions/62470863/ffmpeg-command-not-found-but-pip-list-shows-ffmpeg
 
 - This project uses [black](https://github.com/psf/black) as the default python formatter. Please install black w/ pip and the corresponding VSCode extension.
 
