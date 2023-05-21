@@ -58,12 +58,18 @@ def main() -> None:
     )
 
     # Load experiment conditions
-    match args["robot_configuration"]:
+    match args["robot_configuration"]["base_config"]:
         case "default":
             exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG()
         case "arch_testing":
             exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
-                s_caudl_senstivity=RobotFeedbackSenstivity.SIN, s_caudl_weight=-10
+                s_caudl_senstivity=getattr(
+                    RobotFeedbackSenstivity,
+                    args["robot_configuration"]["s_caudl_senstivity"],
+                ),
+                s_caudl_weight=args["robot_configuration"]["s_caudl_weight"],
+                init_osci_cond=args["robot_configuration"]["init_osci_cond"],
+                c_inter=args["robot_configuration"]["c_inter"],
             )
         case _:
             raise ValueError("Invalid robot_configuration")
@@ -71,7 +77,7 @@ def main() -> None:
 
     # Set simulation options
     sim_options.fast = True
-    sim_options.headless = True
+    sim_options.headless = args["headless"]
     sim_options.n_iterations = args["simulation"][
         "n_iterations"
     ]  # timesteps per episode

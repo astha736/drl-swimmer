@@ -195,6 +195,8 @@ class ExperimentConditions:
         robot_pose: int = 0,
         friction: float = 0.2,
         debug: bool = False,
+        init_osci_cond: int = 0,
+        c_inter: float = 0,
         **kwargs,
     ) -> Tuple[RobotInitialConditions, str]:
         """Design for gym learning
@@ -209,17 +211,15 @@ class ExperimentConditions:
         experiment = RobotInitialConditions(
             network_exp=RobotInitialNetwork(
                 c_intra=c_intra,
-                c_inter=0.0,
+                c_inter=c_inter,
                 s_local=None,
                 s_rostl=None,
-                s_caudl=0,  # s_caudl_weight, #set to zero for only swimming
+                s_caudl=s_caudl_weight,  # set to zero + ideal starting conditions for only swimming
                 s_caudl_senstivity=s_caudl_senstivity,
             ),
             domain_exp=RobotInitialDomain(friction=friction),
             initial_exp=RobotInitialState(condition_shape=robot_shape, pose=robot_pose),
-            osc_exp=RobotInitialOscillator(
-                cond=0
-            ),  # ideal is 0; random is 1. Ideal means that the phase difference of the oscillators is set well
+            osc_exp=RobotInitialOscillator(cond=init_osci_cond),
         )
 
         if debug:
