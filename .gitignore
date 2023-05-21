@@ -5,6 +5,11 @@
 # env
 obstacle/*
 
+# farms
+farms/farms_*
+!farms/farms_core/farms_core/sensors/data.py
+!farms/farms_amphibious/farms_amphibious/data/network.py
+
 # pycache 
 scripts/__pycache__/*
 utils/__pycache__/*
