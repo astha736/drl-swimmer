@@ -7,11 +7,10 @@ obstacle/*
 
 # farms
 /farms/*
-!farms/core/
-!farms/core/*
-!farms/core/**/*
-#/farms_core/farms_core/sensors/data.py
-#!farms/farms_amphibious/farms_amphibious/data/network.py
+!/farms/farms_core/farms_core/sensors/*
+!/farms/farms_core/farms_core/sensors/data.py
+!farms/farms_amphibious/farms_amphibious/data/*
+!farms/farms_amphibious/farms_amphibious/data/network.py
 
 # pycache 
 scripts/__pycache__/*
