@@ -31,14 +31,10 @@ from stable_baselines3.common.callbacks import BaseCallback
 
 import csv
 
-# from .rl_reward import FarmsReward
 from utils.limbless_spawn import RobotInitialState
 from utils.limbless_oscillator import RobotInitialOscillator
 
 from utils import utils
-
-
-# from cmc.salamandra_simulation.test import wrap_2pi
 
 
 class bcolors:
@@ -387,6 +383,7 @@ class FarmsGym(gym.Env):
         self.n_act = action_choice.n_act
         self.timestep = timestep
         self.sim = sim
+
         self.reward = None
         self.info = None
         self.done = None
@@ -436,13 +433,16 @@ class FarmsGym(gym.Env):
     def step(self, action):
         """Performs a step on the environment"""
 
-        # iteration changes after the env step
+        # this MUST be defined here!
+        iteration = self.sim.task.iteration
+        if action is None:
+            print("should not be allowed")
 
         FarmsGym.set_action(
             action=action,
             network_parameters=self.sim.task.data.network,
             action_choice=self.action_choice,
-            iteration=self.sim.task.iteration,
+            iteration=iteration,
         )
 
         # @ASTHA makes simulation go forward # @CHECK
@@ -453,43 +453,32 @@ class FarmsGym(gym.Env):
         self.observation = FarmsGym.get_observations(
             data_sensors=self.sim.task.data.sensors,
             data_states=self.sim.task.data.state,
-            iteration=self.sim.task.iteration,
+            iteration=iteration,
             observation_choice=self.observation_choice,
         )
 
-        # compute reward
-        fwd = np.array(
-            self.sim.task.data.sensors.links.global_com_position(
-                self.sim.task.iteration
-            )
-        )[0]
+        fwd = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[
+            0
+        ]
 
-        if self.sim.task.iteration == 0:
+        if iteration == 0:
             x_vel = 0
         else:
             x_prev = np.array(
-                self.sim.task.data.sensors.links.global_com_position(
-                    self.sim.task.iteration - 1
-                )
+                self.sim.task.data.sensors.links.global_com_position(iteration - 1)
             )[0]
             x_pos = np.array(
-                self.sim.task.data.sensors.links.global_com_position(
-                    self.sim.task.iteration
-                )
+                self.sim.task.data.sensors.links.global_com_position(iteration)
             )[0]
             x_vel = x_pos - x_prev
 
         self.reward = fwd * 10 + x_vel * 100000
 
-        # Add Termination criteria here
+        # @IDEA
+        # add directional reward: the sum of all angles should be zero, or sth like that
+        # so that the robot actually swims forward!
 
         self.done = True if (env_step.step_type == StepType.LAST) else False
-
-        # save performance metrics when done and is_test_env
-        if self.done and self.is_test_env:
-            utils.save_performance_metrics(
-                self.sim, self.log_dir, self.timestep, self.sim.task.iteration
-            )
 
         return self.observation, self.reward, self.done, self.info
 
@@ -647,11 +636,14 @@ class GymTestCallback(TaskCallback):
             prev_iteration=(iteration - int(1 / self.timestep)),
             debug=True,
         )
-
-        # add termination condition here
-        done = False
-
-        if done:
+        episode_limit = FarmsGym.arena_limit_reached(
+            timestep=self.timestep,
+            data_sensors=task.data.sensors,
+            data_states=task.data.state,
+            iteration=iteration,
+            debug=True,
+        )
+        if episode_limit:
             self.reset()
         if self.debug_random_cond and iteration > 1000:
             self.reset()
