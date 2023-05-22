@@ -30,9 +30,9 @@ def main() -> None:
 
     # setup clargs
     clargs = sim_parse_args()
-    clargs.animat_config = args["configs"]["animat_config"]
-    clargs.arena_config = args["configs"]["arena_config"]
-    clargs.simulation_config = args["configs"]["simulation_config"]
+    clargs.animat_config = args["config"]["animat"]
+    clargs.arena_config = args["config"]["arena"]
+    clargs.simulation_config = args["config"]["simulation"]
     clargs.profile = os.path.join(LOG_DIR, "simulation.profile")
     clargs.log_path = LOG_DIR
     clargs.prompt = False
@@ -58,30 +58,23 @@ def main() -> None:
     )
 
     # Load experiment conditions
-    match args["robot_configuration"]["base_config"]:
+    match args["robot"]["base_config"]:
         case "default":
             exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG()
         case "arch_testing":
             exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
                 s_caudl_senstivity=getattr(
                     RobotFeedbackSenstivity,
-                    args["robot_configuration"]["s_caudl_senstivity"],
+                    args["robot"]["s_caudl_senstivity"],
                 ),
-                s_caudl_weight=args["robot_configuration"]["s_caudl_weight"],
-                init_osci_cond=args["robot_configuration"]["init_osci_cond"],
-                c_inter=args["robot_configuration"]["c_inter"],
+                s_caudl_weight=args["robot"]["s_caudl_weight"],
+                init_osci_cond=args["robot"]["init_osci_cond"],
+                c_inter=args["robot"]["c_inter"],
             )
         case _:
             raise ValueError("Invalid robot_configuration")
     exp_cond_experiment.setup(animat_options)
 
-    # Set simulation options
-    # sim_options.fast = True
-    # sim_options.headless = args["headless"]
-    # sim_options.n_iterations = args["simulation"][
-    #     "n_iterations"
-    # ]  # timesteps per episode
-    # sim_options.timestep = args["simulation"]["timestep"]
     total_timesteps = sim_options.n_iterations * args["RL"]["episodes_per_training"]
 
     # Set action and observation spaces
