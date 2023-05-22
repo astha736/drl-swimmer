@@ -66,18 +66,18 @@ def main() -> None:
     )
 
     # Load experiment conditions
-    match conf["robot"]["base_config"]:
-        case "default":
+    match conf["run_type"]:
+        case "train":
             exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG()
         case "arch_testing":
             exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
                 s_caudl_senstivity=getattr(
                     RobotFeedbackSenstivity,
-                    conf["robot"]["s_caudl_senstivity"],
+                    conf["robot_arch"]["s_caudl_senstivity"],
                 ),
-                s_caudl_weight=conf["robot"]["s_caudl_weight"],
-                init_osci_cond=conf["robot"]["init_osci_cond"],
-                c_inter=conf["robot"]["c_inter"],
+                s_caudl_weight=conf["robot_arch"]["s_caudl_weight"],
+                init_osci_cond=conf["robot_arch"]["init_osci_cond"],
+                c_inter=conf["robot_arch"]["c_inter"],
             )
         case _:
             raise ValueError("Invalid robot_configuration")
