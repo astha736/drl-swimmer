@@ -2,12 +2,13 @@ units:
   meters: 1.0
   seconds: 1.0
   kilograms: 1.0
-timestep: 0.01
-n_iterations: 35001
+timestep: 0.01 # modify
+n_iterations: 700 # modify
+# total time = n_iterations * timestep
 play: true
 rtl: 1.0
 fast: true
-headless: false
+headless: true # modify
 show_progress: true
 zoom: 1
 free_camera: false

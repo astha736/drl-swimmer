@@ -1,8 +1,10 @@
+from asyncore import write
 import os
 import numpy as np
 import pickle
 from enum import Enum
-
+import torch
+from torch.utils.tensorboard import SummaryWriter
 
 from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationChoice
 
@@ -19,7 +21,6 @@ from stable_baselines3.common.callbacks import (
     BaseCallback,
 )
 
-import torch
 from farms_sim.simulation import postprocessing_from_clargs
 from farms_amphibious.data.data import AmphibiousData
 from . import utils
@@ -224,9 +225,15 @@ class TrainTestClass:
         #     video_name="name.mp4",
         # )
 
+        writer = SummaryWriter(log_dir=self.log_dir)
+
         # get and save plots and data
         utils.save_performance_metrics(
-            sim, self.log_dir, self.sim_options.timestep, self.sim_options.n_iterations
+            sim,
+            self.log_dir,
+            self.sim_options.timestep,
+            self.sim_options.n_iterations,
+            writer,
         )
 
 

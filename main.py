@@ -76,12 +76,12 @@ def main() -> None:
     exp_cond_experiment.setup(animat_options)
 
     # Set simulation options
-    sim_options.fast = True
-    sim_options.headless = args["headless"]
-    sim_options.n_iterations = args["simulation"][
-        "n_iterations"
-    ]  # timesteps per episode
-    sim_options.timestep = args["simulation"]["timestep"]
+    # sim_options.fast = True
+    # sim_options.headless = args["headless"]
+    # sim_options.n_iterations = args["simulation"][
+    #     "n_iterations"
+    # ]  # timesteps per episode
+    # sim_options.timestep = args["simulation"]["timestep"]
     total_timesteps = sim_options.n_iterations * args["RL"]["episodes_per_training"]
 
     # Set action and observation spaces
