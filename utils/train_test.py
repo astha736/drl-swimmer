@@ -69,6 +69,7 @@ class TrainTestClass:
         learn_total_timesteps: int,
         experiment_args,
         clargs=None,
+        experiment_id: str = None,
     ):
         """Constructor for TrainTestClass
 
@@ -91,6 +92,7 @@ class TrainTestClass:
         self.learn_total_timesteps = learn_total_timesteps
         self.experiment_args = experiment_args
         self.clargs = clargs
+        self.experiment_id = experiment_id
 
     def exp_training(self, model_filename: str) -> None:
         """Experiment training
@@ -225,7 +227,7 @@ class TrainTestClass:
         #     video_name="name.mp4",
         # )
 
-        writer = SummaryWriter(log_dir=self.log_dir)
+        # writer = SummaryWriter(log_dir=self.log_dir)
 
         # get and save plots and data
         utils.save_performance_metrics(
@@ -233,7 +235,7 @@ class TrainTestClass:
             self.log_dir,
             self.sim_options.timestep,
             self.sim_options.n_iterations,
-            writer,
+            self.experiment_id,
         )
 
 

@@ -1,6 +1,9 @@
 # env
 obstacle/*
 
+# logs
+*events.out.tfevents*
+
 # farms
 /farms
 !/farms/farms_core/farms_core/sensors/*
