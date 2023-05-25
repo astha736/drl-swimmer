@@ -10,6 +10,8 @@ obstacle/*
 !/farms/farms_core/farms_core/sensors/data.py
 !farms/farms_amphibious/farms_amphibious/data/*
 !farms/farms_amphibious/farms_amphibious/data/network.py
+!farms/farms_mujoco/farms_mujoco/simulation/*
+!farms/farms_mujoco/farms_mujoco/simulation/simulation.py
 
 # pycache 
 scripts/__pycache__/*
