@@ -32,6 +32,11 @@
 
 - This project uses [black](https://github.com/psf/black) as the default python formatter. Please install black w/ pip and the corresponding VSCode extension.
 
+## Setup for HPC
+- https://pytorch.org/rl/reference/generated/knowledge_base/MUJOCO_INSTALLATION.html
+- https://github.com/deepmind/dm_control
+- https://github.com/deepmind/dm_control/issues/136
+
 ## Folders
 - farms: Where farms repo are clone and installed 
 - config: Where AganathaX configurations files are stored & generated for the system 
