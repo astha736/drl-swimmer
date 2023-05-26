@@ -2,7 +2,7 @@ units:
   meters: 1.0
   seconds: 1.0
   kilograms: 1.0
-timestep: 0.01 # modify
+timestep: 0.05 # modify
 n_iterations: 1500 # modify
 # total time = n_iterations * timestep
 play: true
@@ -14,7 +14,7 @@ zoom: 1
 free_camera: false
 top_camera: false
 rotating_camera: false
-record: true
+record: false
 fps: 30
 video_name: video
 video_yaw: 0
