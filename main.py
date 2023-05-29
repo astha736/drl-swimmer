@@ -22,11 +22,20 @@ parser = argparse.ArgumentParser()
 parser.add_argument("experiment_id")
 args = parser.parse_args()
 
-
 # Load experiment config and setup *_DIRs
 with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_config:
     conf = yaml.full_load(experiment_config)
-LOG_DIR = "./experiments/" + conf["experiment_id"] + "/logs/"
+
+# log to /shared on HPC; log to ./experiments on personal PCs
+if os.path.isdir("/shared"): # cluster
+    LOG_DIR = "/shared/hausdoer/experiments/" + conf["experiment_id"] + "/logs"
+    if not os.path.isdir(LOG_DIR): os.makedirs(LOG_DIR)
+else: # local
+    LOG_DIR = "./experiments/" + conf["experiment_id"] + "/logs/"
+
+# create log dir if not existing; not required, but just to be sure
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
 
 
 def main() -> None:
@@ -42,10 +51,6 @@ def main() -> None:
     clargs.simulator = "MUJOCO"
     clargs.test_configs = False
     clargs.verify_save = False
-
-    # create log dir if not existing
-    if not os.path.exists(LOG_DIR):
-        os.makedirs(LOG_DIR)
 
     # Load options from yaml files
     (
@@ -118,6 +123,8 @@ def main() -> None:
             train_test.arch_testing()
         case _:
             raise ValueError("Invalid run_type")
+
+
 
 
 if __name__ == "__main__":
