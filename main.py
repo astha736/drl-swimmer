@@ -26,12 +26,7 @@ args = parser.parse_args()
 # Load experiment config and setup *_DIRs
 with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_config:
     conf = yaml.full_load(experiment_config)
-LOG_DIR = (
-    "./experiments/"
-    + conf["experiment_id"]
-    + "/logs/"
-    # + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
-)
+LOG_DIR = "./experiments/" + conf["experiment_id"] + "/logs/"
 
 
 def main() -> None:
