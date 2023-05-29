@@ -35,7 +35,7 @@ from . import utils
 from gym import spaces
 
 # https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
-class ActorNNLocalFeedback(nn.Module):
+class CustomNetwork(nn.Module):
     """
     Custom network for policy and value function.
     It receives as input the features extracted by the features extractor.
@@ -48,11 +48,10 @@ class ActorNNLocalFeedback(nn.Module):
     def __init__(
         self,
         feature_dim: int,
-        last_layer_dim_pi: int = 10,
-        last_layer_dim_vf: int = 200,
+        last_layer_dim_pi: int = 200, # actor=policy
+        last_layer_dim_vf: int = 200, # critir
     ):
         super().__init__()
-        pass
 
         # IMPORTANT:
         # Save output dimensions, used to create the distributions
@@ -61,9 +60,9 @@ class ActorNNLocalFeedback(nn.Module):
 
         # Policy network
         self.policy_net = nn.Sequential(
-            nn.Linear(1, 10),
+            nn.Linear(feature_dim, 200),
             nn.ReLU(),
-            nn.Linear(10, 1),
+            nn.Linear(200, last_layer_dim_pi),
             nn.ReLU(),
         )
         # Value network
@@ -87,9 +86,11 @@ class ActorNNLocalFeedback(nn.Module):
         # Thats wrong. Action space is one dimensional! (Same probability distributions for all actions)
         # Make action space 1D
         # not sure how to handle obs space yet
-        feature = th.Tensor([th.Tensor([features[0][1]])])
-        out = self.policy_net(feature)
-        return th.Tensor([out, out, out, out, out, out, out, out, out, out])
+        # feature = th.Tensor([th.Tensor([features[0][1]])])
+        # out = self.policy_net(feature)
+        # return th.Tensor([out, out, out, out, out, out, out, out, out, out])
+
+        return self.policy_net(features)
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
@@ -117,7 +118,7 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
         # self.ortho_init = False
 
     def _build_mlp_extractor(self) -> None:
-        self.mlp_extractor = ActorNNLocalFeedback(self.features_dim)
+        self.mlp_extractor = CustomNetwork(self.features_dim)
 
 
 class TrainTestClass:
@@ -230,10 +231,9 @@ class TrainTestClass:
         )
 
         model = PPO(
-            CustomActorCriticPolicy,
-            # self.experiment_args["RL"]["policy_network"]["policy_type"],
+            CustomActorCriticPolicy, # self.experiment_args["RL"]["policy_network"]["policy_type"],
             vec_gym_env,
-            policy_kwargs=policy_kwargs,
+            # policy_kwargs=policy_kwargs,
             tensorboard_log=self.log_dir,
         )
 
@@ -259,7 +259,7 @@ class TrainTestClass:
 
         model.learn(total_timesteps=1000000)  # , callback=eval_callback)
 
-        from stable_baselines3.common.evaluation import evaluate_policy
+        # from stable_baselines3.common.evaluation import evaluate_policy
 
         # rew, len_ = evaluate_policy(
         #     model,

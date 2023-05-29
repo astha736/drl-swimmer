@@ -141,10 +141,9 @@ cpdef inline void ode_stretch(
                 *cos(state[i0])  # For Tegotae
             )
         elif connection_type == ConnectionType.STRETCH2FREQ:
-            # stretch_weight*joint_position
+            # RL: stretch_weight = f(joint_positions, osci_phases)
             dstate[i0] += (
                 joints2osc_map.c_weight(i)
-                *joints.position_cy(iteration, i1)
             )
         elif connection_type == ConnectionType.STRETCH2AMP:
             # stretch_weight*joint_position
