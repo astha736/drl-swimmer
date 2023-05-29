@@ -28,10 +28,10 @@ with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_co
 
 # log to /shared on HPC; log to ./experiments on personal PCs
 if os.path.isdir("/shared"): # cluster
-    LOG_DIR = "/shared/hausdoer/experiments/" + conf["experiment_id"] + "/logs"
+    LOG_DIR = "/shared/hausdoer/experiments/" + conf["experiment_id"] + "/logs" + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
     if not os.path.isdir(LOG_DIR): os.makedirs(LOG_DIR)
 else: # local
-    LOG_DIR = "./experiments/" + conf["experiment_id"] + "/logs/"
+    LOG_DIR = "./experiments/" + conf["experiment_id"] + "/logs/" + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
 
 # create log dir if not existing; not required, but just to be sure
 if not os.path.exists(LOG_DIR):
@@ -65,22 +65,19 @@ def main() -> None:
         arena_options_loader=AmphibiousArenaOptions,
     )
 
-    # Load experiment conditions
-    match conf["run_type"]:
-        case "train":
-            exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG()
-        case "arch_testing":
-            exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
-                s_caudl_senstivity=getattr(
-                    RobotFeedbackSenstivity,
-                    conf["robot_arch"]["s_caudl_senstivity"],
-                ),
-                s_caudl_weight=conf["robot_arch"]["s_caudl_weight"],
-                init_osci_cond=conf["robot_arch"]["init_osci_cond"],
-                c_inter=conf["robot_arch"]["c_inter"],
-            )
-        case _:
-            raise ValueError("Invalid robot_configuration")
+    exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG()
+    
+    if conf["run_type"] == "arch_testing":
+        exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
+            s_caudl_senstivity=getattr(
+                RobotFeedbackSenstivity,
+                conf["robot_arch"]["s_caudl_senstivity"],
+            ),
+            s_caudl_weight=conf["robot_arch"]["s_caudl_weight"],
+            init_osci_cond=conf["robot_arch"]["init_osci_cond"],
+            c_inter=conf["robot_arch"]["c_inter"],
+        )
+        
     exp_cond_experiment.setup(animat_options)
 
     total_timesteps = sim_options.n_iterations * conf["RL"]["episodes_per_training"]

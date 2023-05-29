@@ -49,7 +49,7 @@ class CustomNetwork(nn.Module):
         self,
         feature_dim: int,
         last_layer_dim_pi: int = 200, # actor=policy
-        last_layer_dim_vf: int = 200, # critir
+        last_layer_dim_vf: int = 200, # critic
     ):
         super().__init__()
 
@@ -235,6 +235,7 @@ class TrainTestClass:
             vec_gym_env,
             # policy_kwargs=policy_kwargs,
             tensorboard_log=self.log_dir,
+            learning_rate=0.0,
         )
 
         # configure logger
@@ -242,14 +243,14 @@ class TrainTestClass:
         model.set_logger(new_logger)
 
         # train
-        # eval_callback = EvalCallback(
-        #     gym_env,
-        #     log_path="./logs/",
-        #     eval_freq=20000,
-        #     deterministic=True,
-        #     warn=True,
-        #     verbose=1,
-        # )
+        eval_callback = EvalCallback(
+            vec_gym_env,
+            # log_path="./logs/",
+            eval_freq=20000,
+            deterministic=True,
+            warn=True,
+            verbose=1,
+        )
 
         # profile.profile(
         #     function=model.learn, total_timesteps=1, profile_filename="profile.txt"
@@ -257,7 +258,8 @@ class TrainTestClass:
 
         # model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
 
-        model.learn(total_timesteps=1000000)  # , callback=eval_callback)
+        model.learn(total_timesteps=100_000 , callback=eval_callback)
+        model.save(os.path.join(self.log_dir, "model.zip"))
 
         # from stable_baselines3.common.evaluation import evaluate_policy
 
@@ -290,17 +292,7 @@ class TrainTestClass:
         """
         # load trained model
         model = PPO.load(
-            "logs/experiment_01/10-05-2023_22:15:36/sRobotFeedbackSenstivity.NONPERIOD_sW0_caW10_sCaudal_ncCPG/rl_model_1150000_steps.zip"
-        )
-
-        # callback on trained model for testing
-        gymTestCallback = GymTestCallback(
-            timestep=self.sim_options.timestep,
-            n_iterations=self.sim_options.n_iterations,
-            model=model,
-            observation_choice=self.observation_choice,
-            action_choice=self.action_choice,
-            debug_random_cond=debug_random_cond,
+            "./experiments/999/logs/model.zip",
         )
 
         sim, animat_data = simulation.setup_simulation(
@@ -308,12 +300,51 @@ class TrainTestClass:
             self.arena_options,
             self.sim_options,
             self.simulator,
-            callbacks=[gymTestCallback],
+            callbacks=[],
         )
 
-        gymTestCallback.set_mujoco_model(sim)
+        env = FarmsGym(
+                timestep=self.sim_options.timestep,
+                observation_choice=self.observation_choice,
+                action_choice=self.action_choice,
+                sim=sim,
+                log_dir=self.log_dir,
+        )
 
-        sim.run()
+        from stable_baselines3.common.evaluation import evaluate_policy
+        mean_reward, std_reward = evaluate_policy(model.policy, env, n_eval_episodes=20, deterministic=True)
+        print(f"mean_reward={mean_reward:.2f} s+/- {std_reward}")
+
+
+        # callback on trained model for testing
+        # gymTestCallback = GymTestCallback(
+        #     timestep=self.sim_options.timestep,
+        #     n_iterations=self.sim_options.n_iterations,
+        #     model=model,
+        #     observation_choice=self.observation_choice,
+        #     action_choice=self.action_choice,
+        #     debug_random_cond=debug_random_cond,
+        # )
+
+        # sim, animat_data = simulation.setup_simulation(
+        #     self.animat_options,
+        #     self.arena_options,
+        #     self.sim_options,
+        #     self.simulator,
+        #     callbacks=[gymTestCallback],
+        # )
+
+        # gymTestCallback.set_mujoco_model(sim)
+
+        # sim.run()
+
+        # utils.save_performance_metrics(
+        #     sim,
+        #     self.log_dir,
+        #     self.sim_options.timestep,
+        #     self.sim_options.n_iterations,
+        #     self.experiment_id,
+        # )
 
     def arch_testing(self) -> None:
         """Test the architecture of farms

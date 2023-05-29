@@ -91,12 +91,10 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
         animat_data: animat data object
     """
     # Data
-    # pylog.debug("Check")
     animat_data: Union[AmphibiousData, AmphibiousKinematicsData] = get_amphibious_data(
         animat_options=animat_options,
         simulation_options=sim_options,
     )
-    # pylog.debug("Animat data created")
 
     # Network
     if isinstance(animat_data, AmphibiousData):
@@ -104,7 +102,6 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
         controller_args = {"animat_network": animat_network}
     else:
         controller_args = {}
-    # pylog.debug("Controller network created")
 
     # Controller
     animat_controller: Union[
@@ -115,7 +112,6 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
         sim_options=sim_options,
         **controller_args,
     )
-    # pylog.debug("Controller created")
 
     # Additional engine-specific options
     options = {}
