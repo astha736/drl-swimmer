@@ -259,7 +259,7 @@ class TrainTestClass:
         eval_callback = EvalCallback(
             vec_gym_env,
             # log_path="./logs/",
-            eval_freq=50000,
+            eval_freq=10000,
             deterministic=True,
             warn=True,
             verbose=1,
@@ -271,8 +271,8 @@ class TrainTestClass:
 
         # model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
 
-        model.learn(total_timesteps=200000 , callback=eval_callback)
-        # model.save(os.path.join(self.log_dir, "model.zip"))
+        model.learn(total_timesteps=500000 , callback=eval_callback)
+        model.save(os.path.join(self.log_dir, "trained_model.zip"))
 
         from stable_baselines3.common.evaluation import evaluate_policy
 
@@ -282,7 +282,6 @@ class TrainTestClass:
             n_eval_episodes=3,
             deterministic=True,
             return_episode_rewards=True,
-            warn=True,
         )
 
         print(f'rew: {rew}, len: {len_}')
@@ -306,7 +305,7 @@ class TrainTestClass:
         """
         # load trained model
         model = PPO.load(
-            "./experiments/999/logs/model.zip",
+            "./experiments/999/logs/30-05-2023_14:00:37/trained_model.zip",
         )
 
         sim, animat_data = simulation.setup_simulation(
@@ -317,16 +316,23 @@ class TrainTestClass:
             callbacks=[],
         )
 
-        env = FarmsGym(
+        def get_vec_env():
+            gym_env = FarmsGym(
                 timestep=self.sim_options.timestep,
                 observation_choice=self.observation_choice,
                 action_choice=self.action_choice,
                 sim=sim,
                 log_dir=self.log_dir,
-        )
+                is_test_env=True,
+            )
+            return gym_env
+        
+        vec_gym_env = make_vec_env(
+            get_vec_env, n_envs=1
+        ) 
 
         from stable_baselines3.common.evaluation import evaluate_policy
-        mean_reward, std_reward = evaluate_policy(model.policy, env, n_eval_episodes=20, deterministic=True)
+        mean_reward, std_reward = evaluate_policy(model.policy, vec_gym_env, n_eval_episodes=1, deterministic=True)
         print(f"mean_reward={mean_reward:.2f} s+/- {std_reward}")
 
 
