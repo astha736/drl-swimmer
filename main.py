@@ -71,11 +71,11 @@ def main() -> None:
         exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
             s_caudl_senstivity=getattr(
                 RobotFeedbackSenstivity,
-                conf["robot_arch"]["s_caudl_senstivity"],
+                conf["robot_arch_testing"]["s_caudl_senstivity"],
             ),
-            s_caudl_weight=conf["robot_arch"]["s_caudl_weight"],
-            init_osci_cond=conf["robot_arch"]["init_osci_cond"],
-            c_inter=conf["robot_arch"]["c_inter"],
+            s_caudl_weight=conf["robot_arch_testing"]["s_caudl_weight"],
+            init_osci_cond=conf["robot_arch_testing"]["init_osci_cond"],
+            c_inter=conf["robot_arch_testing"]["c_inter"],
         )
         
     exp_cond_experiment.setup(animat_options)

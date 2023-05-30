@@ -204,8 +204,6 @@ class TrainTestClass:
             callbacks=[],
         )
 
-        # setup gym: create the environment with mujoco sim
-
         def get_vec_env():
             gym_env = FarmsGym(
                 timestep=self.sim_options.timestep,
@@ -215,9 +213,24 @@ class TrainTestClass:
                 log_dir=self.log_dir,
             )
             return gym_env
+        
+        def get_test_vec_env():
+            gym_env_test = FarmsGym(
+                timestep=self.sim_options.timestep,
+                observation_choice=self.observation_choice,
+                action_choice=self.action_choice,
+                sim=sim,
+                log_dir=self.log_dir,
+                is_test_env=True,
+            )
+            return gym_env_test
 
         vec_gym_env = make_vec_env(
             get_vec_env, n_envs=1
+        )  # , vec_env_cls=SubprocVecEnv) # SubprocVecEnv not working now due to cython pickling error
+
+        vec_gym_env_test = make_vec_env(
+            get_test_vec_env, n_envs=1
         )  # , vec_env_cls=SubprocVecEnv) # SubprocVecEnv not working now due to cython pickling error
 
         policy_kwargs = dict(
@@ -235,7 +248,7 @@ class TrainTestClass:
             vec_gym_env,
             # policy_kwargs=policy_kwargs,
             tensorboard_log=self.log_dir,
-            learning_rate=0.0,
+            #learning_rate=0.0,
         )
 
         # configure logger
@@ -246,7 +259,7 @@ class TrainTestClass:
         eval_callback = EvalCallback(
             vec_gym_env,
             # log_path="./logs/",
-            eval_freq=20000,
+            eval_freq=50000,
             deterministic=True,
             warn=True,
             verbose=1,
@@ -258,19 +271,21 @@ class TrainTestClass:
 
         # model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
 
-        model.learn(total_timesteps=100_000 , callback=eval_callback)
-        model.save(os.path.join(self.log_dir, "model.zip"))
+        model.learn(total_timesteps=200000 , callback=eval_callback)
+        # model.save(os.path.join(self.log_dir, "model.zip"))
 
-        # from stable_baselines3.common.evaluation import evaluate_policy
+        from stable_baselines3.common.evaluation import evaluate_policy
 
-        # rew, len_ = evaluate_policy(
-        #     model,
-        #     gym_env,
-        #     n_eval_episodes=10,
-        #     deterministic=True,
-        #     return_episode_rewards=True,
-        #     warn=True,
-        # )
+        rew, len_ = evaluate_policy(
+            model,
+            vec_gym_env_test,
+            n_eval_episodes=3,
+            deterministic=True,
+            return_episode_rewards=True,
+            warn=True,
+        )
+
+        print(f'rew: {rew}, len: {len_}')
 
         # model.save(os.path.join(str(self.log_dir), str(model_filename)))
 
@@ -282,7 +297,6 @@ class TrainTestClass:
 
         # print("ok")
 
-        print("Done training")
 
     def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
         """Experiment testing
@@ -362,9 +376,11 @@ class TrainTestClass:
         # profile.profile(function=sim.run, profile_filename="profile.txt")
         # return
 
-        sim._env.reset()
-        sim.run()
 
+        sim._env.reset()
+
+        sim.run()
+            
         # postprocessing_from_clargs(
         #     sim=sim,
         #     clargs=self.clargs,

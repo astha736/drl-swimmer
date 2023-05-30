@@ -195,7 +195,7 @@ class ExperimentConditions:
         robot_pose: int = 0,
         friction: float = 0.2,
         debug: bool = False,
-        init_osci_cond: int = 0,
+        init_osci_cond: int = -1,
         c_inter: float = 0,
         **kwargs,
     ) -> Tuple[RobotInitialConditions, str]:

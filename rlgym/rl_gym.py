@@ -457,28 +457,46 @@ class FarmsGym(gym.Env):
             observation_choice=self.observation_choice,
         )
 
-        fwd = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[
+        if iteration == 0:
+            prev_x = 0.0
+        else:
+            prev_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration - 1)[
+                0
+            ])
+
+        curr_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[
             0
         ]
 
-        if iteration == 0:
-            x_vel = 0
-        else:
-            x_prev = np.array(
-                self.sim.task.data.sensors.links.global_com_position(iteration - 1)
-            )[0]
-            x_pos = np.array(
-                self.sim.task.data.sensors.links.global_com_position(iteration)
-            )[0]
-            x_vel = x_pos - x_prev
+        fwd = curr_x - prev_x
 
-        self.reward = fwd * 10 + x_vel * 100000
+        # if iteration == 0:
+        #     x_vel = 0
+        # else:
+        #     x_prev = np.array(
+        #         self.sim.task.data.sensors.links.global_com_position(iteration - 1)
+        #     )[0]
+        #     x_pos = np.array(
+        #         self.sim.task.data.sensors.links.global_com_position(iteration)
+        #     )[0]
+        #     x_vel = x_pos - x_prev
+
+        self.reward = 10 * fwd # * 10 + x_vel * 100000
 
         # @IDEA
         # add directional reward: the sum of all angles should be zero, or sth like that
         # so that the robot actually swims forward!
 
         self.done = True if (env_step.step_type == StepType.LAST) else False
+
+        if self.done and self.is_test_env:
+            utils.save_performance_metrics(
+                self.sim,
+                self.log_dir,
+                self.timestep,
+                1500,
+                "999",
+            )
 
         return self.observation, self.reward, self.done, self.info
 

@@ -7,9 +7,7 @@ import numpy as np
 from scipy import integrate
 from scipy.integrate._ode import ode as ODE
 
-from farms_core.model.data import AnimatData
-
-from ode import ode_oscillators_sparse
+from .ode import ode_oscillators_sparse
 
 
 class AnimatNetwork(ABC):
@@ -36,7 +34,7 @@ class NetworkODETEST(AnimatNetwork):
 
     def __init__(self, data, **kwargs):
         state_array = data.state.array
-        self.state_aray_init = data.state.array
+        self.state_array_init = data.state.array
         super().__init__(data=data, n_iterations=np.shape(state_array)[0])
         self.dstate = np.zeros_like(data.state.array[0, :])
         self.ode: Callable = kwargs.pop("ode", ode_oscillators_sparse)
@@ -58,8 +56,10 @@ class NetworkODETEST(AnimatNetwork):
     ):
         """Control step"""
         if iteration == 0:
-            self.dstate = np.zeros_like(self.state_aray_init[0, :])
-            self.solver.set_initial_value(y=self.state_aray_init[0, :], t=0.0)
+            self.dstate = np.zeros_like(self.state_array_init[0, :])  # reset state
+            self.solver.set_initial_value(
+                y=self.state_array_init[0, :], t=0.0
+            )  # reset initial values
             self.copy_next_drive(iteration)
             return
         if checks:
