@@ -36,6 +36,9 @@ from utils.limbless_oscillator import RobotInitialOscillator
 
 from utils import utils
 
+# TODO refactor to different location and use n_oscillators
+right_oscillator_indexes = [i * 2 - 1 for i in range(1, 11)]
+left_oscillator_indexes = [i * 2 for i in range(0, 10)]
 
 class bcolors:
     HEADER = "\033[95m"
@@ -61,6 +64,7 @@ class ObservationType(Enum):
     REACTION_Z = 4
     REACTION_XY = 5
     REACTION_XYZ = 6
+    PHASES = 7
 
 
 class ActionChoice:
@@ -228,6 +232,12 @@ class ObservationChoice:
         low = np.array([-np.inf] * (self.n_body_joints + 1))
         high = np.array([np.inf] * (self.n_body_joints + 1))
         return low, high
+    
+    def observation_bound_PHASES(self):
+        """PHASES"""
+        low = np.array([-np.inf] * (self.n_body_joints)) # why not +1?
+        high = np.array([np.inf] * (self.n_body_joints)) # whoy not +1?
+        return low, high
 
     def get_observation_bound(self, observation: ObservationType):
         switcher = {
@@ -237,6 +247,7 @@ class ObservationChoice:
             ObservationType.REACTION_Z: self.observation_bound_REACTION_Z,
             ObservationType.REACTION_XY: self.observation_bound_REACTION_XY,
             ObservationType.REACTION_XYZ: self.observation_bound_REACTION_XYZ,
+            ObservationType.PHASES: self.observation_bound_PHASES,
         }
 
         return switcher.get(observation, "Invalid observation Type")
@@ -258,13 +269,24 @@ class ObservationChoice:
 
         return spaces.Box(low=low_bound, high=high_bound), np.shape(low_bound)[0]
 
-    def extract_observation_JOINT_POSITION(self, data_sensors, iteration):
+    def extract_observation_JOINT_POSITION(self, data_sensors, data_states, iteration):
 
         joints_pos = np.array(data_sensors.joints.positions(iteration=iteration))
 
         return joints_pos
+    
+    def extract_observation_PHASES(self, data_sensors, data_states, iteration):
 
-    def extract_observation_REACTION_X(self, data_sensors, iteration):
+        # only return right oscillators for now. 
+        # this is technical not correct, as left and right oscillators are not initialized ideally
+        # so they need some time to sync
+        # however, I want to reduce input observation space for now
+        # phases_right = np.mod(np.array(data_states.phases(iteration))[right_oscillator_indexes], 2*np.pi)
+        phases_right = np.sin(np.array(data_states.phases(iteration))[right_oscillator_indexes])
+
+        return phases_right
+
+    def extract_observation_REACTION_X(self, data_sensors, data_states, iteration):
         data_reaction_x = np.array(data_sensors.contacts.array[iteration, :, 0])
         isNaN = np.isnan(data_reaction_x).any()
         if isNaN:
@@ -276,7 +298,7 @@ class ObservationChoice:
         np.nan_to_num(data_reaction_x, copy=False, nan=0.0, posinf=0.0, neginf=-0.0)
         return data_reaction_x
 
-    def extract_observation_REACTION_Y(self, data_sensors, iteration):
+    def extract_observation_REACTION_Y(self, data_sensors, data_states, iteration):
         data_reaction_y = np.array(data_sensors.contacts.array[iteration, :, 1])
         isNaN = np.isnan(data_reaction_y).any()
         if isNaN:
@@ -288,7 +310,7 @@ class ObservationChoice:
         np.nan_to_num(data_reaction_y, copy=False, nan=0.0, posinf=0.0, neginf=-0.0)
         return data_reaction_y
 
-    def extract_observation_REACTION_Z(self, data_sensors, iteration):
+    def extract_observation_REACTION_Z(self, data_sensors, data_states, iteration):
         data_reaction_z = np.array(data_sensors.contacts.array[iteration, :, 2])
         isNaN = np.isnan(data_reaction_z).any()
         if isNaN:
@@ -300,7 +322,7 @@ class ObservationChoice:
         np.nan_to_num(data_reaction_z, copy=False, nan=0.0, posinf=0.0, neginf=-0.0)
         return data_reaction_z
 
-    def extract_observation_REACTION_XY_NORM(self, data_sensors, iteration):
+    def extract_observation_REACTION_XY_NORM(self, data_sensors, data_states, iteration):
         data_reaction_xy = np.array(data_sensors.contacts.array[iteration, :, 0:2])
         isNaN = np.isnan(data_reaction_xy).any()
         if isNaN:
@@ -313,7 +335,7 @@ class ObservationChoice:
         data_reaction_xy_norm = np.linalg.norm(data_reaction_xy, axis=1)
         return data_reaction_xy_norm
 
-    def extract_observation_REACTION_XYZ_NORM(self, data_sensors, iteration):
+    def extract_observation_REACTION_XYZ_NORM(self, data_sensors, data_states, iteration):
         data_reaction_xyz = np.array(data_sensors.contacts.array[iteration, :, 0:3])
         isNaN = np.isnan(data_reaction_xyz).any()
         if isNaN:
@@ -334,16 +356,17 @@ class ObservationChoice:
             ObservationType.REACTION_Z: self.extract_observation_REACTION_Z,
             ObservationType.REACTION_XY: self.extract_observation_REACTION_XY_NORM,
             ObservationType.REACTION_XYZ: self.extract_observation_REACTION_XYZ_NORM,
+            ObservationType.PHASES: self.extract_observation_PHASES,
         }
 
         return switcher.get(observation, "Invalid observation Type")
 
-    def get_observation(self, data_sensors, iteration: int):
+    def get_observation(self, data_sensors, data_states, iteration: int):
 
         observations_list = []
         for observation in self.observation_list:
             observation_val = self.extract_observation(observation)(
-                data_sensors, iteration
+                data_sensors, data_states, iteration
             )
             observations_list += [observation_val]
 
@@ -405,7 +428,7 @@ class FarmsGym(gym.Env):
 
         """
         return observation_choice.get_observation(
-            data_sensors=data_sensors, iteration=iteration
+            data_sensors=data_sensors, data_states = data_states, iteration=iteration
         )
 
     def compute_reward(
