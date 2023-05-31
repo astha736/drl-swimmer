@@ -35,6 +35,7 @@ from utils.limbless_spawn import RobotInitialState
 from utils.limbless_oscillator import RobotInitialOscillator
 
 from utils import utils
+import conf
 
 # TODO refactor to different location and use n_oscillators
 right_oscillator_indexes = [i * 2 - 1 for i in range(1, 11)]
@@ -281,9 +282,15 @@ class ObservationChoice:
         # this is technical not correct, as left and right oscillators are not initialized ideally
         # so they need some time to sync
         # however, I want to reduce input observation space for now
-        # phases_right = np.mod(np.array(data_states.phases(iteration))[right_oscillator_indexes], 2*np.pi)
-        phases_right = np.sin(np.array(data_states.phases(iteration))[right_oscillator_indexes])
-
+        match conf.CONF["RL"]["phase_preprocessing"]:
+            case "sin":
+                phases_right = np.sin(np.array(data_states.phases(iteration))[right_oscillator_indexes])
+            case "cos":
+                phases_right = np.cos(np.array(data_states.phases(iteration))[right_oscillator_indexes])
+            case "mod":
+                phases_right = np.mod(np.array(data_states.phases(iteration))[right_oscillator_indexes], 2*np.pi)
+            case _:
+                raise ValueError("Unknown phase preprocessing method")
         return phases_right
 
     def extract_observation_REACTION_X(self, data_sensors, data_states, iteration):

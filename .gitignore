@@ -31,3 +31,6 @@ agnathax_control/ode.c
 
 # eggs
 .eggs/*
+
+*.so
+__pycache__

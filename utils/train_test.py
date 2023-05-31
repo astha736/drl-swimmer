@@ -34,6 +34,8 @@ from . import utils
 
 from gym import spaces
 
+import conf
+
 # https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
 class CustomNetwork(nn.Module):
     """
@@ -162,9 +164,7 @@ class TrainTestClass:
         action_choice: ActionChoice,
         observation_choice: ObservationChoice,
         learn_total_timesteps: int,
-        experiment_args,
         clargs=None,
-        experiment_id: str = None,
     ):
         """Constructor for TrainTestClass
 
@@ -185,9 +185,7 @@ class TrainTestClass:
         self.action_choice = action_choice
         self.observation_choice = observation_choice
         self.learn_total_timesteps = learn_total_timesteps
-        self.experiment_args = experiment_args
         self.clargs = clargs
-        self.experiment_id = experiment_id
 
     def exp_training(self, model_filename: str) -> None:
         """Experiment training
@@ -235,16 +233,16 @@ class TrainTestClass:
 
         policy_kwargs = dict(
             activation_fn=getattr(
-                torch.nn, self.experiment_args["RL"]["policy_network"]["activation"]
+                torch.nn, conf.CONF["RL"]["policy_network"]["activation"]
             ),
             net_arch=dict(
-                pi=self.experiment_args["RL"]["policy_network"]["arch"],  # actor
-                vf=self.experiment_args["RL"]["policy_network"]["arch"],  # critic
+                pi=conf.CONF["RL"]["policy_network"]["arch"],  # actor
+                vf=conf.CONF["RL"]["policy_network"]["arch"],  # critic
             ),
         )
 
         model = PPO(
-            CustomActorCriticPolicy, # self.experiment_args["RL"]["policy_network"]["policy_type"],
+            CustomActorCriticPolicy, # conf.CONF["RL"]["policy_network"]["policy_type"],
             vec_gym_env,
             # policy_kwargs=policy_kwargs,
             tensorboard_log=self.log_dir,
@@ -363,7 +361,6 @@ class TrainTestClass:
         #     self.log_dir,
         #     self.sim_options.timestep,
         #     self.sim_options.n_iterations,
-        #     self.experiment_id,
         # )
 
     def arch_testing(self) -> None:
@@ -382,11 +379,16 @@ class TrainTestClass:
         # profile.profile(function=sim.run, profile_filename="profile.txt")
         # return
 
+        for i in range(0,2):
+            sim._env.reset()
 
-        sim._env.reset()
-
-        sim.run()
-            
+            sim.run()
+            utils.save_performance_metrics(
+                sim,
+                self.log_dir,
+                self.sim_options.timestep,
+                self.sim_options.n_iterations
+            )
         # postprocessing_from_clargs(
         #     sim=sim,
         #     clargs=self.clargs,
@@ -403,7 +405,6 @@ class TrainTestClass:
             self.log_dir,
             self.sim_options.timestep,
             self.sim_options.n_iterations,
-            self.experiment_id,
         )
 
 
