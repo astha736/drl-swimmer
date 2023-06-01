@@ -251,11 +251,15 @@ class TrainTestClass:
         )
 
         # profile.profile(
-        #     function=model.learn, total_timesteps=1, profile_filename="profile.txt"
+        #     function=model.learn, total_timesteps=1, profile_filename="profile_1_step.txt"
         # )
 
-        # model.learn(total_timesteps=100000 , callback=eval_callback)
-        # model.save(os.path.join(conf.LOG_DIR, "trained_model_last.zip"))
+        # profile.profile(
+        #     function=model.learn, total_timesteps=10_000, profile_filename="profile_10000_step.txt"
+        # )
+
+        model.learn(total_timesteps=self.learn_total_timesteps , callback=eval_callback)
+        model.save(os.path.join(conf.LOG_DIR, "trained_model_last.zip"))
 
         ##### TEST #####
 
