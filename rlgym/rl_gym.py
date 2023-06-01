@@ -6,6 +6,8 @@ from textwrap import wrap
 import warnings
 import traceback
 from enum import Enum
+from typing import List
+
 
 import numpy as np
 import random
@@ -17,7 +19,8 @@ from farms_core import pylog
 from farms_mujoco.simulation.application import FarmsApplication
 from farms_mujoco.simulation.task import TaskCallback
 from farms_mujoco.simulation.mjcf import euler2mjcquat
-from typing import List
+from farms_sim.simulation import postprocessing_from_clargs
+
 
 import gym
 from gym import spaces
@@ -36,10 +39,6 @@ from utils.limbless_oscillator import RobotInitialOscillator
 
 from utils import utils
 import conf
-
-# TODO refactor to different location and use n_oscillators
-right_oscillator_indexes = [i * 2 - 1 for i in range(1, 11)]
-left_oscillator_indexes = [i * 2 for i in range(0, 10)]
 
 class bcolors:
     HEADER = "\033[95m"
@@ -284,11 +283,11 @@ class ObservationChoice:
         # however, I want to reduce input observation space for now
         match conf.CONF["RL"]["phase_preprocessing"]:
             case "sin":
-                phases_right = np.sin(np.array(data_states.phases(iteration))[right_oscillator_indexes])
+                phases_right = np.sin(np.array(data_states.phases(iteration))[conf.RIGHT_OSCILLATOR_INDEXES])
             case "cos":
-                phases_right = np.cos(np.array(data_states.phases(iteration))[right_oscillator_indexes])
+                phases_right = np.cos(np.array(data_states.phases(iteration))[conf.RIGHT_OSCILLATOR_INDEXES])
             case "mod":
-                phases_right = np.mod(np.array(data_states.phases(iteration))[right_oscillator_indexes], 2*np.pi)
+                phases_right = np.mod(np.array(data_states.phases(iteration))[conf.RIGHT_OSCILLATOR_INDEXES], 2*np.pi)
             case _:
                 raise ValueError("Unknown phase preprocessing method")
         return phases_right
@@ -522,10 +521,13 @@ class FarmsGym(gym.Env):
         if self.done and self.is_test_env:
             utils.save_performance_metrics(
                 self.sim,
-                self.log_dir,
+                conf.LOG_DIR,
                 self.timestep,
                 1500,
-                "999",
+            )
+            postprocessing_from_clargs(
+                sim=self.sim,
+                video_name=os.path.join(conf.LOG_DIR, "best_model.mp4")
             )
 
         return self.observation, self.reward, self.done, self.info
@@ -623,15 +625,12 @@ class GymTestCallback(TaskCallback):
         self.n_obs = observation_choice.n_obs
         self.n_act = action_choice.n_act
 
-        header_obs = ["n_obs_{}".format(i) for i in range(self.n_obs)]
-        header_act = ["n_act_{}".format(i) for i in range(self.n_act)]
         # default action if model is none
         # self.action = np.zeros(self.n_act) if self.model is None else None
         self.sim = None
 
         self.debug_random_cond = kwargs.pop("debug_random_cond", True)
         self.notion = kwargs.pop("notion", None)
-        FarmsGym.prev_action = np.zeros(self.n_act)
 
     def initialize_episode(self, task, physics):
         """Initialize episode"""
@@ -652,11 +651,8 @@ class GymTestCallback(TaskCallback):
         if self.model is None:
             raise ValueError("model cannot be none")
         self.action, _states = self.model.predict(
-            self.observations, deterministic=False
+            self.observations, deterministic=True
         )
-
-        # pylog.debug("observations: {}".format(self.observations))
-        # pylog.debug("action: {}".format(self.action))
 
         # sim is mujoco simulation object
         FarmsGym.set_action(
@@ -666,6 +662,7 @@ class GymTestCallback(TaskCallback):
             iteration=task.iteration,
         )
         return
+    
 
     def after_step(self, task, physics):
         """After each step"""
@@ -676,57 +673,22 @@ class GymTestCallback(TaskCallback):
             iteration=iteration,
             observation_choice=self.observation_choice,
         )
-        reward = FarmsGym.compute_reward(
-            timestep=self.timestep,
-            data_sensors=task.data.sensors,
-            data_states=task.data.state,
-            iteration=iteration,
-            prev_iteration=(iteration - int(1 / self.timestep)),
-            debug=True,
-        )
-        episode_limit = FarmsGym.arena_limit_reached(
-            timestep=self.timestep,
-            data_sensors=task.data.sensors,
-            data_states=task.data.state,
-            iteration=iteration,
-            debug=True,
-        )
-        if episode_limit:
-            self.reset()
-        if self.debug_random_cond and iteration > 1000:
-            self.reset()
+        if iteration == 0:
+            prev_x = 0.0
+        else:
+            prev_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration - 1)[
+                0
+            ])
+
+        curr_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[
+            0
+        ]
+
+        fwd = curr_x - prev_x
+
+        reward = 10 * fwd # * 10 + x_vel * 100000
+        
         return
-
-    def reset(self):
-        """Reset the observations"""
-        self.info = {}
-        self.done = False
-        self.reward = 0
-        if self.debug_random_cond:
-            animat_options = self.sim.task.animat_options
-            RobotInitialState.set_random_shape_pose(animat_options=animat_options)
-            RobotInitialOscillator.random_oscillator_phase(
-                animat_options=animat_options
-            )
-            # apply spawn changes
-            base_link = self.sim._mjcf_model.worldbody.body[-1]
-            base_link.pos = [pos for pos in animat_options.spawn.pose[:3]]
-            base_link.quat = euler2mjcquat(animat_options.spawn.pose[3:])
-            # apply motor pose & oscillator changes with env's reset
-            self.sim._env.reset()
-
-            # only for visuals
-            self.sim.task._app._restart_runtime()
-            self.sim.task._app._perform_deferred_reload()
-
-        self.observation = FarmsGym.get_observations(
-            data_sensors=self.sim.task.data.sensors,
-            data_states=self.sim.task.data.state,
-            iteration=0,
-            observation_choice=self.observation_choice,
-        )
-
-        return self.observation  # reward, done, info can't be included
 
     def set_mujoco_model(self, sim):
         self.sim = sim

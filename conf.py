@@ -8,10 +8,11 @@ def init(experiment_config):
     global CONF
     global LOG_DIR
     global RIGHT_OSCILLATOR_INDEXES
+    global LEFT_OSCILLATOR_INDEXES
 
     CONF = yaml.full_load(experiment_config)
 
-    # log to /shared on HPC; log to ./experiments on personal PCs
+    # log to /shared on HPC; log to home/.../experiments on local PC
     if os.path.isdir("/shared"): # cluster
         LOG_DIR = "/shared/hausdoer/experiments/" + CONF["experiment_id"] + "/logs" + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
         if not os.path.isdir(LOG_DIR): os.makedirs(LOG_DIR)

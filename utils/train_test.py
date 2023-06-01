@@ -187,11 +187,14 @@ class TrainTestClass:
         self.learn_total_timesteps = learn_total_timesteps
         self.clargs = clargs
 
+    # Train and test
     def exp_training(self, model_filename: str) -> None:
         """Experiment training
 
         @param model_filename (str): Name of the saved model.
         """
+
+        ##### TRAIN #####
 
         # setup simulation
         sim, animat_data = simulation.setup_simulation(
@@ -211,7 +214,63 @@ class TrainTestClass:
                 log_dir=self.log_dir,
             )
             return gym_env
-        
+
+        vec_gym_env = make_vec_env(
+            get_vec_env, n_envs=1
+        )  # SubprocVecEnv not working due to cython pickling error
+
+        # policy_kwargs = dict(
+        #     activation_fn=getattr(
+        #         torch.nn, conf.CONF["RL"]["policy_network"]["activation"]
+        #     ),
+        #     net_arch=dict(
+        #         pi=conf.CONF["RL"]["policy_network"]["arch"],  # actor
+        #         vf=conf.CONF["RL"]["policy_network"]["arch"],  # critic
+        #     ),
+        # )
+
+        model = PPO(
+            CustomActorCriticPolicy, # conf.CONF["RL"]["policy_network"]["policy_type"],
+            vec_gym_env,
+            # policy_kwargs=policy_kwargs,
+            tensorboard_log=self.log_dir,
+        )
+
+        # configure logger
+        new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
+        model.set_logger(new_logger)
+
+        eval_callback = EvalCallback(
+            vec_gym_env,
+            eval_freq=10000,
+            deterministic=True,
+            warn=True,
+            verbose=1,
+            # log_path=conf.LOG_DIR, # don't know how to read the log and what's in there
+            best_model_save_path=conf.LOG_DIR,
+        )
+
+        # profile.profile(
+        #     function=model.learn, total_timesteps=1, profile_filename="profile.txt"
+        # )
+
+        # model.learn(total_timesteps=100000 , callback=eval_callback)
+        # model.save(os.path.join(conf.LOG_DIR, "trained_model_last.zip"))
+
+        ##### TEST #####
+
+        # test model once and save performance metrics
+        del model
+        model = PPO.load("experiments/999/logs/31-05-2023_17:03:36/best_model.zip")
+
+        self.sim_options.record = True
+        sim, animat_data = simulation.setup_simulation(
+            self.animat_options,
+            self.arena_options,
+            self.sim_options,
+            self.simulator,
+            callbacks=[],
+        )
         def get_test_vec_env():
             gym_env_test = FarmsGym(
                 timestep=self.sim_options.timestep,
@@ -222,79 +281,27 @@ class TrainTestClass:
                 is_test_env=True,
             )
             return gym_env_test
-
-        vec_gym_env = make_vec_env(
-            get_vec_env, n_envs=1
-        )  # , vec_env_cls=SubprocVecEnv) # SubprocVecEnv not working now due to cython pickling error
-
+        
         vec_gym_env_test = make_vec_env(
             get_test_vec_env, n_envs=1
-        )  # , vec_env_cls=SubprocVecEnv) # SubprocVecEnv not working now due to cython pickling error
-
-        policy_kwargs = dict(
-            activation_fn=getattr(
-                torch.nn, conf.CONF["RL"]["policy_network"]["activation"]
-            ),
-            net_arch=dict(
-                pi=conf.CONF["RL"]["policy_network"]["arch"],  # actor
-                vf=conf.CONF["RL"]["policy_network"]["arch"],  # critic
-            ),
-        )
-
-        model = PPO(
-            CustomActorCriticPolicy, # conf.CONF["RL"]["policy_network"]["policy_type"],
-            vec_gym_env,
-            # policy_kwargs=policy_kwargs,
-            tensorboard_log=self.log_dir,
-            #learning_rate=0.0,
-        )
-
-        # configure logger
-        new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
-        model.set_logger(new_logger)
-
-        # train
-        eval_callback = EvalCallback(
-            vec_gym_env,
-            # log_path="./logs/",
-            eval_freq=10000,
-            deterministic=True,
-            warn=True,
-            verbose=1,
-        )
-
-        # profile.profile(
-        #     function=model.learn, total_timesteps=1, profile_filename="profile.txt"
-        # )
-
-        # model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
-
-        model.learn(total_timesteps=500000 , callback=eval_callback)
-        model.save(os.path.join(self.log_dir, "trained_model.zip"))
-
+        )  # SubprocVecEnv not working due to cython pickling error
+        
         from stable_baselines3.common.evaluation import evaluate_policy
-
         rew, len_ = evaluate_policy(
             model,
             vec_gym_env_test,
-            n_eval_episodes=3,
+            n_eval_episodes=1,
             deterministic=True,
             return_episode_rewards=True,
         )
 
-        print(f'rew: {rew}, len: {len_}')
+        # log reward of best model
+        with open(os.path.join(conf.LOG_DIR, "performance_metrics.txt"), "a") as f:
+            f.write("\n")
+            f.write(f"best model reward: {rew} \n")
+        f.close()
 
-        # model.save(os.path.join(str(self.log_dir), str(model_filename)))
-
-        # vec_env = model.get_env()
-        # obs = vec_env.reset()
-        # for i in range(1000):
-        #     action, _state = model.predict(obs, deterministic=False)
-        #     obs, reward, done, info = vec_env.step(action)
-
-        # print("ok")
-
-
+    # This is another way to test a model; not used for now
     def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
         """Experiment testing
 
@@ -303,7 +310,17 @@ class TrainTestClass:
         """
         # load trained model
         model = PPO.load(
-            "./experiments/999/logs/30-05-2023_14:00:37/trained_model.zip",
+            "experiments/999/logs/31-05-2023_17:03:36/best_model.zip",
+        )
+
+        # callback on trained model for testing
+        gymTestCallback = GymTestCallback(
+            timestep=self.sim_options.timestep,
+            n_iterations=self.sim_options.n_iterations,
+            model=model,
+            observation_choice=self.observation_choice,
+            action_choice=self.action_choice,
+            debug_random_cond=False,
         )
 
         sim, animat_data = simulation.setup_simulation(
@@ -311,58 +328,21 @@ class TrainTestClass:
             self.arena_options,
             self.sim_options,
             self.simulator,
-            callbacks=[],
+            callbacks=[gymTestCallback],
         )
 
-        def get_vec_env():
-            gym_env = FarmsGym(
-                timestep=self.sim_options.timestep,
-                observation_choice=self.observation_choice,
-                action_choice=self.action_choice,
-                sim=sim,
-                log_dir=self.log_dir,
-                is_test_env=True,
-            )
-            return gym_env
-        
-        vec_gym_env = make_vec_env(
-            get_vec_env, n_envs=1
-        ) 
+        gymTestCallback.set_mujoco_model(sim)
 
-        from stable_baselines3.common.evaluation import evaluate_policy
-        mean_reward, std_reward = evaluate_policy(model.policy, vec_gym_env, n_eval_episodes=1, deterministic=True)
-        print(f"mean_reward={mean_reward:.2f} s+/- {std_reward}")
+        sim.run()
 
+        utils.save_performance_metrics(
+            sim,
+            self.log_dir,
+            self.sim_options.timestep,
+            self.sim_options.n_iterations,
+        )
 
-        # callback on trained model for testing
-        # gymTestCallback = GymTestCallback(
-        #     timestep=self.sim_options.timestep,
-        #     n_iterations=self.sim_options.n_iterations,
-        #     model=model,
-        #     observation_choice=self.observation_choice,
-        #     action_choice=self.action_choice,
-        #     debug_random_cond=debug_random_cond,
-        # )
-
-        # sim, animat_data = simulation.setup_simulation(
-        #     self.animat_options,
-        #     self.arena_options,
-        #     self.sim_options,
-        #     self.simulator,
-        #     callbacks=[gymTestCallback],
-        # )
-
-        # gymTestCallback.set_mujoco_model(sim)
-
-        # sim.run()
-
-        # utils.save_performance_metrics(
-        #     sim,
-        #     self.log_dir,
-        #     self.sim_options.timestep,
-        #     self.sim_options.n_iterations,
-        # )
-
+    # Testing a CPG-config without a trained model, i.e. analytical
     def arch_testing(self) -> None:
         """Test the architecture of farms
 
@@ -379,16 +359,10 @@ class TrainTestClass:
         # profile.profile(function=sim.run, profile_filename="profile.txt")
         # return
 
-        for i in range(0,2):
-            sim._env.reset()
+        sim._env.reset()
 
-            sim.run()
-            utils.save_performance_metrics(
-                sim,
-                self.log_dir,
-                self.sim_options.timestep,
-                self.sim_options.n_iterations
-            )
+        sim.run()
+
         # postprocessing_from_clargs(
         #     sim=sim,
         #     clargs=self.clargs,
@@ -406,35 +380,3 @@ class TrainTestClass:
             self.sim_options.timestep,
             self.sim_options.n_iterations,
         )
-
-
-class TensorboardCallback(BaseCallback):
-    """
-    Custom callback for plotting additional values in tensorboard.
-    """
-
-    def __init__(self, verbose=0):
-        super().__init__(verbose)
-
-    def _on_step(self) -> bool:
-        # Log scalar value (here a random variable)
-
-        env = self.model.env.envs[0].env
-
-        self.logger.record(
-            "test_step",
-            env.sim.task.data.sensors.links.com_distance_travelled_in_axis(),
-        )
-        return True
-
-    def _on_rollout_end(self) -> None:
-        """
-        This event is triggered before updating the policy.
-        """
-        env = self.model.env.envs[0].env
-
-        self.logger.record(
-            "test_rollout",
-            env.sim.task.data.sensors.links.com_distance_travelled_in_axis(),
-        )
-        pass

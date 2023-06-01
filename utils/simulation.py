@@ -122,7 +122,7 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
                 timestep=sim_options["timestep"],
                 n_iterations=sim_options["n_iterations"],
                 fps=30,
-                camera_id=1,
+                camera_id=0,
             )
             options["callbacks"] += [camera]
         for callback in callbacks:
