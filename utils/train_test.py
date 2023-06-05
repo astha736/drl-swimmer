@@ -50,28 +50,26 @@ class CustomNetwork(nn.Module):
     def __init__(
         self,
         feature_dim: int,
-        last_layer_dim_pi: int = 200, # actor=policy
-        last_layer_dim_vf: int = 200, # critic
     ):
         super().__init__()
 
         # IMPORTANT:
         # Save output dimensions, used to create the distributions
-        self.latent_dim_pi = last_layer_dim_pi
-        self.latent_dim_vf = last_layer_dim_vf
+        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
+        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
 
         # Policy network
         self.policy_net = nn.Sequential(
-            nn.Linear(feature_dim, 200),
+            nn.Linear(feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
             nn.ReLU(),
-            nn.Linear(200, last_layer_dim_pi),
+            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
             nn.ReLU(),
         )
         # Value network
         self.value_net = nn.Sequential(
-            nn.Linear(feature_dim, 200),
+            nn.Linear(feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
             nn.ReLU(),
-            nn.Linear(200, last_layer_dim_vf),
+            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_vf),
             nn.ReLU(),
         )
 
@@ -234,7 +232,10 @@ class TrainTestClass:
             vec_gym_env,
             # policy_kwargs=policy_kwargs,
             tensorboard_log=self.log_dir,
+            seed=123
         )
+
+
 
         # configure logger
         new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
@@ -251,11 +252,7 @@ class TrainTestClass:
         )
 
         # profile.profile(
-        #     function=model.learn, total_timesteps=1, profile_filename="profile_1_step.txt"
-        # )
-
-        # profile.profile(
-        #     function=model.learn, total_timesteps=10_000, profile_filename="profile_10000_step.txt"
+       	#     function=model.learn, total_timesteps=1, profile_filename="profile_prod_cluster_2cpu.profile"
         # )
 
         model.learn(total_timesteps=self.learn_total_timesteps , callback=eval_callback)
@@ -265,7 +262,7 @@ class TrainTestClass:
 
         # test model once and save performance metrics
         del model
-        model = PPO.load("experiments/999/logs/31-05-2023_17:03:36/best_model.zip")
+        model = PPO.load(os.path.join(conf.LOG_DIR, "best_model.zip"))
 
         self.sim_options.record = True
         sim, animat_data = simulation.setup_simulation(
