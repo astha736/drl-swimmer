@@ -207,8 +207,8 @@ class TrainTestClass:
             return gym_env
 
         vec_gym_env = make_vec_env(
-            get_vec_env, n_envs=1
-        )  # SubprocVecEnv not working due to cython pickling error
+            get_vec_env, n_envs=1, #vec_env_cls=SubprocVecEnv
+        )
 
         # policy_kwargs = dict(
         #     activation_fn=getattr(
