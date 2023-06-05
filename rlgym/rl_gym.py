@@ -7,10 +7,10 @@ import warnings
 import traceback
 from enum import Enum
 from typing import List
-
-
 import numpy as np
 import random
+
+from utils import simulation
 
 from dm_control.rl.control import Environment, PhysicsError
 from dm_env import TimeStep, StepType
@@ -398,7 +398,10 @@ class FarmsGym(gym.Env):
         timestep,
         observation_choice: ObservationChoice,
         action_choice: ActionChoice,
-        sim,
+        animat_options,
+        arena_options,
+        sim_options,
+        simulator,
         log_dir,
         is_test_env: bool = False,
         **kwargs,
@@ -411,7 +414,11 @@ class FarmsGym(gym.Env):
         self.action_space = action_choice.action_space
         self.n_act = action_choice.n_act
         self.timestep = timestep
-        self.sim = sim
+        
+        self.animat_options = animat_options
+        self.arena_options = arena_options
+        self.sim_options = sim_options
+        self.simulator = simulator
 
         self.reward = None
         self.info = None
@@ -423,6 +430,14 @@ class FarmsGym(gym.Env):
 
         self.is_test_env = is_test_env
         self.log_dir = log_dir
+
+        self.sim, self.animat_data = simulation.setup_simulation(
+            self.animat_options,
+            self.arena_options,
+            self.sim_options,
+            self.simulator,
+            callbacks = []
+        )
 
     def get_observations(
         data_sensors, data_states, iteration: int, observation_choice: ObservationChoice

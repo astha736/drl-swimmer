@@ -193,22 +193,15 @@ class TrainTestClass:
         """
 
         ##### TRAIN #####
-
-        # setup simulation
-        sim, animat_data = simulation.setup_simulation(
-            self.animat_options,
-            self.arena_options,
-            self.sim_options,
-            self.simulator,
-            callbacks=[],
-        )
-
         def get_vec_env():
             gym_env = FarmsGym(
                 timestep=self.sim_options.timestep,
                 observation_choice=self.observation_choice,
                 action_choice=self.action_choice,
-                sim=sim,
+                animat_options=self.animat_options,
+                arena_options = self.arena_options,
+                sim_options = self.sim_options,
+                simulator = self.simulator,
                 log_dir=self.log_dir,
             )
             return gym_env
@@ -265,19 +258,16 @@ class TrainTestClass:
         model = PPO.load(os.path.join(conf.LOG_DIR, "best_model.zip"))
 
         self.sim_options.record = True
-        sim, animat_data = simulation.setup_simulation(
-            self.animat_options,
-            self.arena_options,
-            self.sim_options,
-            self.simulator,
-            callbacks=[],
-        )
+
         def get_test_vec_env():
             gym_env_test = FarmsGym(
                 timestep=self.sim_options.timestep,
                 observation_choice=self.observation_choice,
                 action_choice=self.action_choice,
-                sim=sim,
+                animat_options=self.animat_options,
+                arena_options = self.arena_options,
+                sim_options = self.sim_options,
+                simulator = self.simulator,
                 log_dir=self.log_dir,
                 is_test_env=True,
             )
