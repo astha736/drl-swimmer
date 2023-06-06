@@ -7,6 +7,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import torch
 import torch as th
 from torch import nn
+import yaml
 from torch.utils.tensorboard import SummaryWriter
 
 from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationChoice
@@ -17,6 +18,7 @@ from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.logger import configure
+
 from stable_baselines3.common.callbacks import (
     CallbackList,
     CheckpointCallback,
@@ -35,6 +37,7 @@ from . import utils
 from gym import spaces
 
 import conf
+
 
 # https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
 class CustomNetwork(nn.Module):
@@ -58,20 +61,23 @@ class CustomNetwork(nn.Module):
         self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
         self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
 
+        
+
         # Policy network
         self.policy_net = nn.Sequential(
             nn.Linear(feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
-            nn.ReLU(),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
             nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
-            nn.ReLU(),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
         )
         # Value network
         self.value_net = nn.Sequential(
             nn.Linear(feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
-            nn.ReLU(),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
             nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_vf),
-            nn.ReLU(),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
         )
+
 
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         """
@@ -207,25 +213,25 @@ class TrainTestClass:
             return gym_env
 
         vec_gym_env = make_vec_env(
-            get_vec_env, n_envs=1, #vec_env_cls=SubprocVecEnv
+            get_vec_env, n_envs=1, # vec_env_cls=SubprocVecEnv
         )
 
-        # policy_kwargs = dict(
-        #     activation_fn=getattr(
-        #         torch.nn, conf.CONF["RL"]["policy_network"]["activation"]
-        #     ),
-        #     net_arch=dict(
-        #         pi=conf.CONF["RL"]["policy_network"]["arch"],  # actor
-        #         vf=conf.CONF["RL"]["policy_network"]["arch"],  # critic
-        #     ),
-        # )
+        if conf.CONF["RL"]["PPOparams"]["norm_obs"]:
+            vec_gym_env = VecNormalize(vec_gym_env, norm_obs=True, norm_reward=True)
 
         model = PPO(
-            CustomActorCriticPolicy, # conf.CONF["RL"]["policy_network"]["policy_type"],
+            CustomActorCriticPolicy,
             vec_gym_env,
-            # policy_kwargs=policy_kwargs,
             tensorboard_log=self.log_dir,
-            seed=123
+            seed=123,
+            learning_rate=linear_schedule(conf.CONF["RL"]["PPOparams"]["lr_start"], conf.CONF["RL"]["PPOparams"]["lr_end"]),
+            n_steps=conf.CONF["RL"]["PPOparams"]["n_steps"],
+            batch_size=conf.CONF["RL"]["PPOparams"]["batch_size"],
+            n_epochs=conf.CONF["RL"]["PPOparams"]["n_epochs"],
+            gamma=conf.CONF["RL"]["PPOparams"]["gamma"],
+            gae_lambda=conf.CONF["RL"]["PPOparams"]["gae_lambda"],
+            use_sde=conf.CONF["RL"]["PPOparams"]["use_sde"],
+            sde_sample_freq=conf.CONF["RL"]["PPOparams"]["sde_sample_freq"],
         )
 
 
@@ -242,20 +248,20 @@ class TrainTestClass:
             verbose=1,
             # log_path=conf.LOG_DIR, # don't know how to read the log and what's in there
             best_model_save_path=conf.LOG_DIR,
+            callback_on_new_best=SaveVecNormalizeCallback(save_freq=1, name_prefix="best_model", save_path=conf.LOG_DIR) if conf.CONF["RL"]["PPOparams"]["norm_obs"] else None,
         )
 
         # profile.profile(
        	#     function=model.learn, total_timesteps=1, profile_filename="profile_prod_cluster_2cpu.profile"
         # )
 
-        model.learn(total_timesteps=self.learn_total_timesteps , callback=eval_callback)
-        model.save(os.path.join(conf.LOG_DIR, "trained_model_last.zip"))
-
+        model.learn(total_timesteps=200000 , callback=eval_callback)
+        model.save(os.path.join(conf.LOG_DIR, "last_model_trained.zip"))
+        if conf.CONF["RL"]["PPOparams"]["norm_obs"]:
+            model.get_vec_normalize_env().save(os.path.join(conf.LOG_DIR, "last_model_trained_normalize.pkl"))
+        
         ##### TEST #####
-
-        # test model once and save performance metrics
-        del model
-        model = PPO.load(os.path.join(conf.LOG_DIR, "best_model.zip"))
+        del model, vec_gym_env
 
         self.sim_options.record = True
 
@@ -275,8 +281,16 @@ class TrainTestClass:
         
         vec_gym_env_test = make_vec_env(
             get_test_vec_env, n_envs=1
-        )  # SubprocVecEnv not working due to cython pickling error
-        
+        )
+
+        if conf.CONF["RL"]["PPOparams"]["norm_obs"]:
+            vec_gym_env_test = VecNormalize.load(os.path.join(conf.LOG_DIR, "best_model_normalize.pkl"), vec_gym_env_test)
+            vec_gym_env_test.training = False
+            vec_gym_env_test.norm_reward = False
+
+        model = PPO.load(os.path.join(conf.LOG_DIR, "best_model.zip"))
+
+
         from stable_baselines3.common.evaluation import evaluate_policy
         rew, len_ = evaluate_policy(
             model,
@@ -286,11 +300,21 @@ class TrainTestClass:
             return_episode_rewards=True,
         )
 
-        # log reward of best model
+        # log reward of best model to performance_metrics.txt
         with open(os.path.join(conf.LOG_DIR, "performance_metrics.txt"), "a") as f:
             f.write("\n")
             f.write(f"best model reward: {rew} \n")
         f.close()
+
+        # log reward of best model to common results file: results.yaml
+        results_file = "./experiments/results.yaml"
+        results = yaml.load((open(results_file, "r")), Loader=yaml.FullLoader)
+        results[conf.CONF["experiment_id"]]["best model reward"] = f'{rew}'
+        with (open(results_file, "w")) as f:
+            f.write(yaml.dump(results))
+        f.close()
+
+
 
     # This is another way to test a model; not used for now
     def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
@@ -347,22 +371,10 @@ class TrainTestClass:
             self.simulator,
             callbacks=callbacks,
         )
-        # profile.profile(function=sim.run, profile_filename="profile.txt")
-        # return
 
         sim._env.reset()
-
         sim.run()
 
-        # postprocessing_from_clargs(
-        #     sim=sim,
-        #     clargs=self.clargs,
-        #     simulator=self.simulator,
-        #     animat_data_loader=AmphibiousData,
-        #     video_name="name.mp4",
-        # )
-
-        # writer = SummaryWriter(log_dir=self.log_dir)
 
         # get and save plots and data
         utils.save_performance_metrics(
@@ -371,3 +383,69 @@ class TrainTestClass:
             self.sim_options.timestep,
             self.sim_options.n_iterations,
         )
+
+
+class SaveVecNormalizeCallback(BaseCallback):
+    """
+    Callback for saving a VecNormalize wrapper every ``save_freq`` steps
+
+    :param save_freq: (int)
+    :param save_path: (str) Path to the folder where ``VecNormalize`` will be saved, as ``vecnormalize.pkl``
+    :param name_prefix: (str) Common prefix to the saved ``VecNormalize``, if None (default)
+        only one file will be kept.
+    """
+
+    def __init__(self, save_freq: int, save_path: str, name_prefix: str, verbose: int = 0):
+        super(SaveVecNormalizeCallback, self).__init__(verbose)
+        self.save_freq = save_freq
+        self.save_path = save_path
+        self.name_prefix = name_prefix
+
+    def _on_step(self) -> bool:
+        if self.n_calls % self.save_freq == 0:
+            path = os.path.join(self.save_path, f"{self.name_prefix}_normalize.pkl")
+            if self.model.get_vec_normalize_env() is not None:
+                print(f"#### new beset model at {self.n_calls}")
+                self.model.get_vec_normalize_env().save(path)
+                if self.verbose > 1:
+                    print(f"Saving VecNormalize to {path}")
+        return True
+    
+class LinearSchedule():
+    """
+    Linear interpolation between initial_p and final_p over
+    schedule_timesteps. After this many timesteps pass final_p is
+    returned.
+
+    :param schedule_timesteps: (int) Number of timesteps for which to linearly anneal initial_p to final_p
+    :param initial_p: (float) initial output value
+    :param final_p: (float) final output value
+    """
+
+    def __init__(self, schedule_timesteps, final_p, initial_p):
+        self.schedule_timesteps = schedule_timesteps
+        self.final_p = final_p
+        self.initial_p = initial_p
+
+    def value(self, step):
+        fraction = min(float(step) / self.schedule_timesteps, 1.0)
+        return self.initial_p + fraction * (self.final_p - self.initial_p)
+
+def linear_schedule(initial_value: float, end_value: float) -> Callable[[float], float]:
+    """
+    Linear learning rate schedule.
+
+    :param initial_value: Initial learning rate.
+    :return: schedule that computes
+      current learning rate depending on remaining progress
+    """
+    def func(progress_remaining: float) -> float:
+        """
+        Progress will decrease from 1 (beginning) to 0.
+
+        :param progress_remaining:
+        :return: current learning rate
+        """
+        return progress_remaining * (initial_value - end_value) + end_value
+
+    return func

@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 # Load experiment config and setup *_DIRs
 with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_config:
-    conf.init(experiment_config)
+    conf.init(experiment_config, args.experiment_id)
 
 
 def main() -> None:

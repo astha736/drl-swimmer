@@ -501,6 +501,8 @@ class FarmsGym(gym.Env):
             observation_choice=self.observation_choice,
         )
 
+        # REWARD
+        # fwd
         if iteration == 0:
             prev_x = 0.0
         else:
@@ -511,21 +513,13 @@ class FarmsGym(gym.Env):
         curr_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[
             0
         ]
-
         fwd = curr_x - prev_x
+        # torques OR power: torque*speed
 
-        # if iteration == 0:
-        #     x_vel = 0
-        # else:
-        #     x_prev = np.array(
-        #         self.sim.task.data.sensors.links.global_com_position(iteration - 1)
-        #     )[0]
-        #     x_pos = np.array(
-        #         self.sim.task.data.sensors.links.global_com_position(iteration)
-        #     )[0]
-        #     x_vel = x_pos - x_prev
+        # healthy
 
-        self.reward = 10 * fwd # * 10 + x_vel * 100000
+
+        self.reward = 10 * fwd
 
         # @IDEA
         # add directional reward: the sum of all angles should be zero, or sth like that
@@ -602,7 +596,7 @@ class FarmsGym(gym.Env):
         self.done = False
         self.reward = 0
 
-        return self.observation  # reward, done, info can't be included
+        return self.observation
 
     def render(self, mode="rgb_array", height=480, width=480, camera_id=0):
         assert mode == "rgb_array", "only support rgb_array mode, given %s" % mode
@@ -688,20 +682,8 @@ class GymTestCallback(TaskCallback):
             iteration=iteration,
             observation_choice=self.observation_choice,
         )
-        if iteration == 0:
-            prev_x = 0.0
-        else:
-            prev_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration - 1)[
-                0
-            ])
-
-        curr_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[
-            0
-        ]
-
-        fwd = curr_x - prev_x
-
-        reward = 10 * fwd # * 10 + x_vel * 100000
+        
+        # TODO calculate reward here
         
         return
 

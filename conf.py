@@ -4,13 +4,14 @@ import yaml
 import os
 from datetime import datetime
 
-def init(experiment_config):
+def init(experiment_config, experiment_id):
     global CONF
     global LOG_DIR
     global RIGHT_OSCILLATOR_INDEXES
     global LEFT_OSCILLATOR_INDEXES
 
     CONF = yaml.full_load(experiment_config)
+    CONF["experiment_id"] = experiment_id
 
     # log to /shared on HPC; log to home/.../experiments on local PC
     if os.path.isdir("/shared"): # cluster
@@ -22,6 +23,11 @@ def init(experiment_config):
     # create log dir if not existing; not required, but just to be sure
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
+
+    # load referenced PPOparams
+    if "PPOparams" in CONF["RL"]:
+        with open(CONF["RL"]["PPOparams"]) as f:
+            CONF["RL"]["PPOparams"] = yaml.full_load(f)
 
     RIGHT_OSCILLATOR_INDEXES = [i * 2 - 1 for i in range(1, 11)]
     LEFT_OSCILLATOR_INDEXES = [i * 2 for i in range(0, 10)]
