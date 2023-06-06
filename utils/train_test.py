@@ -213,7 +213,7 @@ class TrainTestClass:
             return gym_env
 
         vec_gym_env = make_vec_env(
-            get_vec_env, n_envs=1, # vec_env_cls=SubprocVecEnv
+            get_vec_env, n_envs=1, seed=123 # vec_env_cls=SubprocVecEnv
         )
 
         if conf.CONF["RL"]["PPOparams"]["norm_obs"]:
@@ -255,7 +255,7 @@ class TrainTestClass:
        	#     function=model.learn, total_timesteps=1, profile_filename="profile_prod_cluster_2cpu.profile"
         # )
 
-        model.learn(total_timesteps=200000 , callback=eval_callback)
+        model.learn(total_timesteps=self.learn_total_timesteps , callback=eval_callback)
         model.save(os.path.join(conf.LOG_DIR, "last_model_trained.zip"))
         if conf.CONF["RL"]["PPOparams"]["norm_obs"]:
             model.get_vec_normalize_env().save(os.path.join(conf.LOG_DIR, "last_model_trained_normalize.pkl"))
@@ -280,7 +280,7 @@ class TrainTestClass:
             return gym_env_test
         
         vec_gym_env_test = make_vec_env(
-            get_test_vec_env, n_envs=1
+            get_test_vec_env, n_envs=1, seed=123
         )
 
         if conf.CONF["RL"]["PPOparams"]["norm_obs"]:
@@ -325,7 +325,7 @@ class TrainTestClass:
         """
         # load trained model
         model = PPO.load(
-            "experiments/999/logs/31-05-2023_17:03:36/best_model.zip",
+            "./experiments/030/logs/06-06-2023_10:05:36/best_model.zip",
         )
 
         # callback on trained model for testing
@@ -405,7 +405,7 @@ class SaveVecNormalizeCallback(BaseCallback):
         if self.n_calls % self.save_freq == 0:
             path = os.path.join(self.save_path, f"{self.name_prefix}_normalize.pkl")
             if self.model.get_vec_normalize_env() is not None:
-                print(f"#### new beset model at {self.n_calls}")
+                print(f"#### New best model at {self.num_timesteps}")
                 self.model.get_vec_normalize_env().save(path)
                 if self.verbose > 1:
                     print(f"Saving VecNormalize to {path}")
