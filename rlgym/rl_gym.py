@@ -452,11 +452,30 @@ class FarmsGym(gym.Env):
             data_sensors=data_sensors, data_states = data_states, iteration=iteration
         )
 
-    def compute_reward(
-        timestep, data_sensors, data_states, iteration, prev_iteration, debug=False
-    ):
+    def compute_reward(data_sensors, iteration):
         """used for training and testing"""
-        return 0
+        
+        # fwd
+        if iteration == 0:
+            prev_x = 0.0
+        else:
+            prev_x = np.array(data_sensors.links.global_com_position(iteration - 1)[
+                0
+            ])
+
+        curr_x = np.array(data_sensors.links.global_com_position(iteration))[
+            0
+        ]
+        fwd = curr_x - prev_x
+
+        # torques OR power: torque*speed
+
+        # healthy
+
+
+        reward = 10 * fwd
+
+        return reward
 
     def set_action(
         action, network_parameters, action_choice: ActionChoice, iteration: int
@@ -502,24 +521,10 @@ class FarmsGym(gym.Env):
         )
 
         # REWARD
-        # fwd
-        if iteration == 0:
-            prev_x = 0.0
-        else:
-            prev_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration - 1)[
-                0
-            ])
-
-        curr_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[
-            0
-        ]
-        fwd = curr_x - prev_x
-        # torques OR power: torque*speed
-
-        # healthy
-
-
-        self.reward = 10 * fwd
+        self.reward = FarmsGym.compute_reward(
+            self.sim.task.data.sensors,
+            iteration,
+        )
 
         # @IDEA
         # add directional reward: the sum of all angles should be zero, or sth like that
@@ -607,6 +612,19 @@ class FarmsGym(gym.Env):
     def close(self):
         pass
 
+class ArchTestCallback(TaskCallback):
+    def __init__(
+            self,
+            **kwargs,
+    ):
+        super().__init__()
+        self.reward = 0.0
+    
+    def after_step(self, task, physics):
+        self.reward += FarmsGym.compute_reward(task.data.sensors, task.iteration -1)
+        if task.iteration > 1499:
+            print(f"iteration: {task.iteration}")
+            print(f"reward: {self.reward}")
 
 class GymTestCallback(TaskCallback):
     """GymTestCallback callback

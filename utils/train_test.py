@@ -10,7 +10,7 @@ from torch import nn
 import yaml
 from torch.utils.tensorboard import SummaryWriter
 
-from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationChoice
+from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationChoice, ArchTestCallback
 
 from . import simulation
 
@@ -363,13 +363,14 @@ class TrainTestClass:
 
         @brief: This function is used to check the options for FARMS and Notions(ExperimentOptions)
         """
-        callbacks = []
+        archTestCallback = ArchTestCallback()
+      
         sim, animat_data = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
             self.sim_options,
             self.simulator,
-            callbacks=callbacks,
+            callbacks=[archTestCallback],
         )
 
         sim._env.reset()
@@ -383,6 +384,20 @@ class TrainTestClass:
             self.sim_options.timestep,
             self.sim_options.n_iterations,
         )
+
+        # log reward of best model to performance_metrics.txt
+        with open(os.path.join(conf.LOG_DIR, "performance_metrics.txt"), "a") as f:
+            f.write("\n")
+            f.write(f"best model reward: {archTestCallback.reward} \n")
+        f.close()
+
+        # log reward of best model to common results file: results.yaml
+        results_file = "./experiments/results.yaml"
+        results = yaml.load((open(results_file, "r")), Loader=yaml.FullLoader)
+        results[conf.CONF["experiment_id"]]["best model reward"] = f'{archTestCallback.reward}'
+        with (open(results_file, "w")) as f:
+            f.write(yaml.dump(results))
+        f.close()
 
 
 class SaveVecNormalizeCallback(BaseCallback):
