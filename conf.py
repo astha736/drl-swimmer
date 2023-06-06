@@ -24,10 +24,14 @@ def init(experiment_config, experiment_id):
     if not os.path.exists(LOG_DIR):
         os.makedirs(LOG_DIR)
 
-    # load referenced PPOparams
+    # referenced parameters
     if "PPOparams" in CONF["RL"]:
         with open(CONF["RL"]["PPOparams"]) as f:
             CONF["RL"]["PPOparams"] = yaml.full_load(f)
+            
+    if "RewardFnc" in CONF["RL"]:
+        with open(CONF["RL"]["RewardFnc"]) as f:
+            CONF["RL"]["RewardFnc"] = yaml.full_load(f)
 
     RIGHT_OSCILLATOR_INDEXES = [i * 2 - 1 for i in range(1, 11)]
     LEFT_OSCILLATOR_INDEXES = [i * 2 for i in range(0, 10)]

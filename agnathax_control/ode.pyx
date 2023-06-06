@@ -128,6 +128,7 @@ cpdef inline void ode_stretch(
         connection_type = joints2osc_map.connections.array[i, 2]
         if connection_type == ConnectionType.STRETCH2FREQTEGOTAE:
             # stretch_weight*joint_position*sin(phase)
+            # *state[i0]%3.14159265359
             dstate[i0] += (
                 joints2osc_map.c_weight(i)
                 *joints.position_cy(iteration, i1)

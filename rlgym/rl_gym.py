@@ -455,27 +455,29 @@ class FarmsGym(gym.Env):
     def compute_reward(data_sensors, iteration):
         """used for training and testing"""
         
-        # fwd
-        if iteration == 0:
-            prev_x = 0.0
-        else:
-            prev_x = np.array(data_sensors.links.global_com_position(iteration - 1)[
-                0
-            ])
+        # forward way x
+        curr_x = np.array(data_sensors.links.global_com_position(iteration))[0]
+        prev_x = curr_x if (iteration == 0) else np.array(data_sensors.links.global_com_position(iteration - 1)[0])
+        forward_x = curr_x - prev_x # range of 0.003 per step
 
-        curr_x = np.array(data_sensors.links.global_com_position(iteration))[
-            0
-        ]
-        fwd = curr_x - prev_x
-
-        # torques OR power: torque*speed
+        # torques
+        cmd_torques = np.sum(np.abs(np.array(data_sensors.joints.cmd_torques())[iteration])) # range of ~3-4 per step for 001
+        active_torques = np.sum(np.abs(np.array(data_sensors.joints.active_torques())[iteration])) # range of ~1-2 per step for 001
+        # Astha said active_torques is good for bioinspiration
 
         # healthy
+        healthy = conf.CONF["RL"]["RewardFnc"]["healthy"]
 
+        # forward way COM; positive if forward_x is positive
+        curr_com = np.array(data_sensors.links.global_com_position(iteration))
+        prev_com = curr_com if (iteration == 0) else np.array(data_sensors.links.global_com_position(iteration - 1))
+        forward_com = np.sign(forward_x) * np.linalg.norm(curr_com - prev_com) # range of 0.003 per step for 001
 
-        reward = 10 * fwd
-
-        return reward
+        return conf.CONF["RL"]["RewardFnc"]["forward_x"] * forward_x + \
+               conf.CONF["RL"]["RewardFnc"]["cmd_torques"] * cmd_torques + \
+               conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torques + \
+               healthy + \
+               conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
 
     def set_action(
         action, network_parameters, action_choice: ActionChoice, iteration: int
@@ -530,7 +532,11 @@ class FarmsGym(gym.Env):
         # add directional reward: the sum of all angles should be zero, or sth like that
         # so that the robot actually swims forward!
 
-        self.done = True if (env_step.step_type == StepType.LAST) else False
+        self.done = False
+        if (env_step.step_type == StepType.LAST): self.done = True  # end of episode
+        curr_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[0]
+        start_x = np.array(self.sim.task.data.sensors.links.global_com_position(0))[0]
+        if (curr_x - start_x > 0.2 and conf.CONF["useEarlyTerm"] == True): self.done = True # early terminattion guides training
 
         if self.done and self.is_test_env:
             utils.save_performance_metrics(
