@@ -164,7 +164,6 @@ class TrainTestClass:
         arena_options,
         sim_options,
         simulator,
-        log_dir,
         action_choice: ActionChoice,
         observation_choice: ObservationChoice,
         learn_total_timesteps: int,
@@ -184,7 +183,6 @@ class TrainTestClass:
         self.arena_options = arena_options
         self.sim_options = sim_options
         self.simulator = simulator
-        self.log_dir = log_dir
         self.save_test_data = False  # TODO: setup kwargs option
         self.action_choice = action_choice
         self.observation_choice = observation_choice
@@ -208,7 +206,6 @@ class TrainTestClass:
                 arena_options = self.arena_options,
                 sim_options = self.sim_options,
                 simulator = self.simulator,
-                log_dir=self.log_dir,
             )
             return gym_env
 
@@ -222,7 +219,7 @@ class TrainTestClass:
         model = PPO(
             CustomActorCriticPolicy,
             vec_gym_env,
-            tensorboard_log=self.log_dir,
+            tensorboard_log=conf.LOG_DIR_TENSORBOARD,
             seed=123,
             learning_rate=linear_schedule(conf.CONF["RL"]["PPOparams"]["lr_start"], conf.CONF["RL"]["PPOparams"]["lr_end"]),
             n_steps=conf.CONF["RL"]["PPOparams"]["n_steps"],
@@ -237,7 +234,7 @@ class TrainTestClass:
 
 
         # configure logger
-        new_logger = configure(self.log_dir, ["stdout", "csv", "tensorboard"])
+        new_logger = configure(conf.LOG_DIR_TENSORBOARD, ["stdout", "csv", "tensorboard"])
         model.set_logger(new_logger)
 
         eval_callback = EvalCallback(
@@ -246,9 +243,9 @@ class TrainTestClass:
             deterministic=True,
             warn=True,
             verbose=1,
-            # log_path=conf.LOG_DIR, # don't know how to read the log and what's in there
-            best_model_save_path=conf.LOG_DIR,
-            callback_on_new_best=SaveVecNormalizeCallback(save_freq=1, name_prefix="best_model", save_path=conf.LOG_DIR) if conf.CONF["RL"]["PPOparams"]["norm_obs"] else None,
+            # log_path=conf.LOG_DIR_TENSORBOARD, # don't know how to read the log and what's in there
+            best_model_save_path=conf.LOG_DIR_RESULTS,
+            callback_on_new_best=SaveVecNormalizeCallback(save_freq=1, name_prefix="best_model", save_path=conf.LOG_DIR_RESULTS) if conf.CONF["RL"]["PPOparams"]["norm_obs"] else None,
         )
 
         # profile.profile(
@@ -256,9 +253,9 @@ class TrainTestClass:
         # )
 
         model.learn(total_timesteps=self.learn_total_timesteps , callback=eval_callback)
-        model.save(os.path.join(conf.LOG_DIR, "last_model_trained.zip"))
+        model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
         if conf.CONF["RL"]["PPOparams"]["norm_obs"]:
-            model.get_vec_normalize_env().save(os.path.join(conf.LOG_DIR, "last_model_trained_normalize.pkl"))
+            model.get_vec_normalize_env().save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl"))
         
         ##### TEST #####
         del model, vec_gym_env
@@ -274,7 +271,6 @@ class TrainTestClass:
                 arena_options = self.arena_options,
                 sim_options = self.sim_options,
                 simulator = self.simulator,
-                log_dir=self.log_dir,
                 is_test_env=True,
             )
             return gym_env_test
@@ -284,11 +280,11 @@ class TrainTestClass:
         )
 
         if conf.CONF["RL"]["PPOparams"]["norm_obs"]:
-            vec_gym_env_test = VecNormalize.load(os.path.join(conf.LOG_DIR, "best_model_normalize.pkl"), vec_gym_env_test)
+            vec_gym_env_test = VecNormalize.load(os.path.join(conf.LOG_DIR_RESULTS, "best_model_normalize.pkl"), vec_gym_env_test)
             vec_gym_env_test.training = False
             vec_gym_env_test.norm_reward = False
 
-        model = PPO.load(os.path.join(conf.LOG_DIR, "best_model.zip"))
+        model = PPO.load(os.path.join(conf.LOG_DIR_RESULTS, "best_model.zip"))
 
 
         from stable_baselines3.common.evaluation import evaluate_policy
@@ -301,7 +297,7 @@ class TrainTestClass:
         )
 
         # log reward of best model to performance_metrics.txt
-        with open(os.path.join(conf.LOG_DIR, "performance_metrics.txt"), "a") as f:
+        with open(os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a") as f:
             f.write("\n")
             f.write(f"best model reward: {rew} \n")
         f.close()
@@ -316,46 +312,51 @@ class TrainTestClass:
 
 
 
-    # This is another way to test a model; not used for now
-    def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
-        """Experiment testing
+    # # This is another way to test a model; not used for now
+    # def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
+    #     """Experiment testing
 
-        @param model_filename (str): Name of the saved model.
-        @param debug_random_cond (bool): If true, the animat is tested in random conditions.
-        """
-        # load trained model
-        model = PPO.load(
-            "./experiments/030/logs/06-06-2023_10:05:36/best_model.zip",
-        )
+    #     @param model_filename (str): Name of the saved model.
+    #     @param debug_random_cond (bool): If true, the animat is tested in random conditions.
+    #     """
+    #     # load trained model
+    #     model = PPO.load(
+    #         "experiments/051/best_model.zip",
+    #     )
 
-        # callback on trained model for testing
-        gymTestCallback = GymTestCallback(
-            timestep=self.sim_options.timestep,
-            n_iterations=self.sim_options.n_iterations,
-            model=model,
-            observation_choice=self.observation_choice,
-            action_choice=self.action_choice,
-            debug_random_cond=False,
-        )
+    #     # callback on trained model for testing
+    #     gymTestCallback = GymTestCallback(
+    #         timestep=self.sim_options.timestep,
+    #         n_iterations=self.sim_options.n_iterations,
+    #         model=model,
+    #         observation_choice=self.observation_choice,
+    #         action_choice=self.action_choice,
+    #         debug_random_cond=False,
+    #     )
 
-        sim, animat_data = simulation.setup_simulation(
-            self.animat_options,
-            self.arena_options,
-            self.sim_options,
-            self.simulator,
-            callbacks=[gymTestCallback],
-        )
+    #     sim, animat_data = simulation.setup_simulation(
+    #         self.animat_options,
+    #         self.arena_options,
+    #         self.sim_options,
+    #         self.simulator,
+    #         callbacks=[gymTestCallback],
+    #     )
 
-        gymTestCallback.set_mujoco_model(sim)
+    #     gymTestCallback.set_mujoco_model(sim)
 
-        sim.run()
+    #     print("running")
 
-        utils.save_performance_metrics(
-            sim,
-            self.log_dir,
-            self.sim_options.timestep,
-            self.sim_options.n_iterations,
-        )
+    #     sim.run()
+
+    #     print("did run")
+
+    #     utils.save_performance_metrics(
+    #         sim,
+    #         self.sim_options.timestep,
+    #         self.sim_options.n_iterations,
+    #     )
+
+    #     print("saved")
 
     # Testing a CPG-config without a trained model, i.e. analytical
     def arch_testing(self) -> None:
@@ -365,6 +366,7 @@ class TrainTestClass:
         """
         archTestCallback = ArchTestCallback()
       
+        # self.sim_options.record = True
         sim, animat_data = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
@@ -380,13 +382,12 @@ class TrainTestClass:
         # get and save plots and data
         utils.save_performance_metrics(
             sim,
-            self.log_dir,
             self.sim_options.timestep,
             self.sim_options.n_iterations,
         )
 
         # log reward of best model to performance_metrics.txt
-        with open(os.path.join(conf.LOG_DIR, "performance_metrics.txt"), "a") as f:
+        with open(os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a") as f:
             f.write("\n")
             f.write(f"best model reward: {archTestCallback.reward} \n")
         f.close()

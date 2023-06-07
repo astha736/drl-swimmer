@@ -9,6 +9,8 @@ from scipy.integrate._ode import ode as ODE
 
 from .ode import ode_oscillators_sparse
 
+import conf
+
 
 class AnimatNetwork(ABC):
     """Animat network"""
@@ -56,10 +58,11 @@ class NetworkODETEST(AnimatNetwork):
     ):
         """Control step"""
         if iteration == 0:
-            self.dstate = np.zeros_like(self.state_array_init[0, :])  # reset state
-            self.solver.set_initial_value(
-                y=self.state_array_init[0, :], t=0.0
-            )  # reset initial values
+            if not conf.CONF["RL"]["useRandStartCond"]:
+                self.dstate = np.zeros_like(self.state_array_init[0, :])  # reset dstate
+                self.solver.set_initial_value(
+                    y=self.state_array_init[0, :], t=0.0
+                )  # reset initial values to initial states
             self.copy_next_drive(iteration)
             return
         if checks:

@@ -429,13 +429,15 @@ class FarmsGym(gym.Env):
 
         self.is_test_env = is_test_env
 
-        self.sim, self.animat_data = simulation.setup_simulation(
+        self.sim, _ = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
             self.sim_options,
             self.simulator,
             callbacks = []
         )
+
+        print("done")
 
     def get_observations(
         data_sensors, data_states, iteration: int, observation_choice: ObservationChoice
@@ -539,14 +541,14 @@ class FarmsGym(gym.Env):
         if self.done and self.is_test_env:
             utils.save_performance_metrics(
                 self.sim,
-                conf.LOG_DIR_RESULTS,
                 self.timestep,
                 1500,
             )
-            postprocessing_from_clargs(
-                sim=self.sim,
-                video_name=os.path.join(conf.LOG_DIR_RESULTS, "best_model.mp4")
-            )
+            if self.sim_options.record == True:
+                postprocessing_from_clargs(
+                    sim=self.sim,
+                    video_name=os.path.join(conf.LOG_DIR_RESULTS, "best_model.mp4")
+                )
 
         return self.observation, self.reward, self.done, self.info
 
@@ -559,17 +561,20 @@ class FarmsGym(gym.Env):
 
         """
 
-        animat_options = self.sim.task.animat_options
-
         # get new changes (joint and spawn) via animat_options
-        # RobotInitialState.set_random_shape_pose(animat_options=animat_options)
-        # RobotInitialOscillator.random_oscillator_phase(animat_options=animat_options)
+        # RobotInitialState.set_random_shape_pose(animat_options=self.sim.task.animat_options)
+        # RobotInitialOscillator.random_oscillator_phase(animat_options=self.sim.task.animat_options)
 
-        self.random_times = +1
-        # apply spawn changes
-        base_link = self.sim._mjcf_model.worldbody.body[-1]
-        base_link.pos = [pos for pos in animat_options.spawn.pose[:3]]
-        base_link.quat = euler2mjcquat(animat_options.spawn.pose[3:])
+        # RobotInitialState.set_random_shape_pose(animat_options=self.sim._env._task.animat_options)
+        # RobotInitialOscillator.random_oscillator_phase(animat_options=self.sim._env._task.animat_options)
+
+        # self.sim, _ = simulation.setup_simulation(
+        #     self.animat_options,
+        #     self.arena_options,
+        #     self.sim_options,
+        #     self.simulator,
+        #     callbacks = []
+        # )
 
         return
 
@@ -589,7 +594,7 @@ class FarmsGym(gym.Env):
 
         """
         # reset the variables for robot state
-        self.randomize_robot_state()
+        # self.randomize_robot_state()
         # apply motor pos & oscillator changes along with reset
         self.sim._env.reset()
 

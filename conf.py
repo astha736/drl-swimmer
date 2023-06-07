@@ -36,4 +36,7 @@ def init(experiment_config, experiment_id):
         with open(CONF["RL"]["RewardFnc"]) as f:
             CONF["RL"]["RewardFnc"] = yaml.full_load(f)
 
+    # print infos
+    print(f"LOG_DIR_RESULTS: {LOG_DIR_RESULTS}")
+    print(f"LOG_DIR_TENSORBOARD: {LOG_DIR_TENSORBOARD}")
    

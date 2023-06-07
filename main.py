@@ -100,9 +100,7 @@ def main() -> None:
         case "train":
             train_test.exp_training(model_filename=exp_cond_name)
         case "test":
-            train_test.exp_testing(
-                model_filename=exp_cond_name, debug_random_cond=False
-            )
+            raise ValueError("run_type test not implemented. Switch to train, or sth!")
         case "arch_testing":
             train_test.arch_testing()
         case _:
