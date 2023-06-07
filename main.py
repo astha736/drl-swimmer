@@ -33,8 +33,8 @@ def main() -> None:
     clargs.animat_config = conf.CONF["config"]["animat"]
     clargs.arena_config = conf.CONF["config"]["arena"]
     clargs.simulation_config = conf.CONF["config"]["simulation"]
-    clargs.profile = os.path.join(conf.LOG_DIR, "simulation.profile")
-    clargs.log_path = conf.LOG_DIR
+    clargs.profile = os.path.join(conf.LOG_DIR_RESULTS, "simulation.profile")
+    clargs.log_path = conf.LOG_DIR_RESULTS
     clargs.prompt = False
     clargs.simulator = "MUJOCO"
     clargs.test_configs = False
@@ -89,7 +89,6 @@ def main() -> None:
         arena_options=arena_options,
         sim_options=sim_options,
         simulator=simulator,
-        log_dir=clargs.log_path,
         action_choice=ActionChoice(action_list),
         observation_choice=ObservationChoice(observation_list),
         learn_total_timesteps=total_timesteps,

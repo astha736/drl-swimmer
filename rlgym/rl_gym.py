@@ -402,7 +402,6 @@ class FarmsGym(gym.Env):
         arena_options,
         sim_options,
         simulator,
-        log_dir,
         is_test_env: bool = False,
         **kwargs,
     ):
@@ -429,7 +428,6 @@ class FarmsGym(gym.Env):
         self.notion = kwargs.pop("notion", None)
 
         self.is_test_env = is_test_env
-        self.log_dir = log_dir
 
         self.sim, self.animat_data = simulation.setup_simulation(
             self.animat_options,
@@ -536,18 +534,18 @@ class FarmsGym(gym.Env):
         if (env_step.step_type == StepType.LAST): self.done = True  # end of episode
         curr_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[0]
         start_x = np.array(self.sim.task.data.sensors.links.global_com_position(0))[0]
-        if (curr_x - start_x > 0.2 and conf.CONF["useEarlyTerm"] == True): self.done = True # early terminattion guides training
+        if (curr_x - start_x > 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True): self.done = True # early terminattion guides training
 
         if self.done and self.is_test_env:
             utils.save_performance_metrics(
                 self.sim,
-                conf.LOG_DIR,
+                conf.LOG_DIR_RESULTS,
                 self.timestep,
                 1500,
             )
             postprocessing_from_clargs(
                 sim=self.sim,
-                video_name=os.path.join(conf.LOG_DIR, "best_model.mp4")
+                video_name=os.path.join(conf.LOG_DIR_RESULTS, "best_model.mp4")
             )
 
         return self.observation, self.reward, self.done, self.info
