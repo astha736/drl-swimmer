@@ -31,6 +31,10 @@ def init(experiment_config, experiment_id):
     if "PPOparams" in CONF["RL"]:
         with open(CONF["RL"]["PPOparams"]) as f:
             CONF["RL"]["PPOparams"] = yaml.full_load(f)
+
+    if "SACparams" in CONF["RL"]:
+        with open(CONF["RL"]["SACparams"]) as f:
+            CONF["RL"]["SACparams"] = yaml.full_load(f)
             
     if "RewardFnc" in CONF["RL"]:
         with open(CONF["RL"]["RewardFnc"]) as f:
