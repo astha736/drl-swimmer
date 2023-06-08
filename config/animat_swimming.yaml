@@ -842,9 +842,9 @@ control:
     drive_config: ''
     drives:
     - name: Drive_0
-      initial_value: 4.0
+      initial_value: 3.0
     - name: Drive_1
-      initial_value: 4.0
+      initial_value: 3.0
     oscillators:
     - name: osc_body_0_L
       initial_phase: 1.0489005911736253

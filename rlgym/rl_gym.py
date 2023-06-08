@@ -40,6 +40,7 @@ from utils.limbless_oscillator import RobotInitialOscillator
 from utils import utils
 import conf
 
+
 class bcolors:
     HEADER = "\033[95m"
     OKBLUE = "\033[94m"
@@ -146,7 +147,6 @@ class ActionChoice:
         pass
 
     def set_action_CONTACT(self, action, network_parameters, iteration):
-
         action = action * ActionChoice.action_output_scale[ActionType.STRETCH]
 
         # ASTHA BUG FIX
@@ -232,11 +232,11 @@ class ObservationChoice:
         low = np.array([-np.inf] * (self.n_body_joints + 1))
         high = np.array([np.inf] * (self.n_body_joints + 1))
         return low, high
-    
+
     def observation_bound_PHASES(self):
         """PHASES"""
-        low = np.array([-np.inf] * (self.n_body_joints)) # why not +1?
-        high = np.array([np.inf] * (self.n_body_joints)) # whoy not +1?
+        low = np.array([-np.inf] * (self.n_body_joints))  # why not +1?
+        high = np.array([np.inf] * (self.n_body_joints))  # whoy not +1?
         return low, high
 
     def get_observation_bound(self, observation: ObservationType):
@@ -270,24 +270,35 @@ class ObservationChoice:
         return spaces.Box(low=low_bound, high=high_bound), np.shape(low_bound)[0]
 
     def extract_observation_JOINT_POSITION(self, data_sensors, data_states, iteration):
-
         joints_pos = np.array(data_sensors.joints.positions(iteration=iteration))
 
         return joints_pos
-    
-    def extract_observation_PHASES(self, data_sensors, data_states, iteration):
 
-        # only return right oscillators for now. 
+    def extract_observation_PHASES(self, data_sensors, data_states, iteration):
+        # only return right oscillators for now.
         # this is technical not correct, as left and right oscillators are not initialized ideally
         # so they need some time to sync
         # however, I want to reduce input observation space for now
         match conf.CONF["RL"]["phase_preprocessing"]:
             case "sin":
-                phases_right = np.sin(np.array(data_states.phases(iteration))[conf.RIGHT_OSCILLATOR_INDEXES])
+                phases_right = np.sin(
+                    np.array(data_states.phases(iteration))[
+                        conf.RIGHT_OSCILLATOR_INDEXES
+                    ]
+                )
             case "cos":
-                phases_right = np.cos(np.array(data_states.phases(iteration))[conf.RIGHT_OSCILLATOR_INDEXES])
+                phases_right = np.cos(
+                    np.array(data_states.phases(iteration))[
+                        conf.RIGHT_OSCILLATOR_INDEXES
+                    ]
+                )
             case "mod":
-                phases_right = np.mod(np.array(data_states.phases(iteration))[conf.RIGHT_OSCILLATOR_INDEXES], 2*np.pi)
+                phases_right = np.mod(
+                    np.array(data_states.phases(iteration))[
+                        conf.RIGHT_OSCILLATOR_INDEXES
+                    ],
+                    2 * np.pi,
+                )
             case _:
                 raise ValueError("Unknown phase preprocessing method")
         return phases_right
@@ -328,7 +339,9 @@ class ObservationChoice:
         np.nan_to_num(data_reaction_z, copy=False, nan=0.0, posinf=0.0, neginf=-0.0)
         return data_reaction_z
 
-    def extract_observation_REACTION_XY_NORM(self, data_sensors, data_states, iteration):
+    def extract_observation_REACTION_XY_NORM(
+        self, data_sensors, data_states, iteration
+    ):
         data_reaction_xy = np.array(data_sensors.contacts.array[iteration, :, 0:2])
         isNaN = np.isnan(data_reaction_xy).any()
         if isNaN:
@@ -341,7 +354,9 @@ class ObservationChoice:
         data_reaction_xy_norm = np.linalg.norm(data_reaction_xy, axis=1)
         return data_reaction_xy_norm
 
-    def extract_observation_REACTION_XYZ_NORM(self, data_sensors, data_states, iteration):
+    def extract_observation_REACTION_XYZ_NORM(
+        self, data_sensors, data_states, iteration
+    ):
         data_reaction_xyz = np.array(data_sensors.contacts.array[iteration, :, 0:3])
         isNaN = np.isnan(data_reaction_xyz).any()
         if isNaN:
@@ -368,7 +383,6 @@ class ObservationChoice:
         return switcher.get(observation, "Invalid observation Type")
 
     def get_observation(self, data_sensors, data_states, iteration: int):
-
         observations_list = []
         for observation in self.observation_list:
             observation_val = self.extract_observation(observation)(
@@ -413,7 +427,7 @@ class FarmsGym(gym.Env):
         self.action_space = action_choice.action_space
         self.n_act = action_choice.n_act
         self.timestep = timestep
-        
+
         self.animat_options = animat_options
         self.arena_options = arena_options
         self.sim_options = sim_options
@@ -434,10 +448,8 @@ class FarmsGym(gym.Env):
             self.arena_options,
             self.sim_options,
             self.simulator,
-            callbacks = []
+            callbacks=[],
         )
-
-        print("done")
 
     def get_observations(
         data_sensors, data_states, iteration: int, observation_choice: ObservationChoice
@@ -449,20 +461,28 @@ class FarmsGym(gym.Env):
 
         """
         return observation_choice.get_observation(
-            data_sensors=data_sensors, data_states = data_states, iteration=iteration
+            data_sensors=data_sensors, data_states=data_states, iteration=iteration
         )
 
     def compute_reward(data_sensors, iteration):
         """used for training and testing"""
-        
+
         # forward way x
         curr_x = np.array(data_sensors.links.global_com_position(iteration))[0]
-        prev_x = curr_x if (iteration == 0) else np.array(data_sensors.links.global_com_position(iteration - 1)[0])
-        forward_x = curr_x - prev_x # range of 0.003 per step
+        prev_x = (
+            curr_x
+            if (iteration == 0)
+            else np.array(data_sensors.links.global_com_position(iteration - 1)[0])
+        )
+        forward_x = curr_x - prev_x  # range of 0.003 per step
 
         # torques
-        cmd_torques = np.sum(np.abs(np.array(data_sensors.joints.cmd_torques())[iteration])) # range of ~3-4 per step for 001
-        active_torques = np.sum(np.abs(np.array(data_sensors.joints.active_torques())[iteration])) # range of ~1-2 per step for 001
+        cmd_torques = np.sum(
+            np.abs(np.array(data_sensors.joints.cmd_torques())[iteration])
+        )  # range of ~3-4 per step for 001
+        active_torques = np.sum(
+            np.abs(np.array(data_sensors.joints.active_torques())[iteration])
+        )  # range of ~1-2 per step for 001
         # Astha said active_torques is good for bioinspiration
 
         # healthy
@@ -470,14 +490,22 @@ class FarmsGym(gym.Env):
 
         # forward way COM; positive if forward_x is positive
         curr_com = np.array(data_sensors.links.global_com_position(iteration))
-        prev_com = curr_com if (iteration == 0) else np.array(data_sensors.links.global_com_position(iteration - 1))
-        forward_com = np.sign(forward_x) * np.linalg.norm(curr_com - prev_com) # range of 0.003 per step for 001
+        prev_com = (
+            curr_com
+            if (iteration == 0)
+            else np.array(data_sensors.links.global_com_position(iteration - 1))
+        )
+        forward_com = np.sign(forward_x) * np.linalg.norm(
+            curr_com - prev_com
+        )  # range of 0.003 per step for 001
 
-        return conf.CONF["RL"]["RewardFnc"]["forward_x"] * forward_x + \
-               conf.CONF["RL"]["RewardFnc"]["cmd_torques"] * cmd_torques + \
-               conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torques + \
-               healthy + \
-               conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
+        return (
+            conf.CONF["RL"]["RewardFnc"]["forward_x"] * forward_x
+            + conf.CONF["RL"]["RewardFnc"]["cmd_torques"] * cmd_torques
+            + conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torques
+            + healthy
+            + conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
+        )
 
     def set_action(
         action, network_parameters, action_choice: ActionChoice, iteration: int
@@ -533,21 +561,25 @@ class FarmsGym(gym.Env):
         # so that the robot actually swims forward!
 
         self.done = False
-        if (env_step.step_type == StepType.LAST): self.done = True  # end of episode
-        curr_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[0]
+        if env_step.step_type == StepType.LAST:
+            self.done = True  # end of episode
+        curr_x = np.array(
+            self.sim.task.data.sensors.links.global_com_position(iteration)
+        )[0]
         start_x = np.array(self.sim.task.data.sensors.links.global_com_position(0))[0]
-        if (curr_x - start_x > 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True): self.done = True # early terminattion guides training
+        if curr_x - start_x > 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True:
+            self.done = True  # early termination on backwards movement
 
         if self.done and self.is_test_env:
             utils.save_performance_metrics(
                 self.sim,
                 self.timestep,
-                1500,
+                self.sim_options.n_iterations,
             )
             if self.sim_options.record == True:
                 postprocessing_from_clargs(
                     sim=self.sim,
-                    video_name=os.path.join(conf.LOG_DIR_RESULTS, "best_model.mp4")
+                    video_name=os.path.join(conf.LOG_DIR_RESULTS, "best_model.mp4"),
                 )
 
         return self.observation, self.reward, self.done, self.info
@@ -621,19 +653,21 @@ class FarmsGym(gym.Env):
     def close(self):
         pass
 
+
 class ArchTestCallback(TaskCallback):
     def __init__(
-            self,
-            **kwargs,
+        self,
+        **kwargs,
     ):
         super().__init__()
         self.reward = 0.0
-    
+
     def after_step(self, task, physics):
-        self.reward += FarmsGym.compute_reward(task.data.sensors, task.iteration -1)
+        self.reward += FarmsGym.compute_reward(task.data.sensors, task.iteration - 1)
         if task.iteration > 1499:
             print(f"iteration: {task.iteration}")
             print(f"reward: {self.reward}")
+
 
 class GymTestCallback(TaskCallback):
     """GymTestCallback callback
@@ -686,9 +720,7 @@ class GymTestCallback(TaskCallback):
 
         if self.model is None:
             raise ValueError("model cannot be none")
-        self.action, _states = self.model.predict(
-            self.observations, deterministic=True
-        )
+        self.action, _states = self.model.predict(self.observations, deterministic=True)
 
         # sim is mujoco simulation object
         FarmsGym.set_action(
@@ -698,7 +730,6 @@ class GymTestCallback(TaskCallback):
             iteration=task.iteration,
         )
         return
-    
 
     def after_step(self, task, physics):
         """After each step"""
@@ -709,9 +740,9 @@ class GymTestCallback(TaskCallback):
             iteration=iteration,
             observation_choice=self.observation_choice,
         )
-        
+
         # TODO calculate reward here
-        
+
         return
 
     def set_mujoco_model(self, sim):

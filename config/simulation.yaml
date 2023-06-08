@@ -3,7 +3,7 @@ units:
   seconds: 1.0
   kilograms: 1.0
 timestep: 0.01 # modify
-n_iterations: 1500 # modify
+n_iterations: 1000 # modify
 # total time = n_iterations * timestep
 play: true
 rtl: 1.0

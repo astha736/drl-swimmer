@@ -7,7 +7,13 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import yaml
 from torch.utils.tensorboard import SummaryWriter
 
-from rlgym.rl_gym import FarmsGym, GymTestCallback, ActionChoice, ObservationChoice, ArchTestCallback
+from rlgym.rl_gym import (
+    FarmsGym,
+    GymTestCallback,
+    ActionChoice,
+    ObservationChoice,
+    ArchTestCallback,
+)
 
 from . import simulation
 
@@ -15,6 +21,8 @@ from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
 from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.logger import configure
+from stable_baselines3.common.evaluation import evaluate_policy
+
 
 from stable_baselines3.common.callbacks import (
     CallbackList,
@@ -32,6 +40,7 @@ from . import utils
 
 from utils.networks import CustomActorCriticPolicy
 import conf
+
 
 class TrainTestClass:
     """TrainTestClass
@@ -89,7 +98,6 @@ class TrainTestClass:
         self.arena_options = arena_options
         self.sim_options = sim_options
         self.simulator = simulator
-        self.save_test_data = False  # TODO: setup kwargs option
         self.action_choice = action_choice
         self.observation_choice = observation_choice
         self.learn_total_timesteps = learn_total_timesteps
@@ -103,32 +111,38 @@ class TrainTestClass:
         """
 
         ##### TRAIN #####
-        def get_vec_env():
-            gym_env = FarmsGym(
+        def get_env():
+            env = FarmsGym(
                 timestep=self.sim_options.timestep,
                 observation_choice=self.observation_choice,
                 action_choice=self.action_choice,
                 animat_options=self.animat_options,
-                arena_options = self.arena_options,
-                sim_options = self.sim_options,
-                simulator = self.simulator,
+                arena_options=self.arena_options,
+                sim_options=self.sim_options,
+                simulator=self.simulator,
             )
-            return gym_env
+            return env
 
-        vec_gym_env = make_vec_env(
-            get_vec_env, n_envs=1, seed=123 # vec_env_cls=SubprocVecEnv
-        )
+        venv = make_vec_env(get_env, n_envs=1, seed=123)
+        eval_venv = make_vec_env(get_env, n_envs=1, seed=123)
+        # vec_env_cls=SubprocVecEnv
 
-        if conf.CONF["RL"]["norm_obs"]:
-            vec_gym_env = VecNormalize(vec_gym_env, norm_obs=True, norm_reward=True)
+        if conf.CONF["RL"]["normWrapper"]:
+            venv = VecNormalize(venv, norm_obs=True, norm_reward=True)
+            eval_venv = VecNormalize(
+                eval_venv, norm_obs=True, norm_reward=False, training=False
+            )
 
         if "PPOparams" in conf.CONF["RL"]:
             model = PPO(
                 CustomActorCriticPolicy,
-                vec_gym_env,
+                venv,
                 tensorboard_log=conf.LOG_DIR_TENSORBOARD,
                 seed=123,
-                learning_rate=linear_schedule(conf.CONF["RL"]["PPOparams"]["lr_start"], conf.CONF["RL"]["PPOparams"]["lr_end"]),
+                learning_rate=linear_schedule(
+                    conf.CONF["RL"]["PPOparams"]["lr_start"],
+                    conf.CONF["RL"]["PPOparams"]["lr_end"],
+                ),
                 n_steps=conf.CONF["RL"]["PPOparams"]["n_steps"],
                 batch_size=conf.CONF["RL"]["PPOparams"]["batch_size"],
                 n_epochs=conf.CONF["RL"]["PPOparams"]["n_epochs"],
@@ -140,63 +154,70 @@ class TrainTestClass:
         elif "SACparams" in conf.CONF["RL"]:
             model = SAC(
                 "MlpPolicy",
-                vec_gym_env,
+                venv,
             )
         else:
             raise ValueError("Policy not implemented")
 
-
-
         # configure logger
-        new_logger = configure(conf.LOG_DIR_TENSORBOARD, ["stdout", "csv", "tensorboard"])
+        new_logger = configure(
+            conf.LOG_DIR_TENSORBOARD, ["stdout", "csv", "tensorboard"]
+        )
         model.set_logger(new_logger)
 
         eval_callback = EvalCallback(
-            vec_gym_env,
-            eval_freq=50_000,
+            eval_venv,
+            eval_freq=25_000,
             deterministic=True,
             warn=True,
             verbose=1,
             # log_path=conf.LOG_DIR_TENSORBOARD, # don't know how to read the log and what's in there
             best_model_save_path=conf.LOG_DIR_RESULTS,
-            callback_on_new_best=SaveVecNormalizeCallback(save_freq=1, name_prefix="best_model", save_path=conf.LOG_DIR_RESULTS) if conf.CONF["RL"]["norm_obs"] else None,
+            callback_on_new_best=SaveVecNormalizeCallback(
+                save_freq=1, name_prefix="best_model", save_path=conf.LOG_DIR_RESULTS
+            )
+            if conf.CONF["RL"]["normWrapper"]
+            else None,
         )
 
         # profile.profile(
-       	#     function=model.learn, total_timesteps=1, profile_filename="profile_prod_cluster_2cpu.profile"
+        #     function=model.learn, total_timesteps=1, profile_filename="profile_prod_cluster_2cpu.profile"
         # )
 
-        model.learn(total_timesteps=self.learn_total_timesteps , callback=eval_callback)
+        model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
         model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
-        if conf.CONF["RL"]["norm_obs"]:
-            model.get_vec_normalize_env().save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl"))
-        
+        if conf.CONF["RL"]["normWrapper"]:
+            model.get_vec_normalize_env().save(
+                os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl")
+            )
+
         ##### TEST #####
-        del model, vec_gym_env
+        del model, venv
 
         self.sim_options.record = True
 
-        def get_test_vec_env():
-            gym_env_test = FarmsGym(
+        def get_test_env():
+            test_env = FarmsGym(
                 timestep=self.sim_options.timestep,
                 observation_choice=self.observation_choice,
                 action_choice=self.action_choice,
                 animat_options=self.animat_options,
-                arena_options = self.arena_options,
-                sim_options = self.sim_options,
-                simulator = self.simulator,
+                arena_options=self.arena_options,
+                sim_options=self.sim_options,
+                simulator=self.simulator,
                 is_test_env=True,
             )
-            return gym_env_test
-        
-        vec_gym_env_test = make_vec_env(
-            get_test_vec_env, n_envs=1, seed=123
-        )
+            return test_env
 
-        if conf.CONF["RL"]["norm_obs"]:
-            vec_gym_env_test = VecNormalize.load(os.path.join(conf.LOG_DIR_RESULTS, "best_model_normalize.pkl"), vec_gym_env_test)
-            vec_gym_env_test.training = False
-            vec_gym_env_test.norm_reward = False
+        venv_test = make_vec_env(get_test_env, n_envs=1, seed=123)
+
+        if conf.CONF["RL"]["normWrapper"]:
+            venv_test = VecNormalize.load(
+                os.path.join(conf.LOG_DIR_RESULTS, "best_model_normalize.pkl"),
+                venv_test,
+            )
+            venv_test.training = False
+            venv_test.norm_reward = False
 
         if "PPOparams" in conf.CONF["RL"]:
             model = PPO.load(os.path.join(conf.LOG_DIR_RESULTS, "best_model.zip"))
@@ -205,18 +226,18 @@ class TrainTestClass:
         else:
             raise ValueError("Policy not implemented")
 
-
-        from stable_baselines3.common.evaluation import evaluate_policy
         rew, len_ = evaluate_policy(
             model,
-            vec_gym_env_test,
+            venv_test,
             n_eval_episodes=1,
             deterministic=True,
             return_episode_rewards=True,
         )
 
         # log reward of best model to performance_metrics.txt
-        with open(os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a") as f:
+        with open(
+            os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a"
+        ) as f:
             f.write("\n")
             f.write(f"best model reward: {rew} \n")
         f.close()
@@ -224,12 +245,10 @@ class TrainTestClass:
         # log reward of best model to common results file: results.yaml
         results_file = "./experiments/results.yaml"
         results = yaml.load((open(results_file, "r")), Loader=yaml.FullLoader)
-        results[conf.CONF["experiment_id"]]["best model reward"] = f'{rew}'
-        with (open(results_file, "w")) as f:
+        results[conf.CONF["experiment_id"]]["best model reward"] = f"{rew}"
+        with open(results_file, "w") as f:
             f.write(yaml.dump(results))
         f.close()
-
-
 
     # # This is another way to test a model; not used for now
     # def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
@@ -284,7 +303,7 @@ class TrainTestClass:
         @brief: This function is used to check the options for FARMS and Notions(ExperimentOptions)
         """
         archTestCallback = ArchTestCallback()
-      
+
         # self.sim_options.record = True
         sim, animat_data = simulation.setup_simulation(
             self.animat_options,
@@ -297,7 +316,6 @@ class TrainTestClass:
         sim._env.reset()
         sim.run()
 
-
         # get and save plots and data
         utils.save_performance_metrics(
             sim,
@@ -306,7 +324,9 @@ class TrainTestClass:
         )
 
         # log reward of best model to performance_metrics.txt
-        with open(os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a") as f:
+        with open(
+            os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a"
+        ) as f:
             f.write("\n")
             f.write(f"best model reward: {archTestCallback.reward} \n")
         f.close()
@@ -314,8 +334,10 @@ class TrainTestClass:
         # log reward of best model to common results file: results.yaml
         results_file = "./experiments/results.yaml"
         results = yaml.load((open(results_file, "r")), Loader=yaml.FullLoader)
-        results[conf.CONF["experiment_id"]]["best model reward"] = f'{archTestCallback.reward}'
-        with (open(results_file, "w")) as f:
+        results[conf.CONF["experiment_id"]][
+            "best model reward"
+        ] = f"{archTestCallback.reward}"
+        with open(results_file, "w") as f:
             f.write(yaml.dump(results))
         f.close()
 
@@ -330,8 +352,8 @@ class SaveVecNormalizeCallback(BaseCallback):
         only one file will be kept.
     """
 
-    def __init__(self, save_freq: int, save_path: str, name_prefix: str, verbose: int = 0):
-        super(SaveVecNormalizeCallback, self).__init__(verbose)
+    def __init__(self, save_freq: int, save_path: str, name_prefix: str):
+        super(SaveVecNormalizeCallback, self).__init__(0)
         self.save_freq = save_freq
         self.save_path = save_path
         self.name_prefix = name_prefix
@@ -342,29 +364,10 @@ class SaveVecNormalizeCallback(BaseCallback):
             if self.model.get_vec_normalize_env() is not None:
                 print(f"#### New best model at {self.num_timesteps}")
                 self.model.get_vec_normalize_env().save(path)
-                if self.verbose > 1:
-                    print(f"Saving VecNormalize to {path}")
+            else:
+                raise ValueError("Error: no VecNormalize wrapper on the model")
         return True
-    
-class LinearSchedule():
-    """
-    Linear interpolation between initial_p and final_p over
-    schedule_timesteps. After this many timesteps pass final_p is
-    returned.
 
-    :param schedule_timesteps: (int) Number of timesteps for which to linearly anneal initial_p to final_p
-    :param initial_p: (float) initial output value
-    :param final_p: (float) final output value
-    """
-
-    def __init__(self, schedule_timesteps, final_p, initial_p):
-        self.schedule_timesteps = schedule_timesteps
-        self.final_p = final_p
-        self.initial_p = initial_p
-
-    def value(self, step):
-        fraction = min(float(step) / self.schedule_timesteps, 1.0)
-        return self.initial_p + fraction * (self.final_p - self.initial_p)
 
 def linear_schedule(initial_value: float, end_value: float) -> Callable[[float], float]:
     """
@@ -374,6 +377,7 @@ def linear_schedule(initial_value: float, end_value: float) -> Callable[[float],
     :return: schedule that computes
       current learning rate depending on remaining progress
     """
+
     def func(progress_remaining: float) -> float:
         """
         Progress will decrease from 1 (beginning) to 0.
