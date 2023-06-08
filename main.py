@@ -27,7 +27,6 @@ with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_co
 
 
 def main() -> None:
-
     # setup clargs
     clargs = sim_parse_args()
     clargs.animat_config = conf.CONF["config"]["animat"]
@@ -53,8 +52,20 @@ def main() -> None:
         arena_options_loader=AmphibiousArenaOptions,
     )
 
+    # change config params, if available
+    if "drive" in conf.CONF["config"]:
+        animat_options.control.network.drives[0].initial_value = conf.CONF["config"][
+            "drive"
+        ]
+        animat_options.control.network.drives[1].initial_value = conf.CONF["config"][
+            "drive"
+        ]
+
+    if "n_iterations" in conf.CONF["config"]:
+        sim_options.n_iterations = conf.CONF["config"]["n_iterations"]
+
     exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG()
-    
+
     if conf.CONF["run_type"] == "arch_testing":
         exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
             s_caudl_senstivity=getattr(
@@ -65,10 +76,12 @@ def main() -> None:
             init_osci_cond=conf.CONF["robot_arch_testing"]["init_osci_cond"],
             c_inter=conf.CONF["robot_arch_testing"]["c_inter"],
         )
-        
+
     exp_cond_experiment.setup(animat_options)
 
-    total_timesteps = sim_options.n_iterations * conf.CONF["RL"]["episodes_per_training"]
+    total_timesteps = (
+        sim_options.n_iterations * conf.CONF["RL"]["episodes_per_training"]
+    )
 
     # Set action and observation spaces
     action_list = []
@@ -105,8 +118,6 @@ def main() -> None:
             train_test.arch_testing()
         case _:
             raise ValueError("Invalid run_type")
-
-
 
 
 if __name__ == "__main__":

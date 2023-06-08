@@ -480,10 +480,22 @@ class FarmsGym(gym.Env):
         cmd_torques = np.sum(
             np.abs(np.array(data_sensors.joints.cmd_torques())[iteration])
         )  # range of ~3-4 per step for 001
-        active_torques = np.sum(
-            np.abs(np.array(data_sensors.joints.active_torques())[iteration])
-        )  # range of ~1-2 per step for 001
+
         # Astha said active_torques is good for bioinspiration
+        active_torques = np.array(data_sensors.joints.active_torques())[
+            iteration
+        ]  # range of ~1-2 per step for 001
+
+        active_torques_prev = (
+            np.array(data_sensors.joints.active_torques())[iteration - 1]
+            if iteration > 0
+            else 0.0
+        )
+
+        active_torque = np.sum(np.abs(active_torques))  # range of ~7 per step for 001
+        active_torque_diff = np.sum(
+            np.abs(active_torques - active_torques_prev)
+        )  # range of ~0.3 per step for 001
 
         # healthy
         healthy = conf.CONF["RL"]["RewardFnc"]["healthy"]
@@ -502,9 +514,10 @@ class FarmsGym(gym.Env):
         return (
             conf.CONF["RL"]["RewardFnc"]["forward_x"] * forward_x
             + conf.CONF["RL"]["RewardFnc"]["cmd_torques"] * cmd_torques
-            + conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torques
+            + conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torque
             + healthy
             + conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
+            + conf.CONF["RL"]["RewardFnc"]["active_torque_diff"] * active_torque_diff
         )
 
     def set_action(
