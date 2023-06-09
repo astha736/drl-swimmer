@@ -480,18 +480,15 @@ class FarmsGym(gym.Env):
         cmd_torques = np.sum(
             np.abs(np.array(data_sensors.joints.cmd_torques())[iteration])
         )  # range of ~3-4 per step for 001
-
         # Astha said active_torques is good for bioinspiration
         active_torques = np.array(data_sensors.joints.active_torques())[
             iteration
         ]  # range of ~1-2 per step for 001
-
         active_torques_prev = (
             np.array(data_sensors.joints.active_torques())[iteration - 1]
             if iteration > 0
             else 0.0
         )
-
         active_torque = np.sum(np.abs(active_torques))  # range of ~7 per step for 001
         active_torque_diff = np.sum(
             np.abs(active_torques - active_torques_prev)
@@ -511,6 +508,15 @@ class FarmsGym(gym.Env):
             curr_com - prev_com
         )  # range of 0.003 per step for 001
 
+        # target speed
+        speed_error = 0.0
+        if "target_speed" in conf.CONF["RL"]:
+            speed_com = np.linalg.norm(
+                np.array(data_sensors.links.global_com_velocity(iteration))
+            )
+            speed_target = conf.CONF["RL"]["RewardFnc"]["target_speed"]  # 0.25
+            speed_error = speed_target - speed_com
+
         return (
             conf.CONF["RL"]["RewardFnc"]["forward_x"] * forward_x
             + conf.CONF["RL"]["RewardFnc"]["cmd_torques"] * cmd_torques
@@ -518,6 +524,7 @@ class FarmsGym(gym.Env):
             + healthy
             + conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
             + conf.CONF["RL"]["RewardFnc"]["active_torque_diff"] * active_torque_diff
+            + conf.CONF["RL"]["RewardFnc"]["speed_error"] * speed_error
         )
 
     def set_action(
