@@ -514,7 +514,7 @@ class FarmsGym(gym.Env):
             speed_com = np.linalg.norm(
                 np.array(data_sensors.links.global_com_velocity(iteration))
             )
-            speed_target = conf.CONF["RL"]["RewardFnc"]["target_speed"]  # 0.25
+            speed_target = conf.CONF["RL"]["target_speed"]  # 0.25
             speed_error = speed_target - speed_com
 
         return (
