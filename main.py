@@ -64,6 +64,9 @@ def main() -> None:
     if "n_iterations" in conf.CONF["config"]:
         sim_options.n_iterations = conf.CONF["config"]["n_iterations"]
 
+    if "timestep" in conf.CONF["config"]:
+        sim_options.timestep = conf.CONF["config"]["timestep"]
+
     exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG()
 
     if conf.CONF["run_type"] == "arch_testing":
@@ -87,6 +90,8 @@ def main() -> None:
     action_list = []
     if "STRETCH" in conf.CONF["RL"]["action_choice"]:
         action_list.append(ActionType.STRETCH)
+    if "DRIVE" in conf.CONF["RL"]["action_choice"]:
+        action_list.append(ActionType.DRIVE)
 
     observation_list = []
     if "REACTION_XY" in conf.CONF["RL"]["observation_choice"]:

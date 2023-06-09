@@ -56,6 +56,7 @@ class bcolors:
 class ActionType(Enum):
     STRETCH = 1  # stretch
     CONTACT = 2  # contact
+    DRIVE = 3  # drive
 
 
 class ObservationType(Enum):
@@ -77,6 +78,7 @@ class ActionChoice:
     action_output_scale = {
         ActionType.STRETCH: 30,
         ActionType.CONTACT: 10,
+        ActionType.DRIVE: [3.0, 3.8],
     }
 
     def __init__(self, action_list: List[ActionType], n_body_joints: int = 10):
@@ -107,10 +109,18 @@ class ActionChoice:
 
         return low, high
 
+    def action_bound_DRIVE(self):
+        self.action_length[ActionType.DRIVE] = 2  # 2 drives
+        low = np.array([-1] * self.action_length[ActionType.DRIVE])
+        high = np.array([1] * self.action_length[ActionType.DRIVE])
+
+        return low, high
+
     def get_action_bound(self, action: ActionType):
         switcher = {
             ActionType.STRETCH: self.action_bound_STRETCH,
             ActionType.CONTACT: self.action_bound_CONTACT,
+            ActionType.DRIVE: self.action_bound_DRIVE,
         }
 
         return switcher.get(action, "Invalid Action Type")
@@ -133,15 +143,11 @@ class ActionChoice:
         return spaces.Box(low=low_bound, high=high_bound), np.shape(low_bound)[0]
 
     def set_action_STRETCH(self, action, network_parameters, iteration):
-        # @ASTHA PPO OUTPUTS ACTION IN [-1,1]?
-        # @ASTHA: WHERE DOES SCALING FACTORS COME FROM?
-        action_old = action
         action = action * ActionChoice.action_output_scale[ActionType.STRETCH]
-        # @ASTHA: WHAT DOES FOLLOWIGN LINE DO?
+
         robot_parameters = network_parameters.joints2osc_map.weights.array
 
         for i, action_val in enumerate(action):
-            # LOG PRINT OBSERVE
             robot_parameters[i * 2 + 0] = action_val  # left oscillator assignment
             robot_parameters[i * 2 + 1] = action_val * -1  # right oscillator assignment
         pass
@@ -158,14 +164,27 @@ class ActionChoice:
 
         pass
 
+    def set_action_DRIVE(self, action, network_parameters, iteration):
+        # network_parameters = self.sim.task.data.network
+        # setting data.network.drives.array
+
+        # rescale action
+        action = ((action - (-1)) / 2) * (
+            ActionChoice.action_output_scale[ActionType.DRIVE][1]
+            - ActionChoice.action_output_scale[ActionType.DRIVE][0]
+        ) + ActionChoice.action_output_scale[ActionType.DRIVE][0]
+
+        # set action
+        network_parameters.drives.array[iteration][0] = action[0]
+        network_parameters.drives.array[iteration][1] = action[1]
+
+        pass
+
     def set_action_switch(self, observation: ActionType):
-        # that a simulated switch case with a dict. Basically, the corresponding action in the
-        # dict is called
-        # that a simulated switch case with a dict. Basically, the corresponding action in the
-        # dict is called
         switcher = {
             ActionType.STRETCH: self.set_action_STRETCH,
             ActionType.CONTACT: self.set_action_CONTACT,
+            ActionType.DRIVE: self.set_action_DRIVE,
         }
 
         return switcher.get(observation, "Invalid observation Type")
