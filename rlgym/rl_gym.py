@@ -581,13 +581,14 @@ class FarmsGym(gym.Env):
             self.done = False
             if env_step.step_type == StepType.LAST:
                 self.done = True  # end of episode
+
             curr_x = np.array(
                 self.sim.task.data.sensors.links.global_com_position(iteration)
             )[0]
             start_x = np.array(self.sim.task.data.sensors.links.global_com_position(0))[
                 0
             ]
-            if curr_x - start_x > 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True:
+            if curr_x < start_x - 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True:
                 self.done = True  # early termination on backwards movement
 
             if self.done and self.is_test_env:
