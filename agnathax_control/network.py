@@ -41,8 +41,17 @@ class NetworkODETEST(AnimatNetwork):
         self.dstate = np.zeros_like(data.state.array[0, :])
         self.ode: Callable = kwargs.pop("ode", ode_oscillators_sparse)
         self.solver: ODE = integrate.ode(f=self.ode)
-        self.solver.set_integrator("dopri5", **kwargs)
+        nsteps = 1000
+        if "integrator_nsteps" in conf.CONF["config"]:
+            nsteps = conf.CONF["config"]["integrator_nsteps"]
+        integrator = "dopri5"
+        if "integrator" in conf.CONF["config"]:
+            integrator = conf.CONF["config"]["integrator"]
+        self.solver.set_integrator(integrator, nsteps=nsteps, **kwargs)
         self.solver.set_initial_value(y=state_array[0, :], t=0.0)
+
+        # for drive:
+        # dop853 seems to work
 
     def copy_next_drive(self, iteration):
         """Set initial drive"""
