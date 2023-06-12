@@ -73,8 +73,6 @@ class NetworkODETEST(AnimatNetwork):
             self.data.state.array[0, osci] = initial_phase_l[j]
             self.data.state.array[0, osci + 1] = initial_phase_r[j]
 
-        return initial_phase_l, initial_phase_r
-
     def copy_next_drive(self, iteration):
         """Set initial drive"""
         array = self.data.network.drives.array
