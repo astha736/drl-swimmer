@@ -75,7 +75,6 @@ def main() -> None:
         sim_options.timestep * sim_options.n_iterations
     )
 
-
     exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
         s_caudl_senstivity=getattr(
             RobotFeedbackSenstivity,
