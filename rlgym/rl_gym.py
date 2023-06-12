@@ -424,7 +424,12 @@ class FarmsGym(gym.Env):
         self.action_choice = action_choice
         self.observation_space = observation_choice.observation_space
         self.n_obs = observation_choice.n_obs
-        self.action_space = spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
+
+        # choose action space according to experiment
+        if conf.CONF["RL"]["localFeedback"]:
+            self.action_space = spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
+        else:
+            self.action_space = action_choice.action_space
 
         self.n_act = action_choice.n_act
         self.timestep = timestep
@@ -452,8 +457,9 @@ class FarmsGym(gym.Env):
             callbacks=[],
         )
 
-        self.action_buffer = np.zeros(self.n_act)
-        self.action_buffer_counter = 0
+        if conf.CONF["RL"]["localFeedback"]:
+            self.action_buffer = np.zeros(self.n_act)
+            self.action_buffer_counter = 0
 
     def get_observations(
         data_sensors, data_states, iteration: int, observation_choice: ObservationChoice
@@ -543,68 +549,71 @@ class FarmsGym(gym.Env):
     def step(self, action):
         """Performs a step on the environment"""
 
-        self.action_buffer[self.action_buffer_counter] = action[0]
-        self.action_buffer_counter += 1
+        # global feedback: step every iteration
+        # local feedback: use action buffering
+        if conf.CONF["RL"]["localFeedback"]:
+            self.action_buffer[self.action_buffer_counter] = action[0]
+            self.action_buffer_counter += 1
+            # return if we have not yet filled the buffer
+            if not self.action_buffer_counter == self.n_act:
+                return self.observation, self.reward, self.done, self.info
+            # reset action_buffer_counter and perform a step in the environment
+            else:
+                action = self.action_buffer
+                self.action_buffer_counter = 0
 
-        # step every self.n_act iterations, because we have self.n_act actions
-        if self.action_buffer_counter == self.n_act:
-            # this MUST be defined here!
-            iteration = self.sim.task.iteration
-            if action is None:
-                print("should not be allowed")
+        # this MUST be defined here!
+        iteration = self.sim.task.iteration
+        if action is None:
+            print("should not be allowed")
 
-            FarmsGym.set_action(
-                action=self.action_buffer,
-                network_parameters=self.sim.task.data.network,
-                action_choice=self.action_choice,
-                iteration=iteration,
+        FarmsGym.set_action(
+            action=action,
+            network_parameters=self.sim.task.data.network,
+            action_choice=self.action_choice,
+            iteration=iteration,
+        )
+
+        # @ASTHA makes simulation go forward # @CHECK
+        env_step = self.sim._env.step(
+            action=None
+        )  # Take control of the env; used instead of sim.run
+
+        self.observation = FarmsGym.get_observations(
+            data_sensors=self.sim.task.data.sensors,
+            data_states=self.sim.task.data.state,
+            iteration=iteration,
+            observation_choice=self.observation_choice,
+        )
+
+        # REWARD
+        self.reward = FarmsGym.compute_reward(
+            self.sim.task.data.sensors,
+            iteration,
+        )
+
+        self.done = False
+        if env_step.step_type == StepType.LAST:
+            self.done = True  # end of episode
+
+        curr_x = np.array(
+            self.sim.task.data.sensors.links.global_com_position(iteration)
+        )[0]
+        start_x = np.array(self.sim.task.data.sensors.links.global_com_position(0))[0]
+        if curr_x < start_x - 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True:
+            self.done = True  # early termination on backwards movement
+
+        if self.done and self.is_test_env:
+            utils.save_performance_metrics(
+                self.sim,
+                self.timestep,
+                self.sim_options.n_iterations,
             )
-
-            # @ASTHA makes simulation go forward # @CHECK
-            env_step = self.sim._env.step(
-                action=None
-            )  # Take control of the env; used instead of sim.run
-
-            self.observation = FarmsGym.get_observations(
-                data_sensors=self.sim.task.data.sensors,
-                data_states=self.sim.task.data.state,
-                iteration=iteration,
-                observation_choice=self.observation_choice,
-            )
-
-            # REWARD
-            self.reward = FarmsGym.compute_reward(
-                self.sim.task.data.sensors,
-                iteration,
-            )
-
-            self.done = False
-            if env_step.step_type == StepType.LAST:
-                self.done = True  # end of episode
-
-            curr_x = np.array(
-                self.sim.task.data.sensors.links.global_com_position(iteration)
-            )[0]
-            start_x = np.array(self.sim.task.data.sensors.links.global_com_position(0))[
-                0
-            ]
-            if curr_x < start_x - 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True:
-                self.done = True  # early termination on backwards movement
-
-            if self.done and self.is_test_env:
-                utils.save_performance_metrics(
-                    self.sim,
-                    self.timestep,
-                    self.sim_options.n_iterations,
+            if self.sim_options.record == True:
+                postprocessing_from_clargs(
+                    sim=self.sim,
+                    video_name=os.path.join(conf.LOG_DIR_RESULTS, "best_model.mp4"),
                 )
-                if self.sim_options.record == True:
-                    postprocessing_from_clargs(
-                        sim=self.sim,
-                        video_name=os.path.join(conf.LOG_DIR_RESULTS, "best_model.mp4"),
-                    )
-
-            # reset action_buffer_counter
-            self.action_buffer_counter = 0
 
         return self.observation, self.reward, self.done, self.info
 
