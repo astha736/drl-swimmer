@@ -443,7 +443,13 @@ class FarmsGym(gym.Env):
         self.action_choice = action_choice
         self.observation_space = observation_choice.observation_space
         self.n_obs = observation_choice.n_obs
-        self.action_space = action_choice.action_space
+
+        # choose action space according to experiment
+        if conf.CONF["RL"]["localFeedback"]:
+            self.action_space = spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
+        else:
+            self.action_space = action_choice.action_space
+
         self.n_act = action_choice.n_act
         self.timestep = timestep
 
@@ -469,6 +475,10 @@ class FarmsGym(gym.Env):
             self.simulator,
             callbacks=[],
         )
+
+        if conf.CONF["RL"]["localFeedback"]:
+            self.action_buffer = np.zeros(self.n_act)
+            self.action_buffer_counter = 0
 
     def get_observations(
         data_sensors, data_states, iteration: int, observation_choice: ObservationChoice
@@ -565,6 +575,19 @@ class FarmsGym(gym.Env):
     def step(self, action):
         """Performs a step on the environment"""
 
+        # global feedback: step every iteration
+        # local feedback: use action buffering
+        if conf.CONF["RL"]["localFeedback"]:
+            self.action_buffer[self.action_buffer_counter] = action[0]
+            self.action_buffer_counter += 1
+            # return if we have not yet filled the buffer
+            if not self.action_buffer_counter == self.n_act:
+                return self.observation, self.reward, self.done, self.info
+            # reset action_buffer_counter and perform a step in the environment
+            else:
+                action = self.action_buffer
+                self.action_buffer_counter = 0
+
         # this MUST be defined here!
         iteration = self.sim.task.iteration
         if action is None:
@@ -595,13 +618,10 @@ class FarmsGym(gym.Env):
             iteration,
         )
 
-        # @IDEA
-        # add directional reward: the sum of all angles should be zero, or sth like that
-        # so that the robot actually swims forward!
-
         self.done = False
         if env_step.step_type == StepType.LAST:
             self.done = True  # end of episode
+
         curr_x = np.array(
             self.sim.task.data.sensors.links.global_com_position(iteration)
         )[0]
