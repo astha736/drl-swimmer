@@ -39,7 +39,7 @@ class RobotInitialOscillator:
             animat_options (_type_): animat_option object
         """
         initial_phase_l = np.linspace(2 * np.pi, 0, 10)
-        initial_phase_r = np.linspace(np.pi, -np.pi, 10)
+        initial_phase_r = initial_phase_l - np.pi  # np.linspace(np.pi, -np.pi, 10)
         RobotInitialOscillator.set_oscillator_phase(
             animat_options=animat_options,
             initial_phase_l=initial_phase_l,
@@ -55,8 +55,10 @@ class RobotInitialOscillator:
         """
         # initial_phase_l = np.random.random_sample(10)*(2*np.pi)
         # initial_phase_r = np.random.random_sample(10)*(2*np.pi) - np.pi
-        initial_phase_l = np.random.random_sample(10) * (np.pi / 2)
-        initial_phase_r = np.random.random_sample(10) * (np.pi / 2)
+        initial_phase_l = np.random.random_sample(10) * (np.pi)
+        initial_phase_r = (
+            initial_phase_l - np.pi
+        )  # np.random.random_sample(10) * (np.pi / 2)
         RobotInitialOscillator.set_oscillator_phase(
             animat_options=animat_options,
             initial_phase_l=initial_phase_l,
@@ -87,20 +89,20 @@ class RobotInitialOscillator:
                 3.42433152,
             ]
         )
-        initial_phase_r = np.array(
-            [
-                -1.13958819,
-                -0.41038592,
-                -0.63139568,
-                -1.20212702,
-                1.84092402,
-                -1.85471113,
-                1.21257644,
-                2.54544774,
-                0.71828385,
-                -2.63267731,
-            ]
-        )
+        initial_phase_r = initial_phase_l - np.pi  #  np.array(
+        #     [
+        #         -1.13958819,
+        #         -0.41038592,
+        #         -0.63139568,
+        #         -1.20212702,
+        #         1.84092402,
+        #         -1.85471113,
+        #         1.21257644,
+        #         2.54544774,
+        #         0.71828385,
+        #         -2.63267731,
+        #     ]
+        # )
         RobotInitialOscillator.set_oscillator_phase(
             animat_options=animat_options,
             initial_phase_l=initial_phase_l,

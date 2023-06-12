@@ -643,32 +643,6 @@ class FarmsGym(gym.Env):
 
         return self.observation, self.reward, self.done, self.info
 
-    def randomize_robot_state(self):
-        """Randomize the robot state at each rest
-
-        Robot state:
-            Spawn: pose and orientation
-            Joints: initial position and velocity(default to 0)
-
-        """
-
-        # get new changes (joint and spawn) via animat_options
-        # RobotInitialState.set_random_shape_pose(animat_options=self.sim.task.animat_options)
-        # RobotInitialOscillator.random_oscillator_phase(animat_options=self.sim.task.animat_options)
-
-        # RobotInitialState.set_random_shape_pose(animat_options=self.sim._env._task.animat_options)
-        # RobotInitialOscillator.random_oscillator_phase(animat_options=self.sim._env._task.animat_options)
-
-        # self.sim, _ = simulation.setup_simulation(
-        #     self.animat_options,
-        #     self.arena_options,
-        #     self.sim_options,
-        #     self.simulator,
-        #     callbacks = []
-        # )
-
-        return
-
     def reset(self):
         """reset episode procedure
 
@@ -684,9 +658,22 @@ class FarmsGym(gym.Env):
         as the function is called through sim._env.reset() calls
 
         """
-        # reset the variables for robot state
-        # self.randomize_robot_state()
-        # apply motor pos & oscillator changes along with reset
+
+        # self.sim, _ = simulation.setup_simulation(
+        #     self.animat_options,
+        #     self.arena_options,
+        #     self.sim_options,
+        #     self.simulator,
+        #     callbacks = []
+        # )
+
+        # !!! oscillator states are reset manually in agnathax_control/network.py !!!
+
+        if conf.CONF["RL"]["useRandStartCond"]:
+            RobotInitialState.set_random_shape_pose(
+                animat_options=self.sim.task.animat_options
+            )
+
         self.sim._env.reset()
 
         self.observation = FarmsGym.get_observations(

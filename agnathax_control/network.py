@@ -35,9 +35,8 @@ class NetworkODETEST(AnimatNetwork):
     """NetworkODE"""
 
     def __init__(self, data, **kwargs):
-        state_array = data.state.array
         self.state_array_init = data.state.array
-        super().__init__(data=data, n_iterations=np.shape(state_array)[0])
+        super().__init__(data=data, n_iterations=np.shape(data.state.array)[0])
         self.dstate = np.zeros_like(data.state.array[0, :])
         self.ode: Callable = kwargs.pop("ode", ode_oscillators_sparse)
         self.solver: ODE = integrate.ode(f=self.ode)
@@ -46,12 +45,35 @@ class NetworkODETEST(AnimatNetwork):
             nsteps = conf.CONF["config"]["integrator_nsteps"]
         integrator = "dopri5"
         if "integrator" in conf.CONF["config"]:
-            integrator = conf.CONF["config"]["integrator"]
+            integrator = conf.CONF["config"][
+                "integrator"
+            ]  # dop853 seems to work best for 'drive'
         self.solver.set_integrator(integrator, nsteps=nsteps, **kwargs)
-        self.solver.set_initial_value(y=state_array[0, :], t=0.0)
+        self.solver.set_initial_value(y=data.state.array[0, :], t=0.0)
 
-        # for drive:
-        # dop853 seems to work
+    def __reset(self):
+        # sets initial values of oscillators
+        self.dstate = np.zeros_like(self.state_array_init[0, :])  # reset dstate
+        if conf.CONF["RL"]["useRandStartCond"]:
+            self.__set_random_initial_oscillator_states()
+            self.solver.set_initial_value(y=self.data.state.array[0, :], t=0.0)
+        else:
+            self.solver.set_initial_value(
+                y=self.state_array_init[0, :], t=0.0
+            )  # reset initial values to initial states
+        return
+
+    def __set_random_initial_oscillator_states(self):
+        # generate states
+        initial_phase_l = np.random.random_sample(10) * (np.pi)
+        initial_phase_r = initial_phase_l - np.pi  # np.linspace(np.pi, -np.pi, 10)
+
+        # set states
+        for j, osci in enumerate(range(0, 20, 2)):
+            self.data.state.array[0, osci] = initial_phase_l[j]
+            self.data.state.array[0, osci + 1] = initial_phase_r[j]
+
+        return initial_phase_l, initial_phase_r
 
     def copy_next_drive(self, iteration):
         """Set initial drive"""
@@ -67,11 +89,7 @@ class NetworkODETEST(AnimatNetwork):
     ):
         """Control step"""
         if iteration == 0:
-            if not conf.CONF["RL"]["useRandStartCond"]:
-                self.dstate = np.zeros_like(self.state_array_init[0, :])  # reset dstate
-                self.solver.set_initial_value(
-                    y=self.state_array_init[0, :], t=0.0
-                )  # reset initial values to initial states
+            self.__reset()
             self.copy_next_drive(iteration)
             return
         if checks:

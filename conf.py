@@ -53,6 +53,10 @@ def init(experiment_config, experiment_id):
         with open(CONF["RL"]["RewardFnc"]) as f:
             CONF["RL"]["RewardFnc"] = yaml.full_load(f)
 
+    # set default parameters
+    if not "localFeedback" in CONF["RL"]:
+        CONF["RL"]["localFeedback"] = None
+
     # print infos
     print(f"LOG_DIR_RESULTS: {LOG_DIR_RESULTS}")
     print(f"LOG_DIR_TENSORBOARD: {LOG_DIR_TENSORBOARD}")

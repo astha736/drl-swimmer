@@ -10,6 +10,7 @@ class RobotInitialShape(Enum):
     PARALLEL = 3
     DIAGONAL = 4
     TEST = 5
+    RANDOM = 6
 
 
 class RobotInitialState:
@@ -242,6 +243,8 @@ class RobotInitialState:
             RobotInitialState.set_initial_conditions_diagonal(animat_options, pose)
         elif shape == RobotInitialShape.TEST:
             RobotInitialState.set_initial_conditions_test(animat_options, pose)
+        elif shape == RobotInitialShape.RANDOM:
+            RobotInitialState.set_random_shape_pose(animat_options)
         else:
             raise ValueError(
                 " condition_shape value {}, not found. Please check again".format(shape)
@@ -252,11 +255,11 @@ class RobotInitialState:
     def set_random_shape_pose(animat_options):
         random_state = random.choice(RobotInitialState._robot_state_list)
         random_pose = random.choice(RobotInitialState._robot_pose_list)
-        print(
-            "[set_random_shape_pose] random_state: {}, random_pose: {}".format(
-                random_state, random_pose
-            )
-        )
+        # print(
+        #     "[set_random_shape_pose] random_state: {}, random_pose: {}".format(
+        #         random_state, random_pose
+        #     )
+        # )
         RobotInitialState.set_shape_and_pose_static(
             animat_options=animat_options, shape=random_state, pose=random_pose
         )
