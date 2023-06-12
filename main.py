@@ -75,18 +75,16 @@ def main() -> None:
         sim_options.timestep * sim_options.n_iterations
     )
 
-    exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG()
 
-    if conf.CONF["run_type"] == "arch_testing":
-        exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
-            s_caudl_senstivity=getattr(
-                RobotFeedbackSenstivity,
-                conf.CONF["robot_arch_testing"]["s_caudl_senstivity"],
-            ),
-            s_caudl_weight=conf.CONF["robot_arch_testing"]["s_caudl_weight"],
-            init_osci_cond=conf.CONF["robot_arch_testing"]["init_osci_cond"],
-            c_inter=conf.CONF["robot_arch_testing"]["c_inter"],
-        )
+    exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
+        s_caudl_senstivity=getattr(
+            RobotFeedbackSenstivity,
+            conf.CONF["robot_arch"]["s_caudl_senstivity"],
+        ),
+        s_caudl_weight=conf.CONF["robot_arch"]["s_caudl_weight"],
+        init_osci_cond=conf.CONF["robot_arch"]["init_osci_cond"],
+        c_inter=conf.CONF["robot_arch"]["c_inter"],
+    )
 
     exp_cond_experiment.setup(animat_options)
 

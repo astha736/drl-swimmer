@@ -57,6 +57,18 @@ def init(experiment_config, experiment_id):
     if not "localFeedback" in CONF["RL"]:
         CONF["RL"]["localFeedback"] = None
 
+    if not "robot_arch" in CONF["RL"]:
+        CONF["RL"]["robot_arch"][
+            "init_osci_cond"
+        ] = (
+            -1
+        )  # 0 is ideal starting cond.; 1 is random starting cond.; -1 is fixed preset
+        CONF["RL"]["robot_arch"]["s_caudl_weight"] = 0  # -10 works well
+        CONF["RL"]["robot_arch"]["c_inter"] = 0  # 10 works well
+        CONF["RL"]["robot_arch"][
+            "s_caudl_senstivity"
+        ] = "NONPERIOD"  # [SIN, COS, NONPERIOD, SIGNONE]"
+
     # print infos
     print(f"LOG_DIR_RESULTS: {LOG_DIR_RESULTS}")
     print(f"LOG_DIR_TENSORBOARD: {LOG_DIR_TENSORBOARD}")
