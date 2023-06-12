@@ -63,9 +63,17 @@ def main() -> None:
 
     if "n_iterations" in conf.CONF["config"]:
         sim_options.n_iterations = conf.CONF["config"]["n_iterations"]
+    else:
+        conf.CONF["config"]["n_iterations"] = sim_options.n_iterations
 
     if "timestep" in conf.CONF["config"]:
         sim_options.timestep = conf.CONF["config"]["timestep"]
+    else:
+        conf.CONF["config"]["timestep"] = sim_options.timestep
+
+    conf.CONF["config"]["simulation_time"] = (
+        sim_options.timestep * sim_options.n_iterations
+    )
 
     exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG()
 

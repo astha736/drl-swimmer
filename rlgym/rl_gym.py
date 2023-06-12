@@ -523,6 +523,8 @@ class FarmsGym(gym.Env):
             np.abs(active_torques - active_torques_prev)
         )  # range of ~0.3 per step for 001
 
+        # TODO penalize joint power instead of active torques
+
         # healthy
         healthy = conf.CONF["RL"]["RewardFnc"]["healthy"]
 
