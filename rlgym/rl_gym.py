@@ -80,7 +80,7 @@ class ActionChoice:
     action_output_scale = {
         ActionType.STRETCH: 30,
         ActionType.CONTACT: 10,
-        ActionType.DRIVE: [3.0, 3.8],
+        ActionType.DRIVE: [2.5, 4.5],
     }
 
     def __init__(self, action_list: List[ActionType], n_body_joints: int = 10):
