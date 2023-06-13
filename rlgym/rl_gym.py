@@ -541,12 +541,13 @@ class FarmsGym(gym.Env):
             curr_com - prev_com
         )  # range of 0.003 per step for 001
 
-        # target speed
+        # speed
         speed_com = np.linalg.norm(
             np.array(data_sensors.links.global_com_velocity(iteration))
         )
 
-        test = np.array(data_sensors.links.global_com_velocity(iteration))
+        # velocity
+        velocity_com = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
 
         reward = 0.0
         if "forward_x" in conf.CONF["RL"]["RewardFnc"]:
@@ -571,6 +572,10 @@ class FarmsGym(gym.Env):
             )
         if "forward_com" in conf.CONF["RL"]["RewardFnc"]:
             reward += conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
+        if "velocity_error" in conf.CONF["RL"]["RewardFnc"]:
+            reward += conf.CONF["RL"]["RewardFnc"]["velocity_error"] * np.sum(
+                np.abs(velocity_com - conf.CONF["RL"]["target_velocity"])
+            )
 
         return reward
 
