@@ -69,6 +69,7 @@ class ObservationType(Enum):
     REACTION_XY = 5
     REACTION_XYZ = 6
     PHASES = 7
+    VELOCITIES = 8
 
 
 class ActionChoice:
@@ -256,8 +257,14 @@ class ObservationChoice:
 
     def observation_bound_PHASES(self):
         """PHASES"""
-        low = np.array([-np.inf] * (self.n_body_joints))  # why not +1?
-        high = np.array([np.inf] * (self.n_body_joints))  # whoy not +1?
+        low = np.array([-np.inf] * (self.n_body_joints))
+        high = np.array([np.inf] * (self.n_body_joints))
+        return low, high
+
+    def observation_bound_VELOCITIES(self):
+        """VELOCITIES"""
+        low = np.array([-np.inf] * (4))  # 2 * target + 2 * current
+        high = np.array([np.inf] * (4))  # 2 * target + 2 * current
         return low, high
 
     def get_observation_bound(self, observation: ObservationType):
@@ -269,6 +276,7 @@ class ObservationChoice:
             ObservationType.REACTION_XY: self.observation_bound_REACTION_XY,
             ObservationType.REACTION_XYZ: self.observation_bound_REACTION_XYZ,
             ObservationType.PHASES: self.observation_bound_PHASES,
+            ObservationType.VELOCITIES: self.observation_bound_VELOCITIES,
         }
 
         return switcher.get(observation, "Invalid observation Type")
@@ -294,6 +302,15 @@ class ObservationChoice:
         joints_pos = np.array(data_sensors.joints.positions(iteration=iteration))
 
         return joints_pos
+
+    def extract_observation_VELOCITIES(self, data_sensors, data_states, iteration):
+        com_velocity = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
+
+        target_velocity = np.array(
+            conf.CONF["RL"]["target_velocity"],
+        )
+
+        return np.concatenate((com_velocity, target_velocity))
 
     def extract_observation_PHASES(self, data_sensors, data_states, iteration):
         # only return right oscillators for now.
@@ -399,6 +416,7 @@ class ObservationChoice:
             ObservationType.REACTION_XY: self.extract_observation_REACTION_XY_NORM,
             ObservationType.REACTION_XYZ: self.extract_observation_REACTION_XYZ_NORM,
             ObservationType.PHASES: self.extract_observation_PHASES,
+            ObservationType.VELOCITIES: self.extract_observation_VELOCITIES,
         }
 
         return switcher.get(observation, "Invalid observation Type")

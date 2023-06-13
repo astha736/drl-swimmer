@@ -105,6 +105,8 @@ def main() -> None:
         observation_list.append(ObservationType.JOINT_POSITION)
     if "PHASES" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.PHASES)
+    if "VELOCITIES" in conf.CONF["RL"]["observation_choice"]:
+        observation_list.append(ObservationType.VELOCITIES)
 
     # Setup the TrainTest class
     train_test = TrainTestClass(
