@@ -25,6 +25,8 @@ from farms_sim.simulation import postprocessing_from_clargs
 import gym
 from gym import spaces
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
+
 
 from stable_baselines3 import TD3
 from stable_baselines3.common.monitor import Monitor
@@ -468,6 +470,9 @@ class FarmsGym(gym.Env):
 
         self.is_test_env = is_test_env
 
+        if self.is_test_env:
+            self.log_fb_weights = []
+
         self.sim, _ = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
@@ -638,12 +643,42 @@ class FarmsGym(gym.Env):
         if curr_x < start_x - 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True:
             self.done = True  # early termination on backwards movement
 
+        if self.is_test_env:
+            self.log_fb_weights.append(
+                np.array(self.sim.task.data.network.joints2osc_map.weights.array)
+            )
+
         if self.done and self.is_test_env:
             utils.save_performance_metrics(
                 self.sim,
                 self.timestep,
                 self.sim_options.n_iterations,
             )
+            fb_weights = np.array(self.log_fb_weights)
+            _times = np.arange(
+                0,
+                self.timestep * self.sim_options.n_iterations,
+                self.timestep,
+            )
+            fig = plt.figure(f"Feedback weights")
+            for i in [0, 2, 4, 6, 8]:
+                plt.plot(
+                    _times,
+                    fb_weights[:, i],
+                    label=f"Weight joint {i}",
+                )
+            plt.legend(
+                bbox_to_anchor=(1.05, 1),
+                borderaxespad=0,
+            )
+            plt.xlabel("Time [s]")
+            plt.ylabel("Feedback weight value")
+            plt.grid(True)
+
+            with PdfPages(
+                os.path.join(conf.LOG_DIR_RESULTS, "performance_plots_test_env.pdf")
+            ) as pdf:
+                pdf.savefig(fig, bbox_inches="tight")
             if self.sim_options.record == True:
                 postprocessing_from_clargs(
                     sim=self.sim,
