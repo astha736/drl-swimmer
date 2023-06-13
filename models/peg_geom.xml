@@ -1,0 +1,6 @@
+<geometry>
+    <cylinder>
+        <radius>0.02</radius>
+        <length>0.3</length>
+    </cylinder>
+</geometry>
