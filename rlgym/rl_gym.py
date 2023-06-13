@@ -542,7 +542,7 @@ class FarmsGym(gym.Env):
             speed_com = np.linalg.norm(
                 np.array(data_sensors.links.global_com_velocity(iteration))
             )
-            speed_target = conf.CONF["RL"]["target_speed"]  # 0.25
+            speed_target = conf.CONF["RL"]["target_speed"]
             speed_error = speed_target - speed_com
 
         reward = 0.0
@@ -678,10 +678,10 @@ class FarmsGym(gym.Env):
 
         # !!! oscillator states are reset manually in agnathax_control/network.py !!!
 
-        if conf.CONF["RL"]["useRandStartCond"]:
-            RobotInitialState.set_random_shape_pose(
-                animat_options=self.sim.task.animat_options
-            )
+        # if conf.CONF["RL"]["useRandStartCond"]:
+        #     RobotInitialState.set_random_shape_pose(
+        #         animat_options=self.sim.task.animat_options
+        #     )
 
         self.sim._env.reset()
 
