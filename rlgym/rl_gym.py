@@ -525,9 +525,6 @@ class FarmsGym(gym.Env):
 
         # TODO penalize joint power instead of active torques
 
-        # healthy
-        healthy = conf.CONF["RL"]["RewardFnc"]["healthy"]
-
         # forward way COM; positive if forward_x is positive
         curr_com = np.array(data_sensors.links.global_com_position(iteration))
         prev_com = (
@@ -548,15 +545,25 @@ class FarmsGym(gym.Env):
             speed_target = conf.CONF["RL"]["target_speed"]  # 0.25
             speed_error = speed_target - speed_com
 
-        return (
-            conf.CONF["RL"]["RewardFnc"]["forward_x"] * forward_x
-            + conf.CONF["RL"]["RewardFnc"]["cmd_torques"] * cmd_torques
-            + conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torque
-            + healthy
-            + conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
-            + conf.CONF["RL"]["RewardFnc"]["active_torque_diff"] * active_torque_diff
-            + conf.CONF["RL"]["RewardFnc"]["speed_error"] * speed_error
-        )
+        reward = 0.0
+        if "forward_x" in conf.CONF["RL"]["RewardFnc"]:
+            reward += conf.CONF["RL"]["RewardFnc"]["forward_x"] * forward_x
+        if "cmd_torques" in conf.CONF["RL"]["RewardFnc"]:
+            reward += conf.CONF["RL"]["RewardFnc"]["cmd_torques"] * cmd_torques
+        if "active_torques" in conf.CONF["RL"]["RewardFnc"]:
+            reward += conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torque
+        if "healthy" in conf.CONF["RL"]["RewardFnc"]:
+            reward += conf.CONF["RL"]["RewardFnc"]["healthy"]
+        if "speed_error" in conf.CONF["RL"]["RewardFnc"]:
+            reward += conf.CONF["RL"]["RewardFnc"]["speed_error"] * speed_error
+        if "active_torque_diff" in conf.CONF["RL"]["RewardFnc"]:
+            reward += (
+                conf.CONF["RL"]["RewardFnc"]["active_torque_diff"] * active_torque_diff
+            )
+        if "forward_com" in conf.CONF["RL"]["RewardFnc"]:
+            reward += conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
+
+        return reward
 
     def set_action(
         action, network_parameters, action_choice: ActionChoice, iteration: int

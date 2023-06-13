@@ -5,6 +5,7 @@
 *.pkl
 *.zip
 *.csv
+*.out
 
 
 # env
