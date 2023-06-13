@@ -542,13 +542,11 @@ class FarmsGym(gym.Env):
         )  # range of 0.003 per step for 001
 
         # target speed
-        speed_error = 0.0
-        if "target_speed" in conf.CONF["RL"]:
-            speed_com = np.linalg.norm(
-                np.array(data_sensors.links.global_com_velocity(iteration))
-            )
-            speed_target = conf.CONF["RL"]["target_speed"]
-            speed_error = speed_target - speed_com
+        speed_com = np.linalg.norm(
+            np.array(data_sensors.links.global_com_velocity(iteration))
+        )
+
+        test = np.array(data_sensors.links.global_com_velocity(iteration))
 
         reward = 0.0
         if "forward_x" in conf.CONF["RL"]["RewardFnc"]:
@@ -559,8 +557,14 @@ class FarmsGym(gym.Env):
             reward += conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torque
         if "healthy" in conf.CONF["RL"]["RewardFnc"]:
             reward += conf.CONF["RL"]["RewardFnc"]["healthy"]
-        if "speed_error" in conf.CONF["RL"]["RewardFnc"]:
-            reward += conf.CONF["RL"]["RewardFnc"]["speed_error"] * speed_error
+        # TODO catch error if target_speed || speed_error is not defined
+        if (
+            "speed_error" in conf.CONF["RL"]["RewardFnc"]
+            and "target_speed" in conf.CONF["RL"]
+        ):
+            reward += conf.CONF["RL"]["RewardFnc"]["speed_error"] * (
+                speed_com - conf.CONF["RL"]["target_speed"]
+            )
         if "active_torque_diff" in conf.CONF["RL"]["RewardFnc"]:
             reward += (
                 conf.CONF["RL"]["RewardFnc"]["active_torque_diff"] * active_torque_diff
