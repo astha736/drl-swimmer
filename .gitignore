@@ -23,6 +23,10 @@ obstacle/*
 !farms/farms_mujoco/farms_mujoco/simulation/*
 !farms/farms_mujoco/farms_mujoco/simulation/simulation.py
 
+stable-baselines3/*
+!stable-baselines3/stable_baselines3/common/policies.py
+
+
 # pycache 
 scripts/__pycache__/*
 utils/__pycache__/*

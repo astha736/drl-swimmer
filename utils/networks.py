@@ -56,13 +56,6 @@ class CustomNetwork(nn.Module):
         return self.forward_actor(features), self.forward_critic(features)
 
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
-        # Thats wrong. Action space is one dimensional! (Same probability distributions for all actions)
-        # Make action space 1D
-        # not sure how to handle obs space yet
-        # feature = th.Tensor([th.Tensor([features[0][1]])])
-        # out = self.policy_net(feature)
-        # return th.Tensor([out, out, out, out, out, out, out, out, out, out])
-
         return self.policy_net(features)
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
@@ -86,7 +79,6 @@ class localFeedbackShared(nn.Module):
     ):
         super().__init__()
 
-        self.n_calls: int = 0
         self.obs_per_iter: int = 2
 
         # IMPORTANT:
@@ -100,6 +92,9 @@ class localFeedbackShared(nn.Module):
             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
             nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(
+                self.latent_dim_pi, 1
+            ),  # 1 output neuron for each action; replaces the proba_distribution_net of stable-baselines3
         )
 
         # Value network
@@ -120,26 +115,26 @@ class localFeedbackShared(nn.Module):
         return self.forward_actor(features), self.forward_critic(features)
 
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
-        # extract relevant obs
-        # 0-9: joint positions
-        # 10-19: phases
-        obs = th.tensor(
-            [
-                th.Tensor([features[0][self.n_calls]]),
-                th.Tensor(
-                    [features[0][self.n_calls + 1 + 10]]
-                ),  # + 1 because head phase not relevant
-            ],
+        # features: 0-9: joint positions; 10-19: phases
+
+        mean_actions = th.zeros(
+            [1, 9],
             device="cuda:0" if features.get_device() == 0 else "cpu",
         )
 
-        # increment call counter and reset when = 10
-        # don't try to make this as one-lines ;)
-        self.n_calls += 1
-        if self.n_calls == 9:
-            self.n_calls = 0
+        for i in range(9):
+            feature = th.tensor(
+                [
+                    th.Tensor([features[0][i]]),
+                    th.Tensor(
+                        [features[0][i + 1 + 10]]
+                    ),  # + 1 because head phase not relevant
+                ],
+                device="cuda:0" if features.get_device() == 0 else "cpu",
+            )
+            mean_actions[0][i] = self.policy_net(feature)
 
-        return self.policy_net(obs)
+        return mean_actions
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
@@ -162,7 +157,6 @@ class localFeedbackNonShared(nn.Module):
     ):
         super().__init__()
 
-        self.n_calls: int = 0
         self.obs_per_iter: int = 2
 
         # IMPORTANT:
@@ -180,9 +174,12 @@ class localFeedbackNonShared(nn.Module):
                     conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi
                 ),
                 getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+                nn.Linear(
+                    self.latent_dim_pi, 1
+                ),  # 1 output neuron for each action; replaces the proba_distribution_net of stable-baselines3
             )
 
-        self.policy_nets = [get_policy_net() for i in range(10)]
+        self.policy_nets = [get_policy_net() for i in range(9)]
 
         # Value network
         self.value_net = nn.Sequential(
@@ -202,28 +199,26 @@ class localFeedbackNonShared(nn.Module):
         return self.forward_actor(features), self.forward_critic(features)
 
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
-        # extract relevant obs
-        # 0-9: joint positions
-        # 10-19: phases
-        obs = th.tensor(
-            [
-                th.Tensor([features[0][self.n_calls]]),
-                th.Tensor(
-                    [features[0][self.n_calls + 1 + 10]]
-                ),  # + 1 because head phase not relevant
-            ],
+        # features: 0-9: joint positions; 10-19: phases
+
+        mean_actions = th.zeros(
+            [1, 9],
             device="cuda:0" if features.get_device() == 0 else "cpu",
         )
 
-        out = self.policy_nets[self.n_calls](obs)
+        for i in range(9):
+            feature = th.tensor(
+                [
+                    th.Tensor([features[0][i]]),
+                    th.Tensor(
+                        [features[0][i + 1 + 10]]
+                    ),  # + 1 because head phase not relevant
+                ],
+                device="cuda:0" if features.get_device() == 0 else "cpu",
+            )
+            mean_actions[0][i] = self.policy_nets[i](feature)
 
-        # increment call counter and reset when = 10
-        # don't try to make this as one-liner ;)
-        self.n_calls += 1
-        if self.n_calls == 9:
-            self.n_calls = 0
-
-        return out
+        return mean_actions
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)

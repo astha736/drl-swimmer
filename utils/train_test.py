@@ -17,12 +17,10 @@ from rlgym.rl_gym import (
 
 from . import simulation
 
-from sb3_contrib.ppo_recurrent.ppo_recurrent import RecurrentPPO
 from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.evaluation import evaluate_policy
-
 
 from stable_baselines3.common.callbacks import (
     CallbackList,
@@ -180,11 +178,22 @@ class TrainTestClass:
             else None,
         )
 
+        checkpoint_callback = CheckpointCallback(
+            save_freq=50_000,
+            save_path=conf.LOG_DIR_RESULTS,
+            name_prefix="checkpoint",
+            save_replay_buffer=False,
+            save_vecnormalize=True,
+        )
+
         # profile.profile(
         #     function=model.learn, total_timesteps=1, profile_filename="profile_prod_cluster_2cpu.profile"
         # )
 
-        model.learn(total_timesteps=self.learn_total_timesteps, callback=eval_callback)
+        model.learn(
+            total_timesteps=self.learn_total_timesteps,
+            callback=[eval_callback, checkpoint_callback],
+        )
         model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
         if conf.CONF["RL"]["normWrapper"]:
             model.get_vec_normalize_env().save(

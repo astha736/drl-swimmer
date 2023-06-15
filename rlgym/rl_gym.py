@@ -464,11 +464,7 @@ class FarmsGym(gym.Env):
         self.observation_space = observation_choice.observation_space
         self.n_obs = observation_choice.n_obs
 
-        # choose action space according to experiment
-        if conf.CONF["RL"]["localFeedback"]:
-            self.action_space = spaces.Box(low=-1, high=1, shape=(1,), dtype=np.float32)
-        else:
-            self.action_space = action_choice.action_space
+        self.action_space = action_choice.action_space
 
         self.n_act = action_choice.n_act
         self.timestep = timestep
@@ -498,10 +494,6 @@ class FarmsGym(gym.Env):
             self.simulator,
             callbacks=[],
         )
-
-        if conf.CONF["RL"]["localFeedback"]:
-            self.action_buffer = np.zeros(self.n_act)
-            self.action_buffer_counter = 0
 
     def get_observations(
         data_sensors, data_states, iteration: int, observation_choice: ObservationChoice
@@ -615,19 +607,6 @@ class FarmsGym(gym.Env):
 
     def step(self, action):
         """Performs a step on the environment"""
-
-        # global feedback: step every iteration
-        # local feedback: use action buffering
-        if conf.CONF["RL"]["localFeedback"]:
-            self.action_buffer[self.action_buffer_counter] = action[0]
-            self.action_buffer_counter += 1
-            # return if we have not yet filled the buffer
-            if not self.action_buffer_counter == self.n_act:
-                return self.observation, self.reward, self.done, self.info
-            # reset action_buffer_counter and perform a step in the environment
-            else:
-                action = self.action_buffer
-                self.action_buffer_counter = 0
 
         # this MUST be defined here!
         iteration = self.sim.task.iteration
@@ -758,6 +737,9 @@ class FarmsGym(gym.Env):
         self.info = {}
         self.done = False
         self.reward = 0
+
+        if self.is_test_env:
+            self.log_fb_weights = []
 
         return self.observation
 
