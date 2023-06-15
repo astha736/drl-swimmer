@@ -539,7 +539,9 @@ class FarmsGym(gym.Env):
         )  # range of ~0.3 per step for 001
 
         # power
-        joints_power = data_sensors.joints.sum_power_joints_timestep()[iteration]
+        joints_power = np.sum(
+            data_sensors.joints.sum_power_joints_timestep()[iteration]
+        )
 
         # forward way COM; positive if forward_x is positive
         curr_com = np.array(data_sensors.links.global_com_position(iteration))
@@ -561,6 +563,10 @@ class FarmsGym(gym.Env):
         velocity_com = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
 
         reward = 0.0
+        if "vel_com" in conf.CONF["RL"]["RewardFnc"]:
+            reward += (
+                conf.CONF["RL"]["RewardFnc"]["vel_com"] * speed_com * np.sign(forward_x)
+            )
         if "joints_power" in conf.CONF["RL"]["RewardFnc"]:
             reward += conf.CONF["RL"]["RewardFnc"]["joints_power"] * joints_power
         if "forward_x" in conf.CONF["RL"]["RewardFnc"]:
