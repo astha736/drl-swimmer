@@ -538,7 +538,8 @@ class FarmsGym(gym.Env):
             np.abs(active_torques - active_torques_prev)
         )  # range of ~0.3 per step for 001
 
-        # TODO penalize joint power instead of active torques
+        # power
+        joints_power = data_sensors.joints.sum_power_joints_timestep()[iteration]
 
         # forward way COM; positive if forward_x is positive
         curr_com = np.array(data_sensors.links.global_com_position(iteration))
@@ -560,6 +561,8 @@ class FarmsGym(gym.Env):
         velocity_com = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
 
         reward = 0.0
+        if "joints_power" in conf.CONF["RL"]["RewardFnc"]:
+            reward += conf.CONF["RL"]["RewardFnc"]["joints_power"] * joints_power
         if "forward_x" in conf.CONF["RL"]["RewardFnc"]:
             reward += conf.CONF["RL"]["RewardFnc"]["forward_x"] * forward_x
         if "cmd_torques" in conf.CONF["RL"]["RewardFnc"]:
@@ -574,7 +577,7 @@ class FarmsGym(gym.Env):
             and "target_speed" in conf.CONF["RL"]
         ):
             reward += conf.CONF["RL"]["RewardFnc"]["speed_error"] * (
-                speed_com - conf.CONF["RL"]["target_speed"]
+                np.abs(speed_com - conf.CONF["RL"]["target_speed"])
             )
         if "active_torque_diff" in conf.CONF["RL"]["RewardFnc"]:
             reward += (
@@ -763,9 +766,9 @@ class ArchTestCallback(TaskCallback):
 
     def after_step(self, task, physics):
         self.reward += FarmsGym.compute_reward(task.data.sensors, task.iteration - 1)
-        if task.iteration > 1499:
-            print(f"iteration: {task.iteration}")
-            print(f"reward: {self.reward}")
+        # if task.iteration > 1499:
+        #     print(f"iteration: {task.iteration}")
+        #     print(f"reward: {self.reward}")
 
 
 class GymTestCallback(TaskCallback):
