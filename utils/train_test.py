@@ -178,13 +178,13 @@ class TrainTestClass:
             else None,
         )
 
-        checkpoint_callback = CheckpointCallback(
-            save_freq=50_000,
-            save_path=conf.LOG_DIR_RESULTS,
-            name_prefix="checkpoint",
-            save_replay_buffer=False,
-            save_vecnormalize=True,
-        )
+        # checkpoint_callback = CheckpointCallback(
+        #     save_freq=50_000,
+        #     save_path=conf.LOG_DIR_RESULTS,
+        #     name_prefix="checkpoint",
+        #     save_replay_buffer=False,
+        #     save_vecnormalize=True,
+        # )
 
         # profile.profile(
         #     function=model.learn, total_timesteps=1, profile_filename="profile_prod_cluster_2cpu.profile"
@@ -192,7 +192,7 @@ class TrainTestClass:
 
         model.learn(
             total_timesteps=self.learn_total_timesteps,
-            callback=[eval_callback, checkpoint_callback],
+            callback=[eval_callback],
         )
         model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
         if conf.CONF["RL"]["normWrapper"]:
