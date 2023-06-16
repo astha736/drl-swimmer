@@ -2,6 +2,7 @@ import torch
 import torch as th
 from torch import device, nn
 from typing import Callable, Tuple
+import numpy as np
 
 from stable_baselines3.common.policies import ActorCriticPolicy
 from gym import spaces
@@ -97,6 +98,13 @@ class localFeedbackShared(nn.Module):
             ),  # 1 output neuron for each action; replaces the proba_distribution_net of stable-baselines3
         )
 
+        # handle weight initialization
+        # values taken from stable-baselines3
+        # see https://www.google.com/search?q=why+is+ppo+using+orthogonal+initialization&oq=why+is+ppo+using+orthogonal+initialization&aqs=chrome..69i57j33i160.6735j0j1&sourceid=chrome&ie=UTF-8
+        torch.nn.init.orthogonal_(self.policy_net[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net[2].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net[4].weight, gain=0.01)
+
         # Value network
         self.value_net = nn.Sequential(
             nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
@@ -104,6 +112,9 @@ class localFeedbackShared(nn.Module):
             nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
             getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
         )
+
+        torch.nn.init.orthogonal_(self.value_net[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.value_net[2].weight, gain=np.sqrt(2))
 
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         """
@@ -180,6 +191,9 @@ class localFeedbackNonShared(nn.Module):
                 ),  # 1 output neuron for each action; replaces the proba_distribution_net of stable-baselines3
             )
 
+        # TODO handle weight initialization
+        raise NotImplementedError
+
         self.policy_nets = [get_policy_net().to(self.device) for i in range(9)]
 
         # Value network
@@ -189,6 +203,9 @@ class localFeedbackNonShared(nn.Module):
             nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
             getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
         )
+
+        torch.nn.init.orthogonal_(self.value_net[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.value_net[2].weight, gain=np.sqrt(2))
 
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         """
@@ -243,7 +260,7 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
             **kwargs,
         )
         # Disable orthogonal initialization
-        # self.ortho_init = False
+        self.ortho_init = True
 
     def _build_mlp_extractor(self) -> None:
         # choose correct network
@@ -254,3 +271,4 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
                 self.mlp_extractor = localFeedbackNonShared(self.features_dim)
         else:
             self.mlp_extractor = CustomNetwork(self.features_dim)
+        pass

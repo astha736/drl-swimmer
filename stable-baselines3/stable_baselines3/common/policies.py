@@ -656,8 +656,12 @@ class ActorCriticPolicy(BasePolicy):
             # features_extractor/mlp values are
             # originally from openai/baselines (default gains/init_scales).
             module_gains = {
-                self.features_extractor: np.sqrt(2),
-                self.mlp_extractor: np.sqrt(2),
+                self.features_extractor: np.sqrt(
+                    2
+                ),  # technically not correct. It should depend on act_fn: https://pytorch.org/docs/stable/nn.init.html
+                self.mlp_extractor: np.sqrt(
+                    2
+                ),  # technically not correct. It should depend on act_fn: https://pytorch.org/docs/stable/nn.init.html
                 self.action_net: 0.01,
                 self.value_net: 1,
             }
@@ -667,6 +671,11 @@ class ActorCriticPolicy(BasePolicy):
                 del module_gains[self.features_extractor]
                 module_gains[self.pi_features_extractor] = np.sqrt(2)
                 module_gains[self.vf_features_extractor] = np.sqrt(2)
+
+            # if self.features_extractor and useLocalfeedback -> del!
+            if self.mlp_extractor in module_gains:
+                if conf.CONF["RL"]["localFeedback"]:
+                    del module_gains[self.mlp_extractor]
 
             for module, gain in module_gains.items():
                 module.apply(partial(self.init_weights, gain=gain))
