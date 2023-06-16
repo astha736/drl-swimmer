@@ -158,6 +158,7 @@ class localFeedbackNonShared(nn.Module):
         super().__init__()
 
         self.obs_per_iter: int = 2
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         # IMPORTANT:
         # Save output dimensions, used to create the distributions
@@ -179,7 +180,7 @@ class localFeedbackNonShared(nn.Module):
                 ),  # 1 output neuron for each action; replaces the proba_distribution_net of stable-baselines3
             )
 
-        self.policy_nets = [get_policy_net() for i in range(9)]
+        self.policy_nets = [get_policy_net().to(self.device) for i in range(9)]
 
         # Value network
         self.value_net = nn.Sequential(
