@@ -40,10 +40,10 @@ class CustomNetwork(nn.Module):
         )
         # Value network
         self.value_net = nn.Sequential(
-            nn.Linear(feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_vf),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
         )
 
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
@@ -99,10 +99,10 @@ class localFeedbackShared(nn.Module):
 
         # Value network
         self.value_net = nn.Sequential(
-            nn.Linear(feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_vf),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
         )
 
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
@@ -183,10 +183,10 @@ class localFeedbackNonShared(nn.Module):
 
         # Value network
         self.value_net = nn.Sequential(
-            nn.Linear(feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_vf),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
         )
 
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:

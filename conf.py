@@ -70,6 +70,11 @@ def init(experiment_config, experiment_id):
             "s_caudl_senstivity"
         ] = "NONPERIOD"  # [SIN, COS, NONPERIOD, SIGNONE]"
 
+    if "RL" in CONF:
+        # value network is equal to policy_network by default
+        if not "value_network" in CONF["RL"]:
+            CONF["RL"]["value_network"] = CONF["RL"]["policy_network"]
+
     # print infos
     print(f"LOG_DIR_RESULTS: {LOG_DIR_RESULTS}")
     print(f"LOG_DIR_TENSORBOARD: {LOG_DIR_TENSORBOARD}")
