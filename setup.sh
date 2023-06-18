@@ -22,4 +22,6 @@ pip3 install -e farms_sim --no-cache-dir
 pip3 install -e farms_amphibious --no-cache-dir
 cd ..
 pip3 install -e . --no-cache-dir
-pip install sb3-contrib stable-baselines3 tensorboard black ffmpeg gym --no-cache-dir
+pip install tensorboard black ffmpeg gym --no-cache-dir
+# pip install sb3-contrib
+# pip install stable-baselines3 # install in editable mode manually
