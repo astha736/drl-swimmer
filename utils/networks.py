@@ -104,6 +104,9 @@ class localFeedbackShared(nn.Module):
         torch.nn.init.orthogonal_(self.policy_net[0].weight, gain=np.sqrt(2))
         torch.nn.init.orthogonal_(self.policy_net[2].weight, gain=np.sqrt(2))
         torch.nn.init.orthogonal_(self.policy_net[4].weight, gain=0.01)
+        self.policy_net[0].bias.data.fill_(0.0)
+        self.policy_net[2].bias.data.fill_(0.0)
+        self.policy_net[4].bias.data.fill_(0.0)
 
         # Value network
         self.value_net = nn.Sequential(
@@ -115,6 +118,8 @@ class localFeedbackShared(nn.Module):
 
         torch.nn.init.orthogonal_(self.value_net[0].weight, gain=np.sqrt(2))
         torch.nn.init.orthogonal_(self.value_net[2].weight, gain=np.sqrt(2))
+        self.value_net[0].bias.data.fill_(0.0)
+        self.value_net[2].bias.data.fill_(0.0)
 
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         """
