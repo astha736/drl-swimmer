@@ -132,6 +132,15 @@ class TrainTestClass:
             )
 
         if "PPOparams" in conf.CONF["RL"]:
+            # load optional parameters
+            if "ent_coef" in conf.CONF["RL"]["PPOparams"]:
+                ent_coef = conf.CONF["RL"]["PPOparams"]["ent_coef"]
+            else:
+                ent_coef = 0.0
+            if "vf_coef" in conf.CONF["RL"]["PPOparams"]:
+                vf_coef = conf.CONF["RL"]["PPOparams"]["vf_coef"]
+            else:
+                vf_coef = 0.5
             model = PPO(
                 CustomActorCriticPolicy,
                 venv,
@@ -148,6 +157,8 @@ class TrainTestClass:
                 gae_lambda=conf.CONF["RL"]["PPOparams"]["gae_lambda"],
                 use_sde=conf.CONF["RL"]["PPOparams"]["use_sde"],
                 sde_sample_freq=conf.CONF["RL"]["PPOparams"]["sde_sample_freq"],
+                ent_coef=ent_coef,
+                vf_coef=vf_coef,
             )
         elif "SACparams" in conf.CONF["RL"]:
             model = SAC(
