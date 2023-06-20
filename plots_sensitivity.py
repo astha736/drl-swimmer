@@ -47,9 +47,9 @@ gradient_2 = [
 
 # model and CORRECT experiment_id to load
 model_path = "experiments/415/logs/16-06-2023_09:00:03/best_model.zip"
-model_path = "experiments/999/logs/20-06-2023_08:20:34/best_model.zip"
+# model_path = "experiments/999/logs/20-06-2023_08:20:34/best_model.zip"
 experiment_id = "415"
-experiment_id = "999"
+# experiment_id = "999"
 
 # base observation upon which the input neurons are varied
 base_obs = torch.tensor(
@@ -79,7 +79,34 @@ base_obs = torch.tensor(
     ]
 )
 
-base_obs = torch.tensor([([0.0] * 20)])
+# base_obs = torch.tensor(
+#     [
+#         [
+#             1.4785,
+#             1.1418,
+#             1.6578,
+#             1.6337,
+#             1.7156,
+#             0.8025,
+#             0.2714,
+#             -0.8171,
+#             0.1219,
+#             -1.1453,
+#             -0.0180,
+#             -1.3139,
+#             -1.0594,
+#             0.1475,
+#             0.4937,
+#             0.9981,
+#             -0.8572,
+#             1.5013,
+#             -0.6923,
+#             1.4486,
+#         ]
+#     ]
+# )
+
+# base_obs = torch.tensor([([0.0] * 20)])
 
 with open(f"./experiments/{experiment_id}/" + "conf.yaml") as experiment_config:
     conf.init(experiment_config, experiment_id)
@@ -111,6 +138,8 @@ with PdfPages(
         plot.suptitle(name)
         pdf.savefig(plot.figure)  # pdf
 print("Saved grad plots to pdf.")
+
+plots = {}
 
 # obs of shape (1, 20)
 # features: 0-9: joint positions; 10-19: phases
