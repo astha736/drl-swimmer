@@ -75,6 +75,9 @@ def init(experiment_config, experiment_id):
         if not "value_network" in CONF["RL"]:
             CONF["RL"]["value_network"] = CONF["RL"]["policy_network"]
 
+    CONF["misc"] = {}
+    CONF["misc"]["log_grads"] = False
+
     # print infos
     print(f"LOG_DIR_RESULTS: {LOG_DIR_RESULTS}")
     print(f"LOG_DIR_TENSORBOARD: {LOG_DIR_TENSORBOARD}")

@@ -2,6 +2,7 @@
 
 import collections
 import copy
+import re
 import warnings
 from abc import ABC, abstractmethod
 from functools import partial
@@ -392,6 +393,23 @@ class BasePolicy(BaseModel, ABC):
         self.set_training_mode(False)
 
         observation, vectorized_env = self.obs_to_tensor(observation)
+
+        if "misc" in conf.CONF:
+            if "log_grads" in conf.CONF["misc"]:
+                if conf.CONF["misc"]["log_grads"]:
+                    conf.CONF["misc"]["log_grads"] = []
+                    _grads = []
+                    observation.requires_grad = True
+                    # iterate over actions and return gradients wrt to inputs
+                    for i in range(self.action_space.shape[0]):
+                        actions = self._predict(
+                            observation, deterministic=deterministic
+                        )
+                        actions[0][i].backward()
+                        _grads.append(observation.grad.cpu().numpy().copy())
+                        observation.grad.zero_()  # Required: manually reset gradients
+
+                    conf.CONF["misc"]["log_grads"] = _grads.copy()
 
         with th.no_grad():
             actions = self._predict(observation, deterministic=deterministic)
