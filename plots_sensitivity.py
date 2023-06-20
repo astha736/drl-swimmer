@@ -1,6 +1,7 @@
 from stable_baselines3 import PPO
 import torch
 import numpy as np
+import yaml
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
@@ -86,7 +87,7 @@ model = PPO.load(model_path)
 plots = {}
 
 
-# perform gradient analysis
+# perform gradient analysis for one specific observation
 # conf.CONF["misc"]["log_grads"] will contain the gradients of all outputs wrt to the inputs
 conf.CONF["misc"]["log_grads"] = True
 obs = base_obs
@@ -150,6 +151,7 @@ for input_neuron in input_neurons:
 
 # plot one output neuron for varying all input neurons
 for output_neuron in range(9):
+    sensitivity_sums = []
     fig = plt.figure(f"output neuron {output_neuron}")
     for j, input_neuron in enumerate(input_neurons):
         # iterate over input values
@@ -160,6 +162,8 @@ for output_neuron in range(9):
             obs[0][input_neuron] = i
             action, _ = model.predict(obs, deterministic=True)
             actions.append(action[0][output_neuron])
+
+        sensitivity_sums.append(sum(np.abs(actions)))
 
         plt.plot(
             inputs,
@@ -179,6 +183,15 @@ for output_neuron in range(9):
     plt.grid(True)
 
     plots[f"output neuron {output_neuron}"] = fig
+
+    # new figure for sensitivity sums
+    fig = plt.figure(f"Sum of sensitivities for output neuron {output_neuron}")
+    plt.bar([j for j in range(len(input_neurons))], sensitivity_sums, color="#072140")
+    plt.xticks([j for j in range(len(input_neurons))])
+    plt.xlabel("Input neuron")
+    plt.ylabel(f"Sum of sensitivities")
+    plt.grid(True)
+    plots[f"Sum of sensitivities for output neuron {output_neuron}"] = fig
 
 # save all plots in one pdf
 with PdfPages(
