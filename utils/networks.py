@@ -101,9 +101,13 @@ class localFeedbackShared(nn.Module):
         # handle weight initialization
         # values taken from stable-baselines3
         # see https://www.google.com/search?q=why+is+ppo+using+orthogonal+initialization&oq=why+is+ppo+using+orthogonal+initialization&aqs=chrome..69i57j33i160.6735j0j1&sourceid=chrome&ie=UTF-8
+        gain_last_layer = 0.01
+        if "gain_last_layer" in conf.CONF["RL"]["policy_network"]:
+            gain_last_layer = conf.CONF["RL"]["policy_network"]["gain_last_layer"]
+
         torch.nn.init.orthogonal_(self.policy_net[0].weight, gain=np.sqrt(2))
         torch.nn.init.orthogonal_(self.policy_net[2].weight, gain=np.sqrt(2))
-        torch.nn.init.orthogonal_(self.policy_net[4].weight, gain=0.01)
+        torch.nn.init.orthogonal_(self.policy_net[4].weight, gain=gain_last_layer)
         self.policy_net[0].bias.data.fill_(0.0)
         self.policy_net[2].bias.data.fill_(0.0)
         self.policy_net[4].bias.data.fill_(0.0)

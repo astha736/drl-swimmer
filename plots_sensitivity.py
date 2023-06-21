@@ -46,38 +46,38 @@ gradient_2 = [
 
 
 # model and CORRECT experiment_id to load
-model_path = "experiments/415/logs/16-06-2023_09:00:03/best_model.zip"
+model_path = "experiments/282/logs/20-06-2023_02:04:06/best_model.zip"
 # model_path = "experiments/999/logs/20-06-2023_08:20:34/best_model.zip"
-experiment_id = "415"
+experiment_id = "282"
 # experiment_id = "999"
 
 # base observation upon which the input neurons are varied
-base_obs = torch.tensor(
-    [
-        [
-            -1.3014,
-            0.2440,
-            -0.5538,
-            -0.1316,
-            -1.1946,
-            -1.6352,
-            -2.4294,
-            -0.9034,
-            -0.3155,
-            1.2889,
-            0.9747,
-            1.6770,
-            -1.0865,
-            -1.3532,
-            1.0439,
-            -1.0884,
-            1.0071,
-            -0.3786,
-            -0.0625,
-            -0.6335,
-        ]
-    ]
-)
+# base_obs = torch.tensor(
+#     [
+#         [
+#             -1.3014,
+#             0.2440,
+#             -0.5538,
+#             -0.1316,
+#             -1.1946,
+#             -1.6352,
+#             -2.4294,
+#             -0.9034,
+#             -0.3155,
+#             1.2889,
+#             0.9747,
+#             1.6770,
+#             -1.0865,
+#             -1.3532,
+#             1.0439,
+#             -1.0884,
+#             1.0071,
+#             -0.3786,
+#             -0.0625,
+#             -0.6335,
+#         ]
+#     ]
+# )
 
 # base_obs = torch.tensor(
 #     [
@@ -106,7 +106,7 @@ base_obs = torch.tensor(
 #     ]
 # )
 
-# base_obs = torch.tensor([([0.0] * 20)])
+base_obs = torch.tensor([([0.0] * 20)])
 
 with open(f"./experiments/{experiment_id}/" + "conf.yaml") as experiment_config:
     conf.init(experiment_config, experiment_id)
@@ -129,17 +129,6 @@ for i in range(len(grads)):
     plt.grid(True)
     plots[f"Gradients of output neuron {i} w.r.t. input neurons"] = fig
 conf.CONF["misc"]["log_grads"] = False
-
-# save all plots in one pdf
-with PdfPages(
-    f"plot_utils/network_sensitivity_analysis_plots/grads_{experiment_id}.pdf"
-) as pdf:
-    for name, plot in plots.items():
-        plot.suptitle(name)
-        pdf.savefig(plot.figure)  # pdf
-print("Saved grad plots to pdf.")
-
-plots = {}
 
 # obs of shape (1, 20)
 # features: 0-9: joint positions; 10-19: phases
@@ -229,5 +218,4 @@ with PdfPages(
     for name, plot in plots.items():
         plot.suptitle(name)
         pdf.savefig(plot.figure, bbox_inches="tight")  # pdf
-print("checkpoint 2")
 print("Saved sensitivity plots to pdf.")
