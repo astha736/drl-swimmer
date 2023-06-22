@@ -70,6 +70,7 @@ class ObservationType(Enum):
     REACTION_XYZ = 6
     PHASES = 7
     VELOCITIES = 8
+    AMPLITUDES = 9
 
 
 class ActionChoice:
@@ -261,6 +262,12 @@ class ObservationChoice:
         high = np.array([np.inf] * (self.n_body_joints))
         return low, high
 
+    def observation_bound_AMPLITUDES(self):
+        """AMPLITUDES"""
+        low = np.array([-np.inf] * (self.n_body_joints))
+        high = np.array([np.inf] * (self.n_body_joints))
+        return low, high
+
     def observation_bound_VELOCITIES(self):
         """VELOCITIES"""
         low = np.array([-np.inf] * (4))  # 2 * target + 2 * current
@@ -276,6 +283,7 @@ class ObservationChoice:
             ObservationType.REACTION_XY: self.observation_bound_REACTION_XY,
             ObservationType.REACTION_XYZ: self.observation_bound_REACTION_XYZ,
             ObservationType.PHASES: self.observation_bound_PHASES,
+            ObservationType.AMPLITUDES: self.observation_bound_AMPLITUDES,
             ObservationType.VELOCITIES: self.observation_bound_VELOCITIES,
         }
 
@@ -311,6 +319,12 @@ class ObservationChoice:
         )
 
         return np.concatenate((com_velocity, target_velocity))
+
+    def extract_observation_AMPLITUDES(self, data_sensors, data_states, iteration):
+        amplitudes_right = np.array(data_states.amplitudes(iteration))[
+            conf.RIGHT_OSCILLATOR_INDEXES
+        ]
+        return amplitudes_right
 
     def extract_observation_PHASES(self, data_sensors, data_states, iteration):
         # only return right oscillators for now.
@@ -416,6 +430,7 @@ class ObservationChoice:
             ObservationType.REACTION_XY: self.extract_observation_REACTION_XY_NORM,
             ObservationType.REACTION_XYZ: self.extract_observation_REACTION_XYZ_NORM,
             ObservationType.PHASES: self.extract_observation_PHASES,
+            ObservationType.AMPLITUDES: self.extract_observation_AMPLITUDES,
             ObservationType.VELOCITIES: self.extract_observation_VELOCITIES,
         }
 
