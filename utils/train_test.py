@@ -102,13 +102,18 @@ class TrainTestClass:
         self.clargs = clargs
 
     # Train and test
-    def exp_training(self, model_filename: str) -> None:
+    def exp_training(
+        self,
+    ) -> None:
         """Experiment training
 
         @param model_filename (str): Name of the saved model.
         """
 
-        ##### TRAIN #####
+        print("#######################")
+        print("START MODEL TRAINING")
+        print("#######################")
+
         def get_env():
             env = FarmsGym(
                 timestep=self.sim_options.timestep,
@@ -211,8 +216,16 @@ class TrainTestClass:
                 os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl")
             )
 
-        ##### TEST #####
-        del model, venv
+        print("#######################")
+        print("MODEL TRAINING FINISHED")
+        print("#######################")
+
+        self.test()
+
+    def test(self) -> None:
+        print("#######################")
+        print("START MODEL TESTING")
+        print("#######################")
 
         self.sim_options.record = True
 
@@ -269,6 +282,12 @@ class TrainTestClass:
         with open(results_file, "w") as f:
             f.write(yaml.dump(results))
         f.close()
+
+        self.sim_options.record = False
+
+        print("#######################")
+        print("MODEL TESTING FINISHED")
+        print("#######################")
 
     # # This is another way to test a model; not used for now
     # def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:

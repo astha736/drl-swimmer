@@ -8,6 +8,7 @@ from farms_core.io.yaml import pyobject2yaml
 from farms_sim.utils.parse_args import sim_parse_args
 from farms_sim.simulation import setup_from_clargs
 from farms_amphibious.model.options import AmphibiousOptions, AmphibiousArenaOptions
+from numpy import require
 from rlgym.rl_gym import ActionChoice, ObservationChoice, ObservationType, ActionType
 
 from utils.limbless_experiment_options import ExperimentConditions as ExpCond
@@ -18,12 +19,21 @@ import conf
 
 # parse args
 parser = argparse.ArgumentParser()
-parser.add_argument("experiment_id")
+parser.add_argument("-e", "--experiment_id", required=False, default=None)
+parser.add_argument("-m", "--base_test_path", required=False, default=None)
 args = parser.parse_args()
+
+# santity check on args
+if args.experiment_id is None and args.base_test_path is None:
+    raise ValueError("Provide either experiment_id or base_test_path.")
+
+if args.base_test_path is not None and args.experiment_id is None:
+    raise ValueError("Provide experiment_id if base_test_path is provided.")
+
 
 # Load experiment config and setup *_DIRs
 with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_config:
-    conf.init(experiment_config, args.experiment_id)
+    conf.init(experiment_config, args.experiment_id, args.base_test_path)
 
 
 def main() -> None:
@@ -125,9 +135,10 @@ def main() -> None:
     # Run experiment
     match conf.CONF["run_type"]:
         case "train":
-            train_test.exp_training(model_filename=exp_cond_name)
-        case "test":
-            raise ValueError("run_type test not implemented. Switch to train, or sth!")
+            if args.base_test_path is not None:
+                train_test.test()
+            else:
+                train_test.exp_training()
         case "arch_testing":
             train_test.arch_testing()
         case _:

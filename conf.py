@@ -1,11 +1,12 @@
 # This module loads the experiment configuration file
 # The parameters are globally accessible by importing this module: "import conf"
+from torch import Value
 import yaml
 import os
 from datetime import datetime
 
 
-def init(experiment_config, experiment_id):
+def init(experiment_config, experiment_id, base_test_path):
     global CONF
     global LOG_DIR_RESULTS
     global LOG_DIR_TENSORBOARD
@@ -18,25 +19,37 @@ def init(experiment_config, experiment_id):
     CONF = yaml.full_load(experiment_config)
     CONF["experiment_id"] = experiment_id
 
-    # log results to home/.../experiments on local PC
-    # log tensorboard logs to /shared/.. if on HPC
-    LOG_DIR_RESULTS = (
-        "./experiments/"
-        + CONF["experiment_id"]
-        + "/logs/"
-        + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
-    )
-    if os.path.isdir("/shared"):  # cluster
-        LOG_DIR_TENSORBOARD = (
-            "/shared/hausdoer/experiments/"
+    # set log paths
+    if base_test_path is not None:
+        if not os.path.isdir(base_test_path):
+            raise ValueError("base_test_path does not exist.")
+        print(f"Perform only testing on models in path: {base_test_path}.")
+        LOG_DIR_RESULTS = base_test_path
+    else:
+        # log results to home/.../experiments on local PC
+        # log tensorboard logs to /shared/.. if on HPC
+        print(f"Perform training and testing.")
+        LOG_DIR_RESULTS = (
+            "./experiments/"
             + CONF["experiment_id"]
-            + "/logs"
+            + "/logs/"
             + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
         )
-    else:
-        LOG_DIR_TENSORBOARD = LOG_DIR_RESULTS
-    if not os.path.isdir(LOG_DIR_TENSORBOARD):
-        os.makedirs(LOG_DIR_TENSORBOARD)
+        if os.path.isdir("/shared"):  # cluster
+            LOG_DIR_TENSORBOARD = (
+                "/shared/hausdoer/experiments/"
+                + CONF["experiment_id"]
+                + "/logs"
+                + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+            )
+        else:
+            LOG_DIR_TENSORBOARD = LOG_DIR_RESULTS
+        if not os.path.isdir(LOG_DIR_TENSORBOARD):
+            os.makedirs(LOG_DIR_TENSORBOARD)
+
+        print(f"LOG_DIR_RESULTS: {LOG_DIR_RESULTS}")
+        print(f"LOG_DIR_TENSORBOARD: {LOG_DIR_TENSORBOARD}")
+
     if not os.path.isdir(LOG_DIR_RESULTS):
         os.makedirs(LOG_DIR_RESULTS)
 
@@ -77,7 +90,3 @@ def init(experiment_config, experiment_id):
 
     CONF["misc"] = {}
     CONF["misc"]["log_grads"] = False
-
-    # print infos
-    print(f"LOG_DIR_RESULTS: {LOG_DIR_RESULTS}")
-    print(f"LOG_DIR_TENSORBOARD: {LOG_DIR_TENSORBOARD}")
