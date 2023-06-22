@@ -812,7 +812,7 @@ class ActorCriticPolicy(BasePolicy):
             latent_pi = self.mlp_extractor.forward_actor(pi_features)
             latent_vf = self.mlp_extractor.forward_critic(vf_features)
         distribution = self._get_action_dist_from_latent(latent_pi)
-        log_prob = distribution.log_prob(actions)
+        log_prob = distribution.log_prob(actions)  # shape (batch_size)
         values = self.value_net(latent_vf)
         entropy = distribution.entropy()
         return values, log_prob, entropy
