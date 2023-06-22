@@ -227,7 +227,11 @@ class TrainTestClass:
         print("START MODEL TESTING")
         print("#######################")
 
-        self.sim_options.record = True
+        self.sim_options.record = False
+
+        self.sim_options.n_iterations = conf.CONF[
+            "n_iterations_testing"
+        ]  # longer training than testing
 
         def get_test_env():
             test_env = FarmsGym(

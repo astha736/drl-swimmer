@@ -88,5 +88,7 @@ def init(experiment_config, experiment_id, base_test_path):
         if not "value_network" in CONF["RL"]:
             CONF["RL"]["value_network"] = CONF["RL"]["policy_network"]
 
+    CONF["n_iterations_testing"] = 3000
+
     CONF["misc"] = {}
     CONF["misc"]["log_grads"] = False
