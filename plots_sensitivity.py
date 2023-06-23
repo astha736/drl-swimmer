@@ -7,6 +7,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 import conf
 
+raise NotImplementedError(
+    "This script is not up to date. The implementation of gradient calculation in policies.py doesn't match the requirements of this file anymore. A current version is implemented in train_test.py."
+)
+
 # gradient for plotting
 gradient_2 = [
     "#072140",

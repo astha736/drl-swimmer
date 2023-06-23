@@ -396,8 +396,7 @@ class BasePolicy(BaseModel, ABC):
 
         if "misc" in conf.CONF:
             if "log_grads" in conf.CONF["misc"]:
-                if conf.CONF["misc"]["log_grads"]:
-                    conf.CONF["misc"]["log_grads"] = []
+                if type(conf.CONF["misc"]["log_grads"]) is list:
                     _grads = []
                     observation.requires_grad = True
                     # iterate over actions and return gradients wrt to inputs
@@ -409,7 +408,7 @@ class BasePolicy(BaseModel, ABC):
                         _grads.append(observation.grad.cpu().numpy().copy())
                         observation.grad.zero_()  # Required: manually reset gradients
 
-                    conf.CONF["misc"]["log_grads"] = _grads.copy()
+                    conf.CONF["misc"]["log_grads"].append(_grads.copy())
 
         with th.no_grad():
             actions = self._predict(observation, deterministic=deterministic)

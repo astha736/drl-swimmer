@@ -1,11 +1,11 @@
-from asyncore import write
 import os
 import numpy as np
-import pickle
-from enum import Enum
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import yaml
-from torch.utils.tensorboard import SummaryWriter
+import matplotlib.pyplot as plt
+import imageio
+import glob
+import time
 
 from rlgym.rl_gym import (
     FarmsGym,
@@ -23,8 +23,6 @@ from stable_baselines3.common.logger import configure
 from stable_baselines3.common.evaluation import evaluate_policy
 
 from stable_baselines3.common.callbacks import (
-    CallbackList,
-    CheckpointCallback,
     EvalCallback,
     BaseCallback,
 )
@@ -32,7 +30,6 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, SubprocVecEnv
 
 from farms_sim.simulation import postprocessing_from_clargs
-from farms_amphibious.data.data import AmphibiousData
 from farms_core.utils import profile
 from . import utils
 
@@ -263,13 +260,97 @@ class TrainTestClass:
         else:
             raise ValueError("Policy not implemented")
 
+        # log gradients during one testing episode
+        # onf.CONF["misc"]["log_grads"] will contain a list of all the gradients for each timestep (all outputs wrt to the inputs)
+        conf.CONF["misc"]["log_grads"] = []
+
         rew, len_ = evaluate_policy(
             model,
             venv_test,
-            n_eval_episodes=1,
+            n_eval_episodes=1,  # if more than one: dont log and plot gradients!
             deterministic=True,
             return_episode_rewards=True,
         )
+
+        grads = conf.CONF["misc"]["log_grads"]  # shape (timestep, outputs, 1, inputs)
+        conf.CONF["misc"]["log_grads"] = False
+
+        # create temp dir
+        _temp_dir = f"{conf.TEMP_DIR}/{1000 * time.time()}"
+        os.makedirs(f"{_temp_dir}")
+
+        # create plots of gradients
+        for k in range(len(grads[0])):  # iterate over output neurons
+            # TODO use numpy instead of python lists for all operations
+            grads_numpy = np.array(grads, dtype=object)
+            max = grads_numpy[:, k, :, :].max()
+            min = grads_numpy[:, k, :, :].min()
+
+            # save accumulated gradients
+            accumulated_gradients = np.sum(np.abs(grads_numpy[:, k, :, :]), axis=(0, 1))
+            fig = plt.figure(f"Accumulated gradients for output neuron {k}")
+            plt.title(f"Accumulated gradients for output neuron {k}")
+            plt.bar(
+                [j for j in range(len(grads[0][0][0]))],
+                accumulated_gradients,
+                color="#072140",
+            )
+            plt.xticks([j for j in range(len(grads[0][0][0]))])
+            plt.xlabel(f"Input neuron")
+            plt.ylabel(f"Accumulated gradient")
+            plt.grid(True)
+            plt.savefig(
+                f"{conf.LOG_DIR_RESULTS}/acc_grads_output_neuron_{k}.pdf",
+            )
+            plt.close()
+
+            # create gif of gradients over episode
+            for i in range(len(grads)):  # timesteps
+                # generate images
+                fig = plt.figure(
+                    f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
+                )
+                plt.title(
+                    f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
+                )
+                plt.bar(
+                    [j for j in range(len(grads[i][k][0]))],
+                    grads[i][k][0],
+                    color="#072140",
+                )
+                plt.xticks([j for j in range(len(grads[i][k][0]))])
+                plt.xlabel(f"Input neuron")
+                plt.ylabel(f"Gradient")
+                plt.grid(True)
+                plt.ylim(min * 1.2, max * 1.2)
+                plt.savefig(
+                    f"{_temp_dir}/img_{i}.png",
+                    transparent=False,
+                    facecolor="white",
+                )
+                plt.close()
+
+            # generate gif
+            frames = []
+            for t in range(self.sim_options.n_iterations):
+                image = imageio.v2.imread(f"{_temp_dir}/img_{t}.png")
+                frames.append(image)
+            imageio.mimsave(
+                f"{conf.LOG_DIR_RESULTS}/grad_anim_output_neuron_{k}.gif",
+                frames,
+                duration=self.sim_options.timestep * 1000,
+            )
+
+            # purge _temp_dir folder
+            for f in glob.glob(f"{_temp_dir}/*"):
+                os.remove(f)
+
+        # purge and remove temp dir
+        for f in glob.glob(f"{_temp_dir}/*"):
+            os.remove(f)
+        os.rmdir(_temp_dir)
+
+        conf.CONF["misc"]["log_grads"] = False
 
         # log reward of best model to performance_metrics.txt
         with open(

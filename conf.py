@@ -4,12 +4,14 @@ from torch import Value
 import yaml
 import os
 from datetime import datetime
+import glob
 
 
 def init(experiment_config, experiment_id, base_test_path):
     global CONF
     global LOG_DIR_RESULTS
     global LOG_DIR_TENSORBOARD
+    global TEMP_DIR
     global RIGHT_OSCILLATOR_INDEXES
     global LEFT_OSCILLATOR_INDEXES
 
@@ -53,6 +55,11 @@ def init(experiment_config, experiment_id, base_test_path):
     if not os.path.isdir(LOG_DIR_RESULTS):
         os.makedirs(LOG_DIR_RESULTS)
 
+    # create _temp folder or purge it
+    TEMP_DIR = "./_temp"
+    if not os.path.isdir(TEMP_DIR):
+        os.makedirs(TEMP_DIR)
+
     # load referenced parameters in experiment config file
     if "PPOparams" in CONF["RL"]:
         with open(CONF["RL"]["PPOparams"]) as f:
@@ -92,7 +99,7 @@ def init(experiment_config, experiment_id, base_test_path):
         if not "seed" in CONF["RL"]:
             CONF["RL"]["seed"] = 123
 
-    CONF["n_iterations_testing"] = 3000
+    CONF["n_iterations_testing"] = 1000
 
     CONF["misc"] = {}
     CONF["misc"]["log_grads"] = False
