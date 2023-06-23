@@ -4,7 +4,6 @@ from torch import Value
 import yaml
 import os
 from datetime import datetime
-import glob
 
 
 def init(experiment_config, experiment_id, base_test_path):

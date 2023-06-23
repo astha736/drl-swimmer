@@ -305,45 +305,45 @@ class TrainTestClass:
             plt.close()
 
             # create gif of gradients over episode
-            for i in range(len(grads)):  # timesteps
-                # generate images
-                fig = plt.figure(
-                    f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
-                )
-                plt.title(
-                    f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
-                )
-                plt.bar(
-                    [j for j in range(len(grads[i][k][0]))],
-                    grads[i][k][0],
-                    color="#072140",
-                )
-                plt.xticks([j for j in range(len(grads[i][k][0]))])
-                plt.xlabel(f"Input neuron")
-                plt.ylabel(f"Gradient")
-                plt.grid(True)
-                plt.ylim(min * 1.2, max * 1.2)
-                plt.savefig(
-                    f"{_temp_dir}/img_{i}.png",
-                    transparent=False,
-                    facecolor="white",
-                )
-                plt.close()
+            # for i in range(len(grads)):  # timesteps
+            #     # generate images
+            #     fig = plt.figure(
+            #         f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
+            #     )
+            #     plt.title(
+            #         f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
+            #     )
+            #     plt.bar(
+            #         [j for j in range(len(grads[i][k][0]))],
+            #         grads[i][k][0],
+            #         color="#072140",
+            #     )
+            #     plt.xticks([j for j in range(len(grads[i][k][0]))])
+            #     plt.xlabel(f"Input neuron")
+            #     plt.ylabel(f"Gradient")
+            #     plt.grid(True)
+            #     plt.ylim(min * 1.2, max * 1.2)
+            #     plt.savefig(
+            #         f"{_temp_dir}/img_{i}.png",
+            #         transparent=False,
+            #         facecolor="white",
+            #     )
+            #     plt.close()
 
             # generate gif
-            frames = []
-            for t in range(self.sim_options.n_iterations):
-                image = imageio.v2.imread(f"{_temp_dir}/img_{t}.png")
-                frames.append(image)
-            imageio.mimsave(
-                f"{conf.LOG_DIR_RESULTS}/grad_anim_output_neuron_{k}.gif",
-                frames,
-                duration=self.sim_options.timestep * 1000,
-            )
+            # frames = []
+            # for t in range(self.sim_options.n_iterations):
+            #     image = imageio.v2.imread(f"{_temp_dir}/img_{t}.png")
+            #     frames.append(image)
+            # imageio.mimsave(
+            #     f"{conf.LOG_DIR_RESULTS}/grad_anim_output_neuron_{k}.gif",
+            #     frames,
+            #     duration=self.sim_options.timestep * 1000,
+            # )
 
             # purge _temp_dir folder
-            for f in glob.glob(f"{_temp_dir}/*"):
-                os.remove(f)
+            # for f in glob.glob(f"{_temp_dir}/*"):
+            #     os.remove(f)
 
         # purge and remove temp dir
         for f in glob.glob(f"{_temp_dir}/*"):
