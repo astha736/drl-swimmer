@@ -46,9 +46,9 @@ gradient_2 = [
 
 
 # model and CORRECT experiment_id to load
-model_path = "experiments/282/logs/20-06-2023_02:04:06/best_model.zip"
+model_path = "experiments/417/logs/16-06-2023_09:00:03/best_model.zip"
 # model_path = "experiments/999/logs/20-06-2023_08:20:34/best_model.zip"
-experiment_id = "282"
+experiment_id = "417"
 # experiment_id = "999"
 
 # base observation upon which the input neurons are varied
@@ -109,7 +109,7 @@ experiment_id = "282"
 base_obs = torch.tensor([([0.0] * 20)])
 
 with open(f"./experiments/{experiment_id}/" + "conf.yaml") as experiment_config:
-    conf.init(experiment_config, experiment_id)
+    conf.init(experiment_config, experiment_id, None)
 model = PPO.load(model_path)
 plots = {}
 

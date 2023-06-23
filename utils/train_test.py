@@ -126,8 +126,8 @@ class TrainTestClass:
             )
             return env
 
-        venv = make_vec_env(get_env, n_envs=1, seed=123)
-        eval_venv = make_vec_env(get_env, n_envs=1, seed=123)
+        venv = make_vec_env(get_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
+        eval_venv = make_vec_env(get_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
         # vec_env_cls=SubprocVecEnv
 
         if conf.CONF["RL"]["normWrapper"]:
@@ -150,7 +150,7 @@ class TrainTestClass:
                 CustomActorCriticPolicy,
                 venv,
                 tensorboard_log=conf.LOG_DIR_TENSORBOARD,
-                seed=123,
+                seed=conf.CONF["RL"]["seed"],
                 learning_rate=linear_schedule(
                     conf.CONF["RL"]["PPOparams"]["lr_start"],
                     conf.CONF["RL"]["PPOparams"]["lr_end"],
@@ -227,7 +227,7 @@ class TrainTestClass:
         print("START MODEL TESTING")
         print("#######################")
 
-        self.sim_options.record = False
+        self.sim_options.record = True
 
         self.sim_options.n_iterations = conf.CONF[
             "n_iterations_testing"
@@ -246,7 +246,7 @@ class TrainTestClass:
             )
             return test_env
 
-        venv_test = make_vec_env(get_test_env, n_envs=1, seed=123)
+        venv_test = make_vec_env(get_test_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
 
         if conf.CONF["RL"]["normWrapper"]:
             venv_test = VecNormalize.load(
