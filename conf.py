@@ -97,6 +97,8 @@ def init(experiment_config, experiment_id, base_test_path):
     if "RL" in CONF:
         if not "seed" in CONF["RL"]:
             CONF["RL"]["seed"] = 123
+        if not "norm_reward" in CONF["RL"]:
+            CONF["RL"]["norm_reward"] = True
 
     CONF["n_iterations_testing"] = 1000
 
