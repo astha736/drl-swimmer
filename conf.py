@@ -54,7 +54,7 @@ def init(experiment_config, experiment_id, base_test_path):
     if not os.path.isdir(LOG_DIR_RESULTS):
         os.makedirs(LOG_DIR_RESULTS)
 
-    # create _temp folder or purge it
+    # create _temp folder if not existent. But dont delete it if it exists, it might be used by other processes
     TEMP_DIR = "./_temp"
     if not os.path.isdir(TEMP_DIR):
         os.makedirs(TEMP_DIR)
@@ -93,8 +93,6 @@ def init(experiment_config, experiment_id, base_test_path):
         # value network is equal to policy_network by default
         if not "value_network" in CONF["RL"]:
             CONF["RL"]["value_network"] = CONF["RL"]["policy_network"]
-
-    if "RL" in CONF:
         if not "seed" in CONF["RL"]:
             CONF["RL"]["seed"] = 123
         if not "norm_reward" in CONF["RL"]:
