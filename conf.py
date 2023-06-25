@@ -20,13 +20,13 @@ def init(experiment_config, experiment_id, base_test_path):
     CONF = yaml.full_load(experiment_config)
     CONF["experiment_id"] = experiment_id
 
-    # set log paths
+    # if base_test_path: only tests should be run on the model within that path
     if base_test_path is not None:
         if not os.path.isdir(base_test_path):
             raise ValueError("base_test_path does not exist.")
         print(f"Perform only testing on models in path: {base_test_path}.")
         LOG_DIR_RESULTS = base_test_path
-    else:
+    else: # else: run training and testing
         # log results to home/.../experiments on local PC
         # log tensorboard logs to /shared/.. if on HPC
         print(f"Perform training and testing.")
@@ -55,7 +55,9 @@ def init(experiment_config, experiment_id, base_test_path):
         os.makedirs(LOG_DIR_RESULTS)
 
     # create _temp folder if not existent. But dont delete it if it exists, it might be used by other processes
-    TEMP_DIR = "./_temp"
+    if os.path.isdir("/shared"):  # cluster
+        TEMP_DIR = "/shared/hausdoer/_temp"
+    else: TEMP_DIR = "./_temp"
     if not os.path.isdir(TEMP_DIR):
         os.makedirs(TEMP_DIR)
 

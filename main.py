@@ -144,6 +144,8 @@ def main() -> None:
         case _:
             raise ValueError("Invalid run_type")
 
+    return
+
 
 if __name__ == "__main__":
     main()
