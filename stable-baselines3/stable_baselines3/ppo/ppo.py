@@ -244,6 +244,21 @@ class PPO(OnPolicyAlgorithm):
                 #     policy_loss, params=dict(self.policy.named_parameters())
                 # ).render("test", format="pdf")
 
+                # import torch
+
+                # torch.onnx.export(
+                #     self.policy,
+                #     rollout_data.observations,
+                #     "test.onnx",
+                #     export_params=True,
+                # )
+
+                # from torchview import draw_graph
+
+                # model_graph = draw_graph(
+                #     self.policy, input_size=(1, 20), save_graph=True
+                # )
+
                 actions = actions.cpu().numpy()
 
                 # Logging
