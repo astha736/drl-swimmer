@@ -8,6 +8,9 @@
 *.out
 *.gif
 
+!**/best_model.zip
+!**/best_model_normalize.pkl
+
 _temp/*
 
 # env
