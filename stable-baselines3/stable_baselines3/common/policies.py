@@ -614,7 +614,7 @@ class ActorCriticPolicy(BasePolicy):
         ), "reset_noise() is only available when using gSDE"
         self.action_dist.sample_weights(self.log_std, batch_size=n_envs)
 
-    def _build_mlp_extractor(self) -> None:
+    def _build_mlp_extractor(self, action_dim: int = None) -> None:
         """
         Create the policy and value networks.
         Part of the layers can be shared.
@@ -636,7 +636,7 @@ class ActorCriticPolicy(BasePolicy):
         :param lr_schedule: Learning rate schedule
             lr_schedule(1) is the initial learning rate
         """
-        self._build_mlp_extractor()
+        self._build_mlp_extractor(action_dim=get_action_dim(self.action_space))
 
         latent_dim_pi = self.mlp_extractor.latent_dim_pi
 

@@ -173,9 +173,7 @@ class TrainTestClass:
             raise ValueError("Policy not implemented")
 
         # configure logger
-        new_logger = configure(
-            conf.LOG_DIR_TENSORBOARD, ["stdout", "csv", "tensorboard"]
-        )
+        new_logger = configure(conf.LOG_DIR_TENSORBOARD, ["stdout", "tensorboard"])
         model.set_logger(new_logger)
 
         eval_callback = EvalCallback(
@@ -277,6 +275,22 @@ class TrainTestClass:
         grads = conf.CONF["misc"]["log_grads"]  # shape (timestep, outputs, 1, inputs)
         conf.CONF["misc"]["log_grads"] = False
 
+        # log reward of best model to performance_metrics.txt
+        with open(
+            os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a"
+        ) as f:
+            f.write("\n")
+            f.write(f"best model reward: {rew} \n")
+        f.close()
+
+        # log reward of best model to common results file: results.yaml
+        results_file = "./experiments/results.yaml"
+        results = yaml.load((open(results_file, "r")), Loader=yaml.FullLoader)
+        results[conf.CONF["experiment_id"]]["best model reward"] = f"{rew}"
+        with open(results_file, "w") as f:
+            f.write(yaml.dump(results))
+        f.close()
+
         # create temp dir
         _temp_dir = f"{conf.TEMP_DIR}/{1000 * time.time()}"
         os.makedirs(f"{_temp_dir}")
@@ -354,27 +368,13 @@ class TrainTestClass:
 
         conf.CONF["misc"]["log_grads"] = False
 
-        # log reward of best model to performance_metrics.txt
-        with open(
-            os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a"
-        ) as f:
-            f.write("\n")
-            f.write(f"best model reward: {rew} \n")
-        f.close()
-
-        # log reward of best model to common results file: results.yaml
-        results_file = "./experiments/results.yaml"
-        results = yaml.load((open(results_file, "r")), Loader=yaml.FullLoader)
-        results[conf.CONF["experiment_id"]]["best model reward"] = f"{rew}"
-        with open(results_file, "w") as f:
-            f.write(yaml.dump(results))
-        f.close()
-
         self.sim_options.record = False
 
         print("#######################")
         print("MODEL TESTING FINISHED")
         print("#######################")
+
+        return
 
     # # This is another way to test a model; not used for now
     # def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:

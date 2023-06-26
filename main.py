@@ -85,12 +85,17 @@ def main() -> None:
         sim_options.timestep * sim_options.n_iterations
     )
 
-    exp_cond_experiment, exp_cond_name = ExpCond.rlExp_sCaudal_ncCPG(
+    exp_cond_experiment, _ = ExpCond.rlExp_sCaudal_ncCPG(
         s_caudl_senstivity=getattr(
             RobotFeedbackSenstivity,
             conf.CONF["robot_arch"]["s_caudl_senstivity"],
         ),
+        s_local_senstivity=getattr(
+            RobotFeedbackSenstivity,
+            conf.CONF["robot_arch"]["s_local_senstivity"],
+        ),
         s_caudl_weight=conf.CONF["robot_arch"]["s_caudl_weight"],
+        s_local_weight=conf.CONF["robot_arch"]["s_local_weight"],
         init_osci_cond=conf.CONF["robot_arch"]["init_osci_cond"],
         c_inter=conf.CONF["robot_arch"]["c_inter"],
     )

@@ -187,10 +187,13 @@ class ExperimentConditions:
 
         return experiments, "tegotae_sCaudal_ncCPG"
 
+    # Used for rl experiments
     @staticmethod
     def rlExp_sCaudal_ncCPG(
         s_caudl_senstivity: RobotFeedbackSenstivity = RobotFeedbackSenstivity.NONPERIOD,
-        s_caudl_weight: float = 0,  # default value for Network initialization
+        s_caudl_weight: float = None,  # default value for Network initialization
+        s_local_senstivity: RobotFeedbackSenstivity = RobotFeedbackSenstivity.NONPERIOD,
+        s_local_weight: float = None,  # default value for Network initialization
         robot_shape: RobotInitialShape = RobotInitialShape.PARALLEL,
         robot_pose: int = 0,
         friction: float = 0.2,
@@ -212,10 +215,11 @@ class ExperimentConditions:
             network_exp=RobotInitialNetwork(
                 c_intra=c_intra,
                 c_inter=c_inter,
-                s_local=None,
+                s_local=s_local_weight,  # used for rl to address all couplings to oscillators
                 s_rostl=None,
                 s_caudl=s_caudl_weight,  # set to zero + ideal starting conditions for only swimming
                 s_caudl_senstivity=s_caudl_senstivity,
+                s_local_senstivity=s_local_senstivity,
             ),
             domain_exp=RobotInitialDomain(friction=friction),
             initial_exp=RobotInitialState(condition_shape=robot_shape, pose=robot_pose),
@@ -226,12 +230,7 @@ class ExperimentConditions:
             print("s_caudl_senstivity: {}".format(s_caudl_senstivity))
             print("robot_shape       : {}".format(robot_shape))
 
-        exp_name = (
-            "s{}_".format(s_caudl_senstivity)
-            + "sW{}_".format(int(100 * s_caudl_weight))
-            + "caW{}_".format(c_intra)
-            + "sCaudal_ncCPG"
-        )
+        exp_name = "undefined"
 
         return experiment, exp_name
 

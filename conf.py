@@ -26,7 +26,7 @@ def init(experiment_config, experiment_id, base_test_path):
             raise ValueError("base_test_path does not exist.")
         print(f"Perform only testing on models in path: {base_test_path}.")
         LOG_DIR_RESULTS = base_test_path
-    else: # else: run training and testing
+    else:  # else: run training and testing
         # log results to home/.../experiments on local PC
         # log tensorboard logs to /shared/.. if on HPC
         print(f"Perform training and testing.")
@@ -57,7 +57,8 @@ def init(experiment_config, experiment_id, base_test_path):
     # create _temp folder if not existent. But dont delete it if it exists, it might be used by other processes
     if os.path.isdir("/shared"):  # cluster
         TEMP_DIR = "/shared/hausdoer/_temp"
-    else: TEMP_DIR = "./_temp"
+    else:
+        TEMP_DIR = "./_temp"
     if not os.path.isdir(TEMP_DIR):
         os.makedirs(TEMP_DIR)
 
@@ -74,10 +75,7 @@ def init(experiment_config, experiment_id, base_test_path):
         with open(CONF["RL"]["RewardFnc"]) as f:
             CONF["RL"]["RewardFnc"] = yaml.full_load(f)
 
-    # set default parameters
-    if not "localFeedback" in CONF["RL"]:
-        CONF["RL"]["localFeedback"] = None
-
+    # set default robot architecture (this is the default for rl)
     if not "robot_arch" in CONF:
         CONF["robot_arch"] = {}
         CONF["robot_arch"][
@@ -85,13 +83,19 @@ def init(experiment_config, experiment_id, base_test_path):
         ] = (
             -1
         )  # 0 is ideal starting cond.; 1 is random starting cond.; -1 is fixed preset
-        CONF["robot_arch"]["s_caudl_weight"] = 0  # -10 works well
+        CONF["robot_arch"]["s_local_weight"] = 0  # -10 works well
+        CONF["robot_arch"]["s_caudl_weight"] = None  # -10 works well
         CONF["robot_arch"]["c_inter"] = 0  # 10 works well
         CONF["robot_arch"][
             "s_caudl_senstivity"
         ] = "NONPERIOD"  # [SIN, COS, NONPERIOD, SIGNONE]"
+        CONF["robot_arch"][
+            "s_local_senstivity"
+        ] = "NONPERIOD"  # [SIN, COS, NONPERIOD, SIGNONE]"
 
     if "RL" in CONF:
+        if not "localFeedback" in CONF["RL"]:
+            CONF["RL"]["localFeedback"] = None
         # value network is equal to policy_network by default
         if not "value_network" in CONF["RL"]:
             CONF["RL"]["value_network"] = CONF["RL"]["policy_network"]
