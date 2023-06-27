@@ -78,20 +78,31 @@ def init(experiment_config, experiment_id, base_test_path):
     # set default robot architecture (this is the default for rl)
     if not "robot_arch" in CONF:
         CONF["robot_arch"] = {}
+    if not "init_osci_cond" in CONF["robot_arch"]:
         CONF["robot_arch"][
             "init_osci_cond"
         ] = (
             -1
         )  # 0 is ideal starting cond.; 1 is random starting cond.; -1 is fixed preset
-        CONF["robot_arch"]["s_local_weight"] = 0  # -10 works well
-        CONF["robot_arch"]["s_caudl_weight"] = None  # -10 works well
+    if not "s_local_weight" in CONF["robot_arch"]:
+        CONF["robot_arch"]["s_local_weight"] = None  # -10 works well
+    if not "s_caudl_weight" in CONF["robot_arch"]:
+        CONF["robot_arch"]["s_caudl_weight"] = 0.0  # -10 works well
+    if not "c_inter" in CONF["robot_arch"]:
         CONF["robot_arch"]["c_inter"] = 0  # 10 works well
+    if not "s_caudl_senstivity" in CONF["robot_arch"]:
         CONF["robot_arch"][
             "s_caudl_senstivity"
         ] = "NONPERIOD"  # [SIN, COS, NONPERIOD, SIGNONE]"
+    if not "s_local_senstivity" in CONF["robot_arch"]:
         CONF["robot_arch"][
             "s_local_senstivity"
         ] = "NONPERIOD"  # [SIN, COS, NONPERIOD, SIGNONE]"
+    # check that exactly ONE of s_local_weight OR s_caudl_weight is not None
+    if CONF["robot_arch"]["s_local_weight"] == None and CONF["robot_arch"]["s_caudl_weight"] == None:
+        raise ValueError("Check robot arch 1")
+    if not CONF["robot_arch"]["s_local_weight"] == None and not CONF["robot_arch"]["s_caudl_weight"] == None:
+        raise ValueError("Check robot arch 2")
 
     if "RL" in CONF:
         if not "localFeedback" in CONF["RL"]:
@@ -104,7 +115,7 @@ def init(experiment_config, experiment_id, base_test_path):
         if not "norm_reward" in CONF["RL"]:
             CONF["RL"]["norm_reward"] = True
 
-    CONF["n_iterations_testing"] = 1000
+    CONF["n_iterations_testing"] = 1500
 
     CONF["misc"] = {}
     CONF["misc"]["log_grads"] = False

@@ -99,7 +99,10 @@ class ActionChoice:
         Thus one of the joint in the body can not be used as sensor
         for a given connectivity direction
         """
-        self.action_length[ActionType.STRETCH] = self.n_body_joints  # - 1
+        if not conf.CONF["robot_arch"]["s_local_weight"] == None:
+            self.action_length[ActionType.STRETCH] = self.n_body_joints
+        else:
+            self.action_length[ActionType.STRETCH] = self.n_body_joints - 1
         low = np.array([-1] * self.action_length[ActionType.STRETCH])
         high = np.array([1] * self.action_length[ActionType.STRETCH])
         return low, high

@@ -84,6 +84,9 @@ class localFeedbackShared(nn.Module):
 
         self.obs_per_iter: int = 2
 
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.action_dim = action_dim
+
         # IMPORTANT:
         # Save output dimensions, used to create the distributions
         self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
@@ -139,26 +142,27 @@ class localFeedbackShared(nn.Module):
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # features: 0-9: joint positions; 10-19: phases
 
-        mean_actions = th.zeros(
-            [1, 9],
-            device="cuda:0" if features.get_device() == 0 else "cpu",
-        )
-
+        idx = []
         for i in range(9):
-            feature = th.tensor(
-                [
-                    th.Tensor([features[0][i]]),
-                    th.Tensor(
-                        [features[0][i + 1 + 10]]
-                    ),  # + 1 because head phase not relevant
-                ],
-                device="cuda:0" if features.get_device() == 0 else "cpu",
-            )
-            mean_actions[0][i] = self.policy_net(feature)
+            idx.append(
+                torch.tensor([i, 11 + i], device=self.device, dtype=torch.int)
+            )  # + 1 on phases,as head phase not relevant
 
-        # TODO check action_dim
+        x0 = self.policy_net(torch.index_select(features, dim=1, index=idx[0]))
+        x1 = self.policy_net(torch.index_select(features, dim=1, index=idx[1]))
+        x2 = self.policy_net(torch.index_select(features, dim=1, index=idx[2]))
+        x3 = self.policy_net(torch.index_select(features, dim=1, index=idx[3]))
+        x4 = self.policy_net(torch.index_select(features, dim=1, index=idx[4]))
+        x5 = self.policy_net(torch.index_select(features, dim=1, index=idx[5]))
+        x6 = self.policy_net(torch.index_select(features, dim=1, index=idx[6]))
+        x7 = self.policy_net(torch.index_select(features, dim=1, index=idx[7]))
+        x8 = self.policy_net(torch.index_select(features, dim=1, index=idx[8]))
 
-        return mean_actions
+        out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
+
+        assert out.shape[1] == self.action_dim  # test action dim
+
+        return out
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
@@ -180,6 +184,7 @@ class localFeedbackNonShared(nn.Module):
 
         self.obs_per_iter: int = 2
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.action_dim = action_dim
 
         # IMPORTANT:
         # Save output dimensions, used to create the distributions
@@ -237,26 +242,27 @@ class localFeedbackNonShared(nn.Module):
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # features: 0-9: joint positions; 10-19: phases
 
-        mean_actions = th.zeros(
-            [1, 9],
-            device="cuda:0" if features.get_device() == 0 else "cpu",
-        )
-
+        idx = []
         for i in range(9):
-            feature = th.tensor(
-                [
-                    th.Tensor([features[0][i]]),
-                    th.Tensor(
-                        [features[0][i + 1 + 10]]
-                    ),  # + 1 because head phase not relevant
-                ],
-                device="cuda:0" if features.get_device() == 0 else "cpu",
-            )
-            mean_actions[0][i] = self.policy_nets[i](feature)
+            idx.append(
+                torch.tensor([i, 11 + i], device=self.device, dtype=torch.int)
+            )  # + 1 on phases,as head phase not relevant
 
-        # TODO check action_dim
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[0]))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[1]))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx[2]))
+        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=idx[3]))
+        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=idx[4]))
+        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=idx[5]))
+        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=idx[6]))
+        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=idx[7]))
+        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=idx[8]))
 
-        return mean_actions
+        out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
+
+        assert out.shape[1] == self.action_dim  # test action dim
+
+        return out
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
@@ -301,7 +307,7 @@ class nn3(nn.Module):
             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
             nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-            nn.Linear(self.latent_dim_pi, 5),
+            nn.Linear(self.latent_dim_pi, 4),
         )
 
         # handle weight initialization
@@ -394,7 +400,7 @@ class nn4(nn.Module):
             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
             nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-            nn.Linear(self.latent_dim_pi, 5),
+            nn.Linear(self.latent_dim_pi, 4),
         )
 
         # handle weight initialization
@@ -565,10 +571,8 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
         # choose correct network
         if conf.CONF["RL"]["localFeedback"]:
             if conf.CONF["RL"]["localFeedback"] == "shared":
-                raise NotImplementedError
                 self.mlp_extractor = localFeedbackShared(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "non-shared":
-                raise NotImplementedError
                 self.mlp_extractor = localFeedbackNonShared(
                     self.features_dim, action_dim
                 )
@@ -577,6 +581,7 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
             elif conf.CONF["RL"]["localFeedback"] == "nn4":
                 self.mlp_extractor = nn4(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "nn5":
+                raise NotImplementedError
                 self.mlp_extractor = nn5(self.features_dim, action_dim)
             else:
                 raise NotImplementedError
