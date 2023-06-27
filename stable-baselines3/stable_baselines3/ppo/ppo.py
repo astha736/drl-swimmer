@@ -259,7 +259,7 @@ class PPO(OnPolicyAlgorithm):
                 #     self.policy, input_size=(1, 20), save_graph=True
                 # )
 
-                actions = actions.cpu().numpy()
+                # actions = actions.cpu().numpy()
 
                 # Logging
                 pg_losses.append(policy_loss.item())
