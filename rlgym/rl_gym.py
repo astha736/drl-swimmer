@@ -498,6 +498,8 @@ class FarmsGym(gym.Env):
         self.observation = None
         self.random_times = 0
 
+        self.jointPosLastEpisode = None
+
         self.notion = kwargs.pop("notion", None)
 
         self.is_test_env = is_test_env
@@ -676,6 +678,9 @@ class FarmsGym(gym.Env):
         if curr_x < start_x - 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True:
             self.done = True  # early termination on backwards movement
 
+        if self.done:
+            self.jointPosLastEpisode = np.copy(np.array(self.sim.task.data.sensors.joints.positions(iteration=iteration)))
+        
         if self.is_test_env:
             self.log_fb_weights.append(
                 np.array(self.sim.task.data.network.joints2osc_map.weights.array)
@@ -746,10 +751,20 @@ class FarmsGym(gym.Env):
 
         # !!! oscillator states are reset manually in agnathax_control/network.py !!!
 
-        # if conf.CONF["RL"]["useRandStartCond"]:
-        #     RobotInitialState.set_random_shape_pose(
-        #         animat_options=self.sim.task.animat_options
-        #     )
+        if conf.CONF["RL"]["useRandStartCond"] =="jointPosEndLastEpisode" and not self.jointPosLastEpisode is None:
+            RobotInitialState.set_user_defined_shape_pose(
+                animat_options=self.sim.task.animat_options,
+                shape_pose = self.jointPosLastEpisode
+            )
+            
+            # self.sim.task.data.sensors.joints.positions(0) = self.jointPosLastEpisode
+        elif conf.CONF["RL"]["useRandStartCond"]:
+            pass
+            # RobotInitialState.set_random_shape_pose(
+            #     animat_options=self.sim.task.animat_options
+            # )
+        else:
+            pass
 
         self.sim._env.reset()
 

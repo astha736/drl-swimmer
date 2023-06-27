@@ -251,6 +251,11 @@ class RobotInitialState:
             )
         return
 
+    def set_user_defined_shape_pose(animat_options, shape_pose):
+        for i, elem in enumerate(animat_options.morphology.joints):
+            elem.initial = [shape_pose[i], 0]
+        return
+
     @staticmethod
     def set_random_shape_pose(animat_options):
         random_state = random.choice(RobotInitialState._robot_state_list)
