@@ -693,7 +693,7 @@ class nn7(nn.Module):
                 nn.Linear(self.latent_dim_pi, 1),
             )
 
-        self.policy_nets = nn.ModulesList([get_policy_net_body().to(self.device) for i in range(3)])
+        self.policy_nets = nn.ModuleList([get_policy_net_body().to(self.device) for i in range(3)])
 
         self.policy_net_tail = nn.Sequential(
             nn.Linear(self.obs_dim_tail, conf.CONF["RL"]["policy_network"]["arch"][0]),
@@ -816,7 +816,7 @@ class nn8(nn.Module):
                 nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = nn.ModulesList([get_policy_nets().to(self.device) for i in range(3)])
+        self.policy_nets = nn.ModuleList([get_policy_nets().to(self.device) for i in range(3)])
 
         # handle weight initialization
         for i in range(3):
@@ -896,7 +896,7 @@ class nn9(nn.Module):
                 nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = nn.ModulesList([get_policy_net().to(self.device) for i in range(3)])
+        self.policy_nets = nn.ModuleList([get_policy_net().to(self.device) for i in range(3)])
 
         # handle weight initialization
         for i in range(3):

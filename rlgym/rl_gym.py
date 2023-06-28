@@ -84,7 +84,7 @@ class ActionChoice:
         ActionType.STRETCH: 30,
         ActionType.CONTACT: 10,
         ActionType.DRIVE: [2.5, 4.5],
-        ActionType.STRETCH_BIAS: 30,
+        ActionType.STRETCH_BIAS: 15, # try half
     }
 
     def __init__(self, action_list: List[ActionType], n_body_joints: int = 10):
@@ -176,6 +176,9 @@ class ActionChoice:
 
         robot_parameters = network_parameters.joints2osc_map.weights.array
 
+        # TODO technically this is wrong as the phases from the LAST step are used
+        # maybe this error is small enough
+        if not iteration == 0: iteration = iteration - 1
         phases_left = np.array(data_states.phases(iteration))[
                         conf.LEFT_OSCILLATOR_INDEXES
                     ]
