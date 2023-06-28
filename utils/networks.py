@@ -811,13 +811,13 @@ class nn8(nn.Module):
                     conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi
                 ),
                 getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-                nn.Linear(self.latent_dim_pi, 1),
+                nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = [get_policy_nets().to(self.device) for i in range(9)]
+        self.policy_nets = [get_policy_nets().to(self.device) for i in range(3)]
 
         # handle weight initialization
-        for i in range(9):
+        for i in range(3):
             torch.nn.init.orthogonal_(self.policy_nets[i][0].weight, gain=np.sqrt(2))
             torch.nn.init.orthogonal_(self.policy_nets[i][2].weight, gain=np.sqrt(2))
             torch.nn.init.orthogonal_(self.policy_nets[i][4].weight, gain=0.01)
@@ -853,14 +853,8 @@ class nn8(nn.Module):
         x0 = self.policy_nets[0](features)
         x1 = self.policy_nets[1](features)
         x2 = self.policy_nets[2](features)
-        x3 = self.policy_nets[3](features)
-        x4 = self.policy_nets[4](features)
-        x5 = self.policy_nets[5](features)
-        x6 = self.policy_nets[6](features)
-        x7 = self.policy_nets[7](features)
-        x8 = self.policy_nets[8](features)
 
-        out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
+        out = torch.cat((x0, x1, x2), dim=1)
 
         assert out.shape[1] == self.action_dim  # test action dim
 
@@ -897,13 +891,13 @@ class nn9(nn.Module):
                     conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi
                 ),
                 getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-                nn.Linear(self.latent_dim_pi, 1),
+                nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = [get_policy_net().to(self.device) for i in range(9)]
+        self.policy_nets = [get_policy_net().to(self.device) for i in range(3)]
 
         # handle weight initialization
-        for i in range(9):
+        for i in range(3):
             torch.nn.init.orthogonal_(self.policy_nets[i][0].weight, gain=np.sqrt(2))
             torch.nn.init.orthogonal_(self.policy_nets[i][2].weight, gain=np.sqrt(2))
             torch.nn.init.orthogonal_(self.policy_nets[i][4].weight, gain=0.01)
@@ -937,45 +931,53 @@ class nn9(nn.Module):
         # features: 0-9: joint positions; 10-19: phases
 
         # body
-        idx_body = []
-        for i in range(6):
-            idx_body.append(
-                torch.tensor(
-                    [
-                        0 + i,
-                        1 + i,
-                        2 + i,
-                        3 + i,
-                        4 + i,
-                        10 + i,
-                        11 + i,
-                        12 + i,
-                        13 + i,
-                        14 + i,
-                    ],
-                    device=self.device,
-                    dtype=torch.int,
-                )
-            )
+        idx_0 = torch.tensor(
+            [
+                0,
+                1,
+                2,
+                3,
+                4,
+                10,
+                11,
+                12,
+                13,
+                14,
+            ],
+            device=self.device,
+            dtype=torch.int,
+        )
 
-        # head
-        idx_head = idx_body[0]
+        idx_1 = torch.tensor(
+            [
+                3,
+                4,
+                5,
+                6,
+                7,
+                13,
+                14,
+                15,
+                16,
+                17,
+            ],
+            device=self.device,
+            dtype=torch.int,
+        )
 
-        # tail
-        idx_tail = idx_body[-1]
+        idx_2 = torch.tensor(
+            [5, 6, 7, 8, 9, 15, 16, 17, 18, 19],
+            device=self.device,
+            dtype=torch.int,
+        )
 
         # pay attention on order or actions! It must go head to tail.
-        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_head))
-        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx_body[0]))
-        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx_body[1]))
-        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=idx_body[2]))
-        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=idx_body[3]))
-        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=idx_body[4]))
-        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=idx_body[5]))
-        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=idx_tail))
-        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=idx_tail))
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_0))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx_1))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx_2))
+        
 
-        out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
+        out = torch.cat((x0, x1, x2), dim=1)
 
         assert out.shape[1] == self.action_dim  # test action dim
 
