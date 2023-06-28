@@ -1,6 +1,7 @@
 import torch
 import torch as th
-from torch import device, nn
+from torch import device
+import torch.nn as nn
 from typing import Callable, Tuple
 import numpy as np
 from gym import spaces
@@ -61,7 +62,7 @@ class CustomNetwork(nn.Module):
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
-
+    
 
 # https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
 class localFeedbackShared(nn.Module):
@@ -205,7 +206,9 @@ class localFeedbackNonShared(nn.Module):
                 ),  # 1 output neuron for each action; replaces the proba_distribution_net of stable-baselines3
             )
 
-        self.policy_nets = [get_policy_net().to(self.device) for i in range(9)]
+        
+        
+        self.policy_nets = nn.ModuleList([get_policy_net().to(self.device) for i in range(9)])
 
         # handle weight initialization
         for i in range(9):
@@ -676,6 +679,7 @@ class nn7(nn.Module):
         self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
         self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
 
+
         def get_policy_net_body():
             return nn.Sequential(
                 nn.Linear(
@@ -689,9 +693,7 @@ class nn7(nn.Module):
                 nn.Linear(self.latent_dim_pi, 1),
             )
 
-        self.policy_nets_body = [
-            get_policy_net_body().to(self.device) for i in range(8)
-        ]
+        self.policy_nets = nn.ModulesList([get_policy_net_body().to(self.device) for i in range(3)])
 
         self.policy_net_tail = nn.Sequential(
             nn.Linear(self.obs_dim_tail, conf.CONF["RL"]["policy_network"]["arch"][0]),
@@ -814,7 +816,7 @@ class nn8(nn.Module):
                 nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = [get_policy_nets().to(self.device) for i in range(3)]
+        self.policy_nets = nn.ModulesList([get_policy_nets().to(self.device) for i in range(3)])
 
         # handle weight initialization
         for i in range(3):
@@ -894,7 +896,7 @@ class nn9(nn.Module):
                 nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = [get_policy_net().to(self.device) for i in range(3)]
+        self.policy_nets = nn.ModulesList([get_policy_net().to(self.device) for i in range(3)])
 
         # handle weight initialization
         for i in range(3):
@@ -1031,7 +1033,6 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
                 self.mlp_extractor = nn8(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "nn9":
                 self.mlp_extractor = nn9(self.features_dim, action_dim)
-
         else:
             self.mlp_extractor = CustomNetwork(self.features_dim)
         pass

@@ -112,6 +112,8 @@ def main() -> None:
         action_list.append(ActionType.STRETCH)
     if "DRIVE" in conf.CONF["RL"]["action_choice"]:
         action_list.append(ActionType.DRIVE)
+    if "STRETCH_BIAS" in conf.CONF["RL"]["action_choice"]:
+        action_list.append(ActionType.STRETCH_BIAS)
 
     observation_list = []
     if "REACTION_XY" in conf.CONF["RL"]["observation_choice"]:

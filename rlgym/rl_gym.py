@@ -59,6 +59,7 @@ class ActionType(Enum):
     STRETCH = 1  # stretch
     CONTACT = 2  # contact
     DRIVE = 3  # drive
+    STRETCH_BIAS = 4 # bias with sin, cos
 
 
 class ObservationType(Enum):
@@ -83,6 +84,7 @@ class ActionChoice:
         ActionType.STRETCH: 30,
         ActionType.CONTACT: 10,
         ActionType.DRIVE: [2.5, 4.5],
+        ActionType.STRETCH_BIAS: 30,
     }
 
     def __init__(self, action_list: List[ActionType], n_body_joints: int = 10):
@@ -106,6 +108,15 @@ class ActionChoice:
         low = np.array([-1] * self.action_length[ActionType.STRETCH])
         high = np.array([1] * self.action_length[ActionType.STRETCH])
         return low, high
+    
+    def action_bound_STRETCH_BIAS(self):
+        if not conf.CONF["robot_arch"]["s_local_weight"] == None:
+            self.action_length[ActionType.STRETCH_BIAS] = self.n_body_joints * 2
+        else:
+            self.action_length[ActionType.STRETCH_BIAS] = (self.n_body_joints - 1) * 2
+        low = np.array([-1] * self.action_length[ActionType.STRETCH_BIAS])
+        high = np.array([1] * self.action_length[ActionType.STRETCH_BIAS])
+        return low, high
 
     def action_bound_CONTACT(self):
         """Contacts are usually same as joint"""
@@ -128,6 +139,7 @@ class ActionChoice:
             ActionType.STRETCH: self.action_bound_STRETCH,
             ActionType.CONTACT: self.action_bound_CONTACT,
             ActionType.DRIVE: self.action_bound_DRIVE,
+            ActionType.STRETCH_BIAS: self.action_bound_STRETCH_BIAS,
         }
 
         return switcher.get(action, "Invalid Action Type")
@@ -149,7 +161,7 @@ class ActionChoice:
 
         return spaces.Box(low=low_bound, high=high_bound), np.shape(low_bound)[0]
 
-    def set_action_STRETCH(self, action, network_parameters, iteration):
+    def set_action_STRETCH(self, action, network_parameters, iteration, data_states):
         action = action * ActionChoice.action_output_scale[ActionType.STRETCH]
 
         robot_parameters = network_parameters.joints2osc_map.weights.array
@@ -159,7 +171,28 @@ class ActionChoice:
             robot_parameters[i * 2 + 1] = action_val * -1  # right oscillator assignment
         pass
 
-    def set_action_CONTACT(self, action, network_parameters, iteration):
+    def set_action_STRETCH_BIAS(self, action, network_parameters, iteration, data_states):
+        action = action * ActionChoice.action_output_scale[ActionType.STRETCH_BIAS]
+
+        robot_parameters = network_parameters.joints2osc_map.weights.array
+
+        phases_left = np.array(data_states.phases(iteration))[
+                        conf.LEFT_OSCILLATOR_INDEXES
+                    ]
+        
+        phases_right = np.array(data_states.phases(iteration))[
+                        conf.RIGHT_OSCILLATOR_INDEXES
+                    ]
+        
+        # two actions for each joint
+        for i, j in enumerate(range(0, len(action), 2)):
+            action_biased_left = action[j] * np.cos(phases_left[i]) + action[j+1] * np.sin(phases_left[i])
+            action_biased_right = - action[j] * np.cos(phases_right[i]) - action[j+1] * np.sin(phases_right[i])
+            robot_parameters[i * 2 + 0] = action_biased_left  # left oscillator assignment
+            robot_parameters[i * 2 + 1] = action_biased_right  # right oscillator assignment
+        pass
+
+    def set_action_CONTACT(self, action, network_parameters, iteration, data_states):
         action = action * ActionChoice.action_output_scale[ActionType.STRETCH]
 
         # ASTHA BUG FIX
@@ -171,7 +204,7 @@ class ActionChoice:
 
         pass
 
-    def set_action_DRIVE(self, action, network_parameters, iteration):
+    def set_action_DRIVE(self, action, network_parameters, iteration, data_states):
         # network_parameters = self.sim.task.data.network
         # setting data.network.drives.array
 
@@ -192,17 +225,18 @@ class ActionChoice:
             ActionType.STRETCH: self.set_action_STRETCH,
             ActionType.CONTACT: self.set_action_CONTACT,
             ActionType.DRIVE: self.set_action_DRIVE,
+            ActionType.STRETCH_BIAS: self.set_action_STRETCH_BIAS,      
         }
 
         return switcher.get(observation, "Invalid observation Type")
 
-    def set_action(self, actions, network_parameters, iteration: int):
+    def set_action(self, actions, network_parameters, iteration: int, data_states):
         index = 0
         for action_type in self.action_list:
             action_len = self.action_length[action_type]
             action_slice = actions[index : index + action_len]
             self.set_action_switch(action_type)(
-                action_slice, network_parameters, iteration
+                action_slice, network_parameters, iteration, data_states
             )
             index += action_len
         return
@@ -625,7 +659,7 @@ class FarmsGym(gym.Env):
         return reward
 
     def set_action(
-        action, network_parameters, action_choice: ActionChoice, iteration: int
+        action, network_parameters, action_choice: ActionChoice, iteration: int, data_states
     ):
         """Apply the computed action to the concerned variables"""
         if np.isnan(action).any():
@@ -637,7 +671,7 @@ class FarmsGym(gym.Env):
         if action is None:
             raise ValueError("should not be allowed")
 
-        action_choice.set_action(action, network_parameters, iteration)
+        action_choice.set_action(action, network_parameters, iteration, data_states)
         return
 
     def step(self, action):
@@ -653,6 +687,7 @@ class FarmsGym(gym.Env):
             network_parameters=self.sim.task.data.network,
             action_choice=self.action_choice,
             iteration=iteration,
+            data_states = self.sim.task.data.state,
         )
 
         # @ASTHA makes simulation go forward # @CHECK
