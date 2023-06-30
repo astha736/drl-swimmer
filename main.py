@@ -130,6 +130,8 @@ def main() -> None:
         observation_list.append(ObservationType.VELOCITIES)
     if "AMPLITUDES" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.AMPLITUDES)
+    if "JOINT_VEL" in conf.CONF["RL"]["observation_choice"]:
+        observation_list.append(ObservationType.JOINT_VEL)
 
     # Setup the TrainTest class
     train_test = TrainTestClass(

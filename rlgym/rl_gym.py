@@ -72,6 +72,7 @@ class ObservationType(Enum):
     PHASES = 7
     VELOCITIES = 8
     AMPLITUDES = 9
+    JOINT_VEL = 10
 
 
 class ActionChoice:
@@ -265,6 +266,12 @@ class ObservationChoice:
         low = np.array([-np.inf] * (self.n_body_joints))
         high = np.array([np.inf] * (self.n_body_joints))
         return low, high
+    
+    def observation_bound_JOINT_VEL(self):
+        """JOINT POSITION"""
+        low = np.array([-np.inf] * (self.n_body_joints))
+        high = np.array([np.inf] * (self.n_body_joints))
+        return low, high
 
     def observation_bound_REACTION_X(self):
         """REACTION X direction"""
@@ -317,6 +324,7 @@ class ObservationChoice:
     def get_observation_bound(self, observation: ObservationType):
         switcher = {
             ObservationType.JOINT_POSITION: self.observation_bound_JOINT_POSITION,
+            ObservationType.JOINT_VEL: self.observation_bound_JOINT_VEL,
             ObservationType.REACTION_X: self.observation_bound_REACTION_X,
             ObservationType.REACTION_Y: self.observation_bound_REACTION_Y,
             ObservationType.REACTION_Z: self.observation_bound_REACTION_Z,
@@ -350,6 +358,11 @@ class ObservationChoice:
         joints_pos = np.array(data_sensors.joints.positions(iteration=iteration))
 
         return joints_pos
+    
+    def extract_observation_JOINT_VEL(self, data_sensors, data_states, iteration):
+        joints_vel = np.array(data_sensors.joints.velocities(iteration=iteration))
+
+        return joints_vel
 
     def extract_observation_VELOCITIES(self, data_sensors, data_states, iteration):
         com_velocity = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
@@ -464,6 +477,7 @@ class ObservationChoice:
     def extract_observation(self, observation: ObservationType):
         switcher = {
             ObservationType.JOINT_POSITION: self.extract_observation_JOINT_POSITION,
+            ObservationType.JOINT_VEL: self.extract_observation_JOINT_VEL,
             ObservationType.REACTION_X: self.extract_observation_REACTION_X,
             ObservationType.REACTION_Y: self.extract_observation_REACTION_Y,
             ObservationType.REACTION_Z: self.extract_observation_REACTION_Z,
@@ -795,6 +809,10 @@ class FarmsGym(gym.Env):
             )
         elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandSampled":
             RobotInitialState.set_randomly_sampled_shape_pose(
+                animat_options=self.sim.task.animat_options
+            )
+        elif conf.CONF["RL"]["useRandStartCond"] == "jointPosVelRandSampled":
+            RobotInitialState.set_randomly_sampled_shape_pose_vel(
                 animat_options=self.sim.task.animat_options
             )
         elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandomFromPreset":
