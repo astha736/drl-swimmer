@@ -255,6 +255,11 @@ class RobotInitialState:
         for i, elem in enumerate(animat_options.morphology.joints):
             elem.initial = [shape_pose[i], 0]
         return
+    
+    def set_randomly_sampled_shape_pose(animat_options):
+        for i, elem in enumerate(animat_options.morphology.joints):
+            elem.initial = [random.uniform(-0.4, 0.4), 0]
+        return
 
     @staticmethod
     def set_random_shape_pose(animat_options):

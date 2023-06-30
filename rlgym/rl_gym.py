@@ -785,28 +785,22 @@ class FarmsGym(gym.Env):
 
         """
 
-        # self.sim, _ = simulation.setup_simulation(
-        #     self.animat_options,
-        #     self.arena_options,
-        #     self.sim_options,
-        #     self.simulator,
-        #     callbacks = []
-        # )
 
-        # !!! oscillator states are reset manually in agnathax_control/network.py !!!
+        # NOTE oscillator states are reset manually in agnathax_control/network.py
 
         if conf.CONF["RL"]["useRandStartCond"] =="jointPosEndLastEpisode" and not self.jointPosLastEpisode is None:
             RobotInitialState.set_user_defined_shape_pose(
                 animat_options=self.sim.task.animat_options,
                 shape_pose = self.jointPosLastEpisode
             )
-            
-            # self.sim.task.data.sensors.joints.positions(0) = self.jointPosLastEpisode
-        elif conf.CONF["RL"]["useRandStartCond"]:
-            pass
-            # RobotInitialState.set_random_shape_pose(
-            #     animat_options=self.sim.task.animat_options
-            # )
+        elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandSampled":
+            RobotInitialState.set_randomly_sampled_shape_pose(
+                animat_options=self.sim.task.animat_options
+            )
+        elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandomFromPreset":
+            RobotInitialState.set_random_shape_pose(
+                animat_options=self.sim.task.animat_options
+            )
         else:
             pass
 
