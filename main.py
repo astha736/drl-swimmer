@@ -85,6 +85,10 @@ def main() -> None:
         sim_options.timestep * sim_options.n_iterations
     )
 
+    conf.CONF["simulation_time_testing"] = (
+        sim_options.timestep * conf.CONF["n_iterations_testing"]
+    )
+
     exp_cond_experiment, _ = ExpCond.rlExp_sCaudal_ncCPG(
         s_caudl_senstivity=getattr(
             RobotFeedbackSenstivity,

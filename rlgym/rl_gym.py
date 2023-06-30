@@ -623,7 +623,7 @@ class FarmsGym(gym.Env):
         head_pos = np.array(data_sensors.links.com_position(iteration=iteration,link_i = 0))[0:2]
         tail_pos = np.array(data_sensors.links.com_position(iteration=iteration,link_i = 10))[0:2]
         tail_head_vec = head_pos - tail_pos
-        sign_fwd = np.sign(np.dot(velocity_com, tail_head_vec) + 0.1) # ~100°
+        sign_fwd = np.sign(np.dot(velocity_com, tail_head_vec) + 0.1) # +/- ~100°
 
         reward = 0.0
         if "vel_com" in conf.CONF["RL"]["RewardFnc"]:

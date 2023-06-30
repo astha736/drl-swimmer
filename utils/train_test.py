@@ -275,18 +275,20 @@ class TrainTestClass:
         grads = conf.CONF["misc"]["log_grads"]  # shape (timestep, outputs, 1, inputs)
         conf.CONF["misc"]["log_grads"] = False
 
+        rew_standardized = [10 * rew / conf.CONF['simulation_time_testing'] for rew in rew] # norm by episode length; * 10 to keep legacy experiments comparable
+
         # log reward of best model to performance_metrics.txt
         with open(
             os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a"
         ) as f:
             f.write("\n")
-            f.write(f"best model reward: {rew} \n")
+            f.write(f"best model reward: {rew_standardized} \n") 
         f.close()
 
         # log reward of best model to common results file: results.yaml
         results_file = "./experiments/results.yaml"
         results = yaml.load((open(results_file, "r")), Loader=yaml.FullLoader)
-        results[conf.CONF["experiment_id"]]["best model reward"] = f"{rew}"
+        results[conf.CONF["experiment_id"]]["best model reward"] = f"{rew_standardized}"
         with open(results_file, "w") as f:
             f.write(yaml.dump(results))
         f.close()
@@ -365,8 +367,6 @@ class TrainTestClass:
         for f in glob.glob(f"{_temp_dir}/*"):
             os.remove(f)
         os.rmdir(_temp_dir)
-
-        conf.CONF["misc"]["log_grads"] = False
 
         self.sim_options.record = False
 
