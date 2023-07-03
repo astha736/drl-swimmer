@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Run salamander simulation"""
 import os
 from re import X
 import argparse
@@ -22,6 +21,7 @@ import conf
 parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--experiment_id", required=False, default=None)
 parser.add_argument("-m", "--base_test_path", required=False, default=None)
+parser.add_argument("-l", "--log_level", required=False, default='min')
 args = parser.parse_args()
 
 # santity check on args
@@ -42,6 +42,8 @@ except:
     with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_config:
         conf.init(experiment_config, args.experiment_id, args.base_test_path)
 
+# assign args
+conf.CONF["log_level"] = args.log_level
 
 def main() -> None:
     # setup clargs

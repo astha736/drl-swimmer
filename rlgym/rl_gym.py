@@ -365,13 +365,19 @@ class ObservationChoice:
         return joints_vel
 
     def extract_observation_VELOCITIES(self, data_sensors, data_states, iteration):
-        com_velocity = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
 
-        target_velocity = np.array(
-            conf.CONF["RL"]["target_velocity"],
-        )
+        if "target_velocity" in conf.CONF["RL"]:
+            target = np.array(
+                conf.CONF["RL"]["target_velocity"],
+            )
+            current = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
+        elif "target_speed" in conf.CONF["RL"]:
+            target = np.array([0.0, conf.CONF["RL"]["target_speed"]])
+            current = np.array([0.0, np.linalg.norm(np.array(data_sensors.links.global_com_velocity(iteration))[0:2])])
+        else:
+            raise ValueError("Check the objectives of this experiment.")
 
-        return np.concatenate((com_velocity, target_velocity))
+        return np.concatenate((current, target))
 
     def extract_observation_AMPLITUDES(self, data_sensors, data_states, iteration):
         amplitudes_right = np.array(data_states.amplitudes(iteration))[
@@ -628,7 +634,7 @@ class FarmsGym(gym.Env):
 
         # speed
         speed_com = np.linalg.norm(
-            np.array(data_sensors.links.global_com_velocity(iteration))
+            np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
         )
 
         # velocity
