@@ -564,6 +564,7 @@ class FarmsGym(gym.Env):
 
         if self.is_test_env:
             self.log_fb_weights = []
+            self.log_tracking_error = []
 
         self.sim, _ = simulation.setup_simulation(
             self.animat_options,
@@ -751,12 +752,30 @@ class FarmsGym(gym.Env):
             self.log_fb_weights.append(
                 np.array(self.sim.task.data.network.joints2osc_map.weights.array)
             )
+            if "target_velocity" in conf.CONF["RL"]:
+                target = np.array(
+                    conf.CONF["RL"]["target_velocity"],
+                )
+                current = np.array(self.sim.task.data.sensors.links.global_com_velocity(iteration))[0:2]
+                self.log_tracking_error.append(np.sum(np.abs(target - current)))
+            elif "target_speed" in conf.CONF["RL"]:
+                target = np.array([conf.CONF["RL"]["target_speed"]])
+                current = np.array([np.linalg.norm(np.array(self.sim.task.data.sensors.links.global_com_velocity(iteration))[0:2])])
+                self.log_tracking_error.append(np.abs(target - current))
+            else:
+                pass
 
         if self.done and self.is_test_env:
+            additionalMetrics = None
+            if len(self.log_tracking_error) > 0:
+                additionalMetrics = {
+                    'mean abs tracking error': np.mean(self.log_tracking_error),
+                }
             utils.save_performance_metrics(
                 self.sim,
                 self.timestep,
                 self.sim_options.n_iterations,
+                additionalMetrics=additionalMetrics
             )
             fb_weights = np.array(self.log_fb_weights)
             _times = np.arange(
@@ -857,6 +876,7 @@ class FarmsGym(gym.Env):
 
         if self.is_test_env:
             self.log_fb_weights = []
+            self.log_tracking_error = []
 
         return self.observation
 

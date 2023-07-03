@@ -295,80 +295,82 @@ class TrainTestClass:
             f.write(yaml.dump(results))
         f.close()
 
-        # create temp dir
-        # _temp_dir = f"{conf.TEMP_DIR}/{1000 * time.time()}"
-        # os.makedirs(f"{_temp_dir}")
+        if conf.CONF["log_level"] == 'max':
 
-        # create plots of gradients
-        # for k in range(len(grads[0])):  # iterate over output neurons
-        #     # TODO use numpy instead of python lists for all operations
-        #     grads_numpy = np.array(grads, dtype=object)
-        #     max = grads_numpy[:, k, :, :].max()
-        #     min = grads_numpy[:, k, :, :].min()
+            # create temp dir
+            _temp_dir = f"{conf.TEMP_DIR}/{1000 * time.time()}"
+            os.makedirs(f"{_temp_dir}")
 
-        #     # save accumulated gradients
-        #     accumulated_gradients = np.sum(np.abs(grads_numpy[:, k, :, :]), axis=(0, 1))
-        #     fig = plt.figure(f"Accumulated gradients for output neuron {k}")
-        #     plt.title(f"Accumulated gradients for output neuron {k}")
-        #     plt.bar(
-        #         [j for j in range(len(grads[0][0][0]))],
-        #         accumulated_gradients,
-        #         color="#072140",
-        #     )
-        #     plt.xticks([j for j in range(len(grads[0][0][0]))])
-        #     plt.xlabel(f"Input neuron")
-        #     plt.ylabel(f"Accumulated gradient")
-        #     plt.grid(True)
-        #     plt.savefig(
-        #         f"{conf.LOG_DIR_RESULTS}/acc_grads_output_neuron_{k}.pdf",
-        #     )
-        #     plt.close()
+            # create plots of gradients
+            for k in range(len(grads[0])):  # iterate over output neurons
+                # TODO use numpy instead of python lists for all operations
+                grads_numpy = np.array(grads, dtype=object)
+                max = grads_numpy[:, k, :, :].max()
+                min = grads_numpy[:, k, :, :].min()
 
-        #     # create gif of gradients over episode
-        #     for i in range(len(grads)):  # timesteps
-        #         # generate images
-        #         fig = plt.figure(
-        #             f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
-        #         )
-        #         plt.title(
-        #             f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
-        #         )
-        #         plt.bar(
-        #             [j for j in range(len(grads[i][k][0]))],
-        #             grads[i][k][0],
-        #             color="#072140",
-        #         )
-        #         plt.xticks([j for j in range(len(grads[i][k][0]))])
-        #         plt.xlabel(f"Input neuron")
-        #         plt.ylabel(f"Gradient")
-        #         plt.grid(True)
-        #         plt.ylim(min * 1.2, max * 1.2)
-        #         plt.savefig(
-        #             f"{_temp_dir}/img_{i}.png",
-        #             transparent=False,
-        #             facecolor="white",
-        #         )
-        #         plt.close()
+                # save accumulated gradients
+                accumulated_gradients = np.sum(np.abs(grads_numpy[:, k, :, :]), axis=(0, 1))
+                fig = plt.figure(f"Accumulated gradients for output neuron {k}")
+                plt.title(f"Accumulated gradients for output neuron {k}")
+                plt.bar(
+                    [j for j in range(len(grads[0][0][0]))],
+                    accumulated_gradients,
+                    color="#072140",
+                )
+                plt.xticks([j for j in range(len(grads[0][0][0]))])
+                plt.xlabel(f"Input neuron")
+                plt.ylabel(f"Accumulated gradient")
+                plt.grid(True)
+                plt.savefig(
+                    f"{conf.LOG_DIR_RESULTS}/acc_grads_output_neuron_{k}.pdf",
+                )
+                plt.close()
 
-        #     # generate gif
-        #     frames = []
-        #     for t in range(self.sim_options.n_iterations):
-        #         image = imageio.v2.imread(f"{_temp_dir}/img_{t}.png")
-        #         frames.append(image)
-        #     imageio.mimsave(
-        #         f"{conf.LOG_DIR_RESULTS}/grad_anim_output_neuron_{k}.gif",
-        #         frames,
-        #         duration=self.sim_options.timestep * 1000,
-        #     )
+                # create gif of gradients over episode
+                for i in range(len(grads)):  # timesteps
+                    # generate images
+                    fig = plt.figure(
+                        f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
+                    )
+                    plt.title(
+                        f"Gradients of output neuron {k} w.r.t. input neurons - {round(i * self.sim_options.timestep)}s"
+                    )
+                    plt.bar(
+                        [j for j in range(len(grads[i][k][0]))],
+                        grads[i][k][0],
+                        color="#072140",
+                    )
+                    plt.xticks([j for j in range(len(grads[i][k][0]))])
+                    plt.xlabel(f"Input neuron")
+                    plt.ylabel(f"Gradient")
+                    plt.grid(True)
+                    plt.ylim(min * 1.2, max * 1.2)
+                    plt.savefig(
+                        f"{_temp_dir}/img_{i}.png",
+                        transparent=False,
+                        facecolor="white",
+                    )
+                    plt.close()
 
-        #     # purge _temp_dir folder
-        #     for f in glob.glob(f"{_temp_dir}/*"):
-        #         os.remove(f)
+                # generate gif
+                frames = []
+                for t in range(self.sim_options.n_iterations):
+                    image = imageio.v2.imread(f"{_temp_dir}/img_{t}.png")
+                    frames.append(image)
+                imageio.mimsave(
+                    f"{conf.LOG_DIR_RESULTS}/grad_anim_output_neuron_{k}.gif",
+                    frames,
+                    duration=self.sim_options.timestep * 1000,
+                )
 
-        # purge and remove temp dir
-        # for f in glob.glob(f"{_temp_dir}/*"):
-        #     os.remove(f)
-        # os.rmdir(_temp_dir)
+                # purge _temp_dir folder
+                for f in glob.glob(f"{_temp_dir}/*"):
+                    os.remove(f)
+
+            # purge and remove temp dir
+            for f in glob.glob(f"{_temp_dir}/*"):
+                os.remove(f)
+            os.rmdir(_temp_dir)
 
         self.sim_options.record = False
 
