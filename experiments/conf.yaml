@@ -1,0 +1,19 @@
+'999':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL:
+    useRandStartCond: "jointPosEndLastEpisode" 
+    normWrapper: True
+    RewardFnc: './config/RewardFnc_params/reward005.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 1500 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [200, 200]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_mini.yaml'

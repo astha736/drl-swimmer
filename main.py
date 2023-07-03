@@ -3,6 +3,7 @@
 import os
 from re import X
 import argparse
+import yaml
 
 from farms_core.io.yaml import pyobject2yaml
 from farms_sim.utils.parse_args import sim_parse_args
@@ -32,8 +33,14 @@ if args.base_test_path is not None and args.experiment_id is None:
 
 
 # Load experiment config and setup *_DIRs
-with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_config:
-    conf.init(experiment_config, args.experiment_id, args.base_test_path)
+try:
+    with open(f"./experiments/conf.yaml") as experiments_config:
+        _conf = yaml.full_load(experiments_config)
+        conf.init(_conf[args.experiment_id], args.experiment_id, args.base_test_path)
+except:
+    # legacy
+    with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_config:
+        conf.init(experiment_config, args.experiment_id, args.base_test_path)
 
 
 def main() -> None:

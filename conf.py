@@ -17,8 +17,17 @@ def init(experiment_config, experiment_id, base_test_path):
     RIGHT_OSCILLATOR_INDEXES = [i * 2 - 1 for i in range(1, 11)]
     LEFT_OSCILLATOR_INDEXES = [i * 2 for i in range(0, 10)]
 
-    CONF = yaml.full_load(experiment_config)
+    try:
+        CONF = yaml.full_load(experiment_config)
+    except:
+        # we assume that experiment_config is a python object already
+        CONF = experiment_config
+        pass
+
     CONF["experiment_id"] = experiment_id
+
+    if not os.path.isdir(f"./experiments/{experiment_id}"):
+        os.makedirs(f"./experiments/{experiment_id}") 
 
     # if base_test_path: only tests should be run on the model within that path
     if base_test_path is not None:
