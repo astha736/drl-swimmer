@@ -256,6 +256,16 @@ class RobotInitialState:
             elem.initial = [shape_pose[i], 0]
         return
     
+    def set_user_defined_shape_pose_vel(animat_options, shape_pose, vel):
+        for i, elem in enumerate(animat_options.morphology.joints):
+            elem.initial = [shape_pose[i], vel[i]]
+        return
+    
+    def set_user_defined_shape_pose_vel_rand(animat_options, shape_pose):
+        for i, elem in enumerate(animat_options.morphology.joints):
+            elem.initial = [shape_pose[i], random.uniform(-0.05, 0.05)]
+        return
+    
     def set_randomly_sampled_shape_pose(animat_options):
         for i, elem in enumerate(animat_options.morphology.joints):
             elem.initial = [random.uniform(-0.4, 0.4), 0]
@@ -263,7 +273,7 @@ class RobotInitialState:
     
     def set_randomly_sampled_shape_pose_vel(animat_options):
         for i, elem in enumerate(animat_options.morphology.joints):
-            elem.initial = [random.uniform(-0.4, 0.4), random.uniform(-0.0261799, 0.02617)] # +/- 22°, +/- 1.5°/s
+            elem.initial = [random.uniform(-0.4, 0.4), random.uniform(-0.05, 0.05)] # +/- 22°, +/- 1.5°/s
         return
 
     @staticmethod

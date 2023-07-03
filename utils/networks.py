@@ -559,7 +559,7 @@ class nn6(nn.Module):
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.obs_dim_body = 6
-        self.obs_dim_tail = 4
+        self.obs_dim_tail = 6
         self.action_dim = action_dim
 
         # IMPORTANT:
@@ -643,13 +643,7 @@ class nn6(nn.Module):
         x6 = self.policy_net_body(torch.index_select(features, dim=1, index=idx[6]))
         x7 = self.policy_net_body(torch.index_select(features, dim=1, index=idx[7]))
 
-        # tail
-        idx = torch.tensor(
-            [8, 9, 18, 19],
-            device=self.device,
-            dtype=torch.int,
-        )
-        x8 = self.policy_net_tail(torch.index_select(features, dim=1, index=idx))
+        x8 = self.policy_net_tail(torch.index_select(features, dim=1, index=idx[7]))
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -671,7 +665,6 @@ class nn7(nn.Module):
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.obs_dim_body = 6
-        self.obs_dim_tail = 4
         self.action_dim = action_dim
 
         # IMPORTANT:
@@ -680,7 +673,7 @@ class nn7(nn.Module):
         self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
 
 
-        def get_policy_net_body():
+        def get_policy_net():
             return nn.Sequential(
                 nn.Linear(
                     self.obs_dim_body, conf.CONF["RL"]["policy_network"]["arch"][0]
@@ -693,35 +686,20 @@ class nn7(nn.Module):
                 nn.Linear(self.latent_dim_pi, 1),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_net_body().to(self.device) for i in range(3)])
-
-        self.policy_net_tail = nn.Sequential(
-            nn.Linear(self.obs_dim_tail, conf.CONF["RL"]["policy_network"]["arch"][0]),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-            nn.Linear(self.latent_dim_pi, 1),
-        )
+        self.policy_nets = nn.ModuleList([get_policy_net().to(self.device) for i in range(9)])
 
         # handle weight initialization
-        for i in range(8):
+        for i in range(9):
             torch.nn.init.orthogonal_(
-                self.policy_nets_body[i][0].weight, gain=np.sqrt(2)
+                self.policy_nets[i][0].weight, gain=np.sqrt(2)
             )
             torch.nn.init.orthogonal_(
-                self.policy_nets_body[i][2].weight, gain=np.sqrt(2)
+                self.policy_nets[i][2].weight, gain=np.sqrt(2)
             )
-            torch.nn.init.orthogonal_(self.policy_nets_body[i][4].weight, gain=0.01)
-            self.policy_nets_body[i][0].bias.data.fill_(0.0)
-            self.policy_nets_body[i][2].bias.data.fill_(0.0)
-            self.policy_nets_body[i][4].bias.data.fill_(0.0)
-
-        torch.nn.init.orthogonal_(self.policy_net_tail[0].weight, gain=np.sqrt(2))
-        torch.nn.init.orthogonal_(self.policy_net_tail[2].weight, gain=np.sqrt(2))
-        torch.nn.init.orthogonal_(self.policy_net_tail[4].weight, gain=0.01)
-        self.policy_net_tail[0].bias.data.fill_(0.0)
-        self.policy_net_tail[2].bias.data.fill_(0.0)
-        self.policy_net_tail[4].bias.data.fill_(0.0)
+            torch.nn.init.orthogonal_(self.policy_nets[i][4].weight, gain=0.01)
+            self.policy_nets[i][0].bias.data.fill_(0.0)
+            self.policy_nets[i][2].bias.data.fill_(0.0)
+            self.policy_nets[i][4].bias.data.fill_(0.0)
 
         # Value network
         self.value_net = nn.Sequential(
@@ -748,7 +726,6 @@ class nn7(nn.Module):
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # features: 0-9: joint positions; 10-19: phases
 
-        # body
         idx = []
         for i in range(8):
             idx.append(
@@ -759,22 +736,15 @@ class nn7(nn.Module):
                 )
             )
 
-        x0 = self.policy_nets_body[0](torch.index_select(features, dim=1, index=idx[0]))
-        x1 = self.policy_nets_body[1](torch.index_select(features, dim=1, index=idx[1]))
-        x2 = self.policy_nets_body[2](torch.index_select(features, dim=1, index=idx[2]))
-        x3 = self.policy_nets_body[3](torch.index_select(features, dim=1, index=idx[3]))
-        x4 = self.policy_nets_body[4](torch.index_select(features, dim=1, index=idx[4]))
-        x5 = self.policy_nets_body[5](torch.index_select(features, dim=1, index=idx[5]))
-        x6 = self.policy_nets_body[6](torch.index_select(features, dim=1, index=idx[6]))
-        x7 = self.policy_nets_body[7](torch.index_select(features, dim=1, index=idx[7]))
-
-        # tail
-        idx = torch.tensor(
-            [8, 9, 18, 19],
-            device=self.device,
-            dtype=torch.int,
-        )
-        x8 = self.policy_net_tail(torch.index_select(features, dim=1, index=idx))
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[0]))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[1]))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx[2]))
+        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=idx[3]))
+        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=idx[4]))
+        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=idx[5]))
+        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=idx[6]))
+        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=idx[7]))
+        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=idx[7]))
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -1035,4 +1005,8 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
                 self.mlp_extractor = nn9(self.features_dim, action_dim)
         else:
             self.mlp_extractor = CustomNetwork(self.features_dim)
-        pass
+        
+        try:
+            conf.CONF["misc"]["log_num_trainable_params"] = sum(p.numel() for p in self.mlp_extractor.policy_net.parameters() if p.requires_grad)
+        except:
+            conf.CONF["misc"]["log_num_trainable_params"] = sum(p.numel() for p in self.mlp_extractor.policy_nets.parameters() if p.requires_grad)

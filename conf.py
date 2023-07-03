@@ -119,3 +119,4 @@ def init(experiment_config, experiment_id, base_test_path):
 
     CONF["misc"] = {}
     CONF["misc"]["log_grads"] = False
+    CONF["misc"]["log_num_trainable_params"] = False
