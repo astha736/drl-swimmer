@@ -34,6 +34,7 @@ from farms_core.utils import profile
 from . import utils
 
 from utils.networks import CustomActorCriticPolicy
+from utils.limbless_spawn import RobotInitialState
 import conf
 
 
@@ -225,6 +226,11 @@ class TrainTestClass:
         print("#######################")
 
         self.sim_options.record = True
+        
+        # reset animat_options (required because random sampling of init cond. during training)
+        RobotInitialState.set_initial_conditions_parallel(
+                animat_options=self.animat_options
+        )
 
         self.sim_options.n_iterations = conf.CONF[
             "n_iterations_testing"
