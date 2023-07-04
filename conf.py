@@ -125,6 +125,7 @@ def init(experiment_config, experiment_id, base_test_path):
             CONF["RL"]["norm_reward"] = True
 
     CONF["n_iterations_testing"] = 1500
+    CONF["testing_transient"] = 3.0 # s
 
     CONF["misc"] = {}
     CONF["misc"]["log_grads"] = False
