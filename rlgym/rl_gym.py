@@ -531,6 +531,7 @@ class FarmsGym(gym.Env):
         sim_options,
         simulator,
         is_test_env: bool = False,
+        is_eval_env: bool = False,
         **kwargs,
     ):
         super().__init__()
@@ -561,6 +562,7 @@ class FarmsGym(gym.Env):
         self.notion = kwargs.pop("notion", None)
 
         self.is_test_env = is_test_env
+        self.is_eval_env = is_eval_env
 
         if self.is_test_env:
             self.log_fb_weights = []
@@ -829,36 +831,37 @@ class FarmsGym(gym.Env):
 
         # NOTE oscillator states are reset manually in agnathax_control/network.py
 
-        if conf.CONF["RL"]["useRandStartCond"] =="jointPosEndLastEpisode" and not self.jointPosLastEpisode is None:
-            RobotInitialState.set_user_defined_shape_pose(
-                animat_options=self.sim.task.animat_options,
-                shape_pose = self.jointPosLastEpisode
-            )
-        elif conf.CONF["RL"]["useRandStartCond"] =="jointPosEndLastEpisodeVelRand" and not self.jointPosLastEpisode is None:
-            RobotInitialState.set_user_defined_shape_pose_vel_rand(
-                animat_options=self.sim.task.animat_options,
-                shape_pose = self.jointPosLastEpisode
-            )
-        elif conf.CONF["RL"]["useRandStartCond"] =="jointPosVelEndLastEpisode" and not self.jointPosLastEpisode is None:
-            RobotInitialState.set_user_defined_shape_pose_vel(
-                animat_options=self.sim.task.animat_options,
-                shape_pose = self.jointPosLastEpisode,
-                vel = self.jointVelLastEpisode
-            )
-        elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandSampled":
-            RobotInitialState.set_randomly_sampled_shape_pose(
-                animat_options=self.sim.task.animat_options
-            )
-        elif conf.CONF["RL"]["useRandStartCond"] == "jointPosVelRandSampled":
-            RobotInitialState.set_randomly_sampled_shape_pose_vel(
-                animat_options=self.sim.task.animat_options
-            )
-        elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandomFromPreset":
-            RobotInitialState.set_random_shape_pose(
-                animat_options=self.sim.task.animat_options
-            )
-        else:
-            pass
+        if not (self.is_eval_env or self.is_test_env):
+            if conf.CONF["RL"]["useRandStartCond"] =="jointPosEndLastEpisode" and not self.jointPosLastEpisode is None:
+                RobotInitialState.set_user_defined_shape_pose(
+                    animat_options=self.sim.task.animat_options,
+                    shape_pose = self.jointPosLastEpisode
+                )
+            elif conf.CONF["RL"]["useRandStartCond"] =="jointPosEndLastEpisodeVelRand" and not self.jointPosLastEpisode is None:
+                RobotInitialState.set_user_defined_shape_pose_vel_rand(
+                    animat_options=self.sim.task.animat_options,
+                    shape_pose = self.jointPosLastEpisode
+                )
+            elif conf.CONF["RL"]["useRandStartCond"] =="jointPosVelEndLastEpisode" and not self.jointPosLastEpisode is None:
+                RobotInitialState.set_user_defined_shape_pose_vel(
+                    animat_options=self.sim.task.animat_options,
+                    shape_pose = self.jointPosLastEpisode,
+                    vel = self.jointVelLastEpisode
+                )
+            elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandSampled":
+                RobotInitialState.set_randomly_sampled_shape_pose(
+                    animat_options=self.sim.task.animat_options
+                )
+            elif conf.CONF["RL"]["useRandStartCond"] == "jointPosVelRandSampled":
+                RobotInitialState.set_randomly_sampled_shape_pose_vel(
+                    animat_options=self.sim.task.animat_options
+                )
+            elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandomFromPreset":
+                RobotInitialState.set_random_shape_pose(
+                    animat_options=self.sim.task.animat_options
+                )
+            else:
+                pass
 
         self.sim._env.reset()
 

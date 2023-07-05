@@ -124,8 +124,21 @@ class TrainTestClass:
             )
             return env
 
+        def get_eval_env():
+            env = FarmsGym(
+                timestep=self.sim_options.timestep,
+                observation_choice=self.observation_choice,
+                action_choice=self.action_choice,
+                animat_options=self.animat_options,
+                arena_options=self.arena_options,
+                sim_options=self.sim_options,
+                simulator=self.simulator,
+                is_eval_env = True,
+            )
+            return env
+
         venv = make_vec_env(get_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
-        eval_venv = make_vec_env(get_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
+        eval_venv = make_vec_env(get_eval_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
         # vec_env_cls=SubprocVecEnv
 
         if conf.CONF["RL"]["normWrapper"]:
