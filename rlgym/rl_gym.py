@@ -568,6 +568,10 @@ class FarmsGym(gym.Env):
             self.log_fb_weights = []
             self.log_tracking_error = []
 
+        if "state_history_length" in conf.CONF["RL"]:
+            self.state_history = np.zeros((self.n_obs, conf.CONF["RL"]["state_history_length"])) # [n_obs, state_history]
+            self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.n_obs * conf.CONF["RL"]["state_history_length"],))
+            
         self.sim, _ = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
@@ -650,16 +654,16 @@ class FarmsGym(gym.Env):
         sign_fwd = np.sign(np.dot(velocity_com, tail_head_vec) + 0.1) # +/- ~100°
 
         # distance of closest link to COM; sum of link distances to COM
-        link_dist_to_com = np.zeros(10)
-        curr_com_ = curr_com[0:2]
-        for i in range(10):
-            link_pos = np.array(data_sensors.links.com_position(iteration=iteration,link_i = i))[0:2]
-            link_dist_to_com[i] = np.linalg.norm(curr_com_ - link_pos)
-        min_link_dist_to_com = np.min(link_dist_to_com)
-        sum_link_dist_to_com = np.sum(link_dist_to_com)
+        # link_dist_to_com = np.zeros(10)
+        # curr_com_ = curr_com[0:2]
+        # for i in range(10):
+        #     link_pos = np.array(data_sensors.links.com_position(iteration=iteration,link_i = i))[0:2]
+        #     link_dist_to_com[i] = np.linalg.norm(curr_com_ - link_pos)
+        # min_link_dist_to_com = np.min(link_dist_to_com)
+        # sum_link_dist_to_com = np.sum(link_dist_to_com)
 
-        print(f"{min_link_dist_to_com}")
-        print(f"######## {sum_link_dist_to_com}")
+        # print(f"{min_link_dist_to_com}")
+        # print(f"######## {sum_link_dist_to_com}")
 
         reward = 0.0
         if "vel_com" in conf.CONF["RL"]["RewardFnc"]:
@@ -740,6 +744,12 @@ class FarmsGym(gym.Env):
             iteration=iteration,
             observation_choice=self.observation_choice,
         )
+
+        if "state_history_length" in conf.CONF["RL"]:
+            for i in range(self.n_obs):
+                self.state_history[i] = np.roll(self.state_history[i], 1) # move all elements one entry to the right
+                self.state_history[i][0] = self.observation[i] # replace first entry
+            self.observation = self.state_history.flatten()
 
         # REWARD
         self.reward = FarmsGym.compute_reward(
@@ -883,6 +893,13 @@ class FarmsGym(gym.Env):
             iteration=0,
             observation_choice=self.observation_choice,
         )
+
+        if "state_history_length" in conf.CONF["RL"]:
+            self.state_history = np.zeros((self.n_obs, conf.CONF["RL"]["state_history_length"])) # [n_obs, state_history]
+            for i in range(self.n_obs):
+                self.state_history[i] = np.roll(self.state_history[i], 1) # move all elements one entry to the right
+                self.state_history[i][0] = self.observation[i] # replace first entry
+            self.observation = self.state_history.flatten()
 
         # for internal use?
         self.info = {}

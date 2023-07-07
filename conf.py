@@ -124,6 +124,12 @@ def init(experiment_config, experiment_id, base_test_path):
         if not "norm_reward" in CONF["RL"]:
             CONF["RL"]["norm_reward"] = True
 
+    # sanity checks
+    if "stateHistoryController" in CONF["RL"] and not "state_history_length" in CONF["RL"]:
+        raise ValueError("State history controller not fully specified 1.")
+    if not "stateHistoryController" in CONF["RL"] and "state_history_length" in CONF["RL"]:
+        raise ValueError("State history controller not fully specified 2.")
+
     CONF["n_iterations_testing"] = 1500
     CONF["testing_transient"] = 3.0 # s
 

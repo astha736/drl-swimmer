@@ -62,6 +62,94 @@ class CustomNetwork(nn.Module):
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
+
+# https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
+class sh1(nn.Module):
+    """
+    Custom network for policy and value function.
+    It receives as input the features extracted by the features extractor.
+
+    :param feature_dim: dimension of the features extracted with the features_extractor (e.g. features from a CNN)
+    :param last_layer_dim_pi: (int) number of units for the last layer of the policy network
+    :param last_layer_dim_vf: (int) number of units for the last layer of the value network
+    """
+
+    def __init__(
+        self,
+        feature_dim: int,
+    ):
+        super().__init__()
+
+        # IMPORTANT:
+        # Save output dimensions, used to create the distributions
+        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
+        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.state_history_length = int(conf.CONF["RL"]["state_history_length"])
+        self.feature_dim = int(feature_dim / conf.CONF["RL"]["state_history_length"])
+
+
+        # state history filters
+        def get_state_history_filter():
+            return nn.Sequential(
+                nn.Linear(
+                    self.state_history_length, 1
+                ),
+            )
+
+        self.state_history_filters = nn.ModuleList([get_state_history_filter().to(self.device) for i in range(self.feature_dim)])
+        
+        # initialize weight of state history filters so that they sum up to one
+        for i in range(self.feature_dim):
+            torch.nn.init.constant_(self.state_history_filters[i][0].weight, 1 / self.state_history_length)
+
+
+        # Policy network
+        self.policy_net = nn.Sequential(
+            nn.Linear(self.feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+        )
+
+        # Value network
+        self.value_net = nn.Sequential(
+            nn.Linear(self.feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+        )
+
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # preprocess in state history filters
+        features_ = torch.tensor([], device=self.device)
+        for i in range(self.feature_dim):
+            idx = torch.tensor([i for i in range(i * self.state_history_length, (i + 1) * self.state_history_length)], device=self.device, dtype=torch.int)
+            out_ = self.state_history_filters[i](torch.index_select(features, dim=1, index=idx))
+            features_ = torch.cat((features_, out_), dim=1)
+        
+        # pass to policy network
+        return self.policy_net(features_)
+
+    def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        # preprocess in state history filters
+        features_ = torch.tensor([], device=self.device)
+        for i in range(self.feature_dim):
+            idx = torch.tensor([i for i in range(i * self.state_history_length, (i + 1) * self.state_history_length)], device=self.device, dtype=torch.int)
+            out_ = self.state_history_filters[i](torch.index_select(features, dim=1, index=idx))
+            features_ = torch.cat((features_, out_), dim=1)
+        
+        # pass to value network
+        return self.value_net(features_)
     
 
 # https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
@@ -1731,7 +1819,7 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
 
     def _build_mlp_extractor(self, action_dim: int) -> None:
         # choose correct network
-        if conf.CONF["RL"]["localFeedback"]:
+        if conf.CONF["RL"]["localFeedback"] or "stateHistoryController" in conf.CONF["RL"]:
             if conf.CONF["RL"]["localFeedback"] == "shared":
                 self.mlp_extractor = localFeedbackShared(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "non-shared":
@@ -1769,6 +1857,8 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
                 self.mlp_extractor = enn7(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "enn8":
                 self.mlp_extractor = enn8(self.features_dim, action_dim)
+            elif conf.CONF["RL"]["stateHistoryController"] == "sh1":
+                self.mlp_extractor = sh1(self.features_dim)
 
         else:
             self.mlp_extractor = CustomNetwork(self.features_dim)
