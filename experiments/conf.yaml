@@ -390,3 +390,388 @@
       arch: [128, 128]
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+
+'322':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'nn7'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [32, 32]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr_higher_lr.yaml'
+'323':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'nn7'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [32, 32]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr_higher_lr_2.yaml'
+'324':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'nn7'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [32, 32]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr_smaller.yaml'
+'325':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'nn7'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [16, 16]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+'326':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'nn9'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr_smaller.yaml'
+'327':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'nn9'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr_higher_lr.yaml'
+'328':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'nn9'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [64, 64]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+'329':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'enn6'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [64, 64]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+'330':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'enn6'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr_higher_lr.yaml'
+'332':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'nn9'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [64, 64]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr_higher_lr.yaml'
+'331':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'enn8'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [64, 64]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+    PPOparams: './config/PPO_params/PPO_1_old_lr_higher_lr.yaml'
+'333':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'nn9'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [32, 32]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+'334':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'enn6'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [32, 32]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+'335':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'enn6'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [16, 16]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+'336':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'enn8'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [64, 64]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+'337':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'enn8'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [32, 32]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+'338':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+  RL: 
+    localFeedback: 'enn8'
+    normWrapper: True
+    useRandStartCond: "jointPosEndLastEpisode" 
+    RewardFnc: './config/RewardFnc_params/reward450.yaml' 
+    useEarlyTerm: False
+    episodes_per_training: 10_000 
+    action_choice: ['STRETCH']
+    observation_choice: ['JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [16, 16]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    value_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'

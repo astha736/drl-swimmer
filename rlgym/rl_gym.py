@@ -649,6 +649,18 @@ class FarmsGym(gym.Env):
         tail_head_vec = head_pos - tail_pos
         sign_fwd = np.sign(np.dot(velocity_com, tail_head_vec) + 0.1) # +/- ~100°
 
+        # distance of closest link to COM; sum of link distances to COM
+        link_dist_to_com = np.zeros(10)
+        curr_com_ = curr_com[0:2]
+        for i in range(10):
+            link_pos = np.array(data_sensors.links.com_position(iteration=iteration,link_i = i))[0:2]
+            link_dist_to_com[i] = np.linalg.norm(curr_com_ - link_pos)
+        min_link_dist_to_com = np.min(link_dist_to_com)
+        sum_link_dist_to_com = np.sum(link_dist_to_com)
+
+        print(f"{min_link_dist_to_com}")
+        print(f"######## {sum_link_dist_to_com}")
+
         reward = 0.0
         if "vel_com" in conf.CONF["RL"]["RewardFnc"]:
             reward += (
