@@ -214,7 +214,7 @@ class TrainTestClass:
         # )
 
         # profile.profile(
-        #     function=model.learn, total_timesteps=1, profile_filename="profile_prod_cluster_2cpu.profile"
+        #     function=model.learn, total_timesteps=20_000, profile_filename="profile_prod_cluster_603.profile"
         # )
 
         model.learn(
@@ -238,7 +238,7 @@ class TrainTestClass:
         print("START MODEL TESTING")
         print("#######################")
 
-        self.sim_options.record = True
+        self.sim_options.record = False
         
         # reset animat_options (required because random sampling of init cond. during training)
         RobotInitialState.set_initial_conditions_parallel(

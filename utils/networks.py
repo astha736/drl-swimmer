@@ -104,6 +104,8 @@ class sh1(nn.Module):
         # initialize weight of state history filters so that they sum up to one
         for i in range(self.feature_dim):
             torch.nn.init.constant_(self.state_history_filters[i][0].weight, 1 / self.state_history_length)
+            self.state_history_filters[i][0].bias.data.fill_(0.0)
+
 
 
         # Policy network
@@ -129,26 +131,108 @@ class sh1(nn.Module):
         """
         return self.forward_actor(features), self.forward_critic(features)
 
-    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+    def preprocess_state_history(self, features: th.Tensor) -> th.Tensor:
         # preprocess in state history filters
         features_ = torch.tensor([], device=self.device)
         for i in range(self.feature_dim):
             idx = torch.tensor([i for i in range(i * self.state_history_length, (i + 1) * self.state_history_length)], device=self.device, dtype=torch.int)
             out_ = self.state_history_filters[i](torch.index_select(features, dim=1, index=idx))
             features_ = torch.cat((features_, out_), dim=1)
-        
+        return features_
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # pass to policy network
+        features_ = self.preprocess_state_history(features)        
         return self.policy_net(features_)
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        features_ = self.preprocess_state_history(features)        
+        return self.value_net(features_)
+    
+class sh2(nn.Module):
+    """
+    Custom network for policy and value function.
+    It receives as input the features extracted by the features extractor.
+
+    :param feature_dim: dimension of the features extracted with the features_extractor (e.g. features from a CNN)
+    :param last_layer_dim_pi: (int) number of units for the last layer of the policy network
+    :param last_layer_dim_vf: (int) number of units for the last layer of the value network
+    """
+
+    def __init__(
+        self,
+        feature_dim: int,
+    ):
+        super().__init__()
+
+        # IMPORTANT:
+        # Save output dimensions, used to create the distributions
+        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
+        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        self.state_history_length = int(conf.CONF["RL"]["state_history_length"])
+        self.feature_dim = int(feature_dim / conf.CONF["RL"]["state_history_length"])
+
+
+        # state history filters
+        def get_state_history_filter():
+            return nn.Sequential(
+                nn.Linear(
+                    self.state_history_length, 1
+                ),
+            )
+
+        self.state_history_filters = nn.ModuleList([get_state_history_filter().to(self.device) for i in range(3)])
+        
+        # initialize weight of state history filters so that they sum up to one
+        for i in range(3):
+            torch.nn.init.constant_(self.state_history_filters[i][0].weight, 1 / self.state_history_length)
+            self.state_history_filters[i][0].bias.data.fill_(0.0)
+
+
+
+        # Policy network
+        self.policy_net = nn.Sequential(
+            nn.Linear(self.feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+        )
+
+        # Value network
+        self.value_net = nn.Sequential(
+            nn.Linear(self.feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+        )
+
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def preprocess_state_history(self, features: th.Tensor) -> th.Tensor:
         # preprocess in state history filters
         features_ = torch.tensor([], device=self.device)
         for i in range(self.feature_dim):
             idx = torch.tensor([i for i in range(i * self.state_history_length, (i + 1) * self.state_history_length)], device=self.device, dtype=torch.int)
-            out_ = self.state_history_filters[i](torch.index_select(features, dim=1, index=idx))
+            filter_nr = int(np.floor(i/10))
+            out_ = self.state_history_filters[filter_nr](torch.index_select(features, dim=1, index=idx))
             features_ = torch.cat((features_, out_), dim=1)
-        
-        # pass to value network
+        return features_
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # pass to policy network
+        features_ = self.preprocess_state_history(features)        
+        return self.policy_net(features_)
+
+    def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        features_ = self.preprocess_state_history(features)        
         return self.value_net(features_)
     
 
@@ -1859,6 +1943,8 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
                 self.mlp_extractor = enn8(self.features_dim, action_dim)
             elif conf.CONF["RL"]["stateHistoryController"] == "sh1":
                 self.mlp_extractor = sh1(self.features_dim)
+            elif conf.CONF["RL"]["stateHistoryController"] == "sh2":
+                self.mlp_extractor = sh2(self.features_dim)
 
         else:
             self.mlp_extractor = CustomNetwork(self.features_dim)
