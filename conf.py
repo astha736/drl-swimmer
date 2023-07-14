@@ -27,7 +27,7 @@ def init(experiment_config, experiment_id, base_test_path):
     CONF["experiment_id"] = experiment_id
 
     if not os.path.isdir(f"./experiments/{experiment_id}"):
-        os.makedirs(f"./experiments/{experiment_id}") 
+        os.makedirs(f"./experiments/{experiment_id}")
 
     # if base_test_path: only tests should be run on the model within that path
     if base_test_path is not None:
@@ -52,8 +52,20 @@ def init(experiment_config, experiment_id, base_test_path):
                 + "/logs"
                 + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
             )
+            global LOG_DIR_OBSERVATION_BUFFER
+            LOG_DIR_OBSERVATION_BUFFER = (
+                "/shared/hausdoer/observation_buffers/" + CONF["experiment_id"]
+            )
+            if not os.path.isdir(LOG_DIR_OBSERVATION_BUFFER):
+                os.makedirs(LOG_DIR_OBSERVATION_BUFFER)
+            else:
+                import glob
+
+                for f in glob.glob(f"{LOG_DIR_OBSERVATION_BUFFER}/*"):
+                    os.remove(f)
         else:
             LOG_DIR_TENSORBOARD = LOG_DIR_RESULTS
+
         if not os.path.isdir(LOG_DIR_TENSORBOARD):
             os.makedirs(LOG_DIR_TENSORBOARD)
 
@@ -108,9 +120,15 @@ def init(experiment_config, experiment_id, base_test_path):
             "s_local_senstivity"
         ] = "NONPERIOD"  # [SIN, COS, NONPERIOD, SIGNONE]"
     # check that exactly ONE of s_local_weight OR s_caudl_weight is not None
-    if CONF["robot_arch"]["s_local_weight"] == None and CONF["robot_arch"]["s_caudl_weight"] == None:
+    if (
+        CONF["robot_arch"]["s_local_weight"] == None
+        and CONF["robot_arch"]["s_caudl_weight"] == None
+    ):
         raise ValueError("Check robot arch 1")
-    if not CONF["robot_arch"]["s_local_weight"] == None and not CONF["robot_arch"]["s_caudl_weight"] == None:
+    if (
+        not CONF["robot_arch"]["s_local_weight"] == None
+        and not CONF["robot_arch"]["s_caudl_weight"] == None
+    ):
         raise ValueError("Check robot arch 2")
 
     if "RL" in CONF:
@@ -124,14 +142,23 @@ def init(experiment_config, experiment_id, base_test_path):
         if not "norm_reward" in CONF["RL"]:
             CONF["RL"]["norm_reward"] = True
 
+    if not "save_observations" in CONF:
+        CONF["save_observations"] = False
+
     # sanity checks
-    if "stateHistoryController" in CONF["RL"] and not "state_history_length" in CONF["RL"]:
+    if (
+        "stateHistoryController" in CONF["RL"]
+        and not "state_history_length" in CONF["RL"]
+    ):
         raise ValueError("State history controller not fully specified 1.")
-    if not "stateHistoryController" in CONF["RL"] and "state_history_length" in CONF["RL"]:
+    if (
+        not "stateHistoryController" in CONF["RL"]
+        and "state_history_length" in CONF["RL"]
+    ):
         raise ValueError("State history controller not fully specified 2.")
 
     CONF["n_iterations_testing"] = 1500
-    CONF["testing_transient"] = 3.0 # s
+    CONF["testing_transient"] = 3.0  # s
 
     CONF["misc"] = {}
     CONF["misc"]["log_grads"] = False

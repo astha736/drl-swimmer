@@ -31,6 +31,8 @@ obstacle/*
 stable-baselines3/*
 !stable-baselines3/stable_baselines3/common/policies.py
 !stable-baselines3/stable_baselines3/ppo/ppo.py
+!stable-baselines3/stable_baselines3/common/on_policy_algorithm.py
+!stable-baselines3/stable_baselines3/common/buffers.py
 
 
 # pycache 
