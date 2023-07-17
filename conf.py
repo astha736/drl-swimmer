@@ -131,6 +131,7 @@ def init(experiment_config, experiment_id, base_test_path):
     ):
         raise ValueError("Check robot arch 2")
 
+    # rl settings
     if "RL" in CONF:
         if not "localFeedback" in CONF["RL"]:
             CONF["RL"]["localFeedback"] = None
@@ -142,8 +143,13 @@ def init(experiment_config, experiment_id, base_test_path):
         if not "norm_reward" in CONF["RL"]:
             CONF["RL"]["norm_reward"] = True
 
+    # other settings
     if not "save_observations" in CONF:
         CONF["save_observations"] = False
+    if not "stretch_action_output_scaling" in CONF:
+        CONF["stretch_action_output_scaling"] = 30
+    if not "frame_skipping" in CONF:
+        CONF["frame_skipping"] = 1
 
     # sanity checks
     if (

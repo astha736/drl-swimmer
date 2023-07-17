@@ -12,6 +12,136 @@ import conf
 
 
 # https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
+# class CustomNetwork(nn.Module):
+#     """
+#     Custom network for policy and value function.
+#     It receives as input the features extracted by the features extractor.
+
+#     :param feature_dim: dimension of the features extracted with the features_extractor (e.g. features from a CNN)
+#     :param last_layer_dim_pi: (int) number of units for the last layer of the policy network
+#     :param last_layer_dim_vf: (int) number of units for the last layer of the value network
+#     """
+
+#     def __init__(
+#         self,
+#         feature_dim: int,
+#     ):
+#         super().__init__()
+
+#         # IMPORTANT:
+#         # Save output dimensions, used to create the distributions
+#         self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
+#         self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
+
+#         # Policy network
+#         self.policy_net = nn.Sequential(
+#             nn.Linear(feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
+#             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+#             nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
+#             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+#         )
+#         # Value network
+#         self.value_net = nn.Sequential(
+#             nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+#             getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+#             nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+#             getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+#         )
+
+#     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+#         """
+#         :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+#             If all layers are shared, then ``latent_policy == latent_value``
+
+#         Customized for very local feedback and shared net
+#         """
+#         return self.forward_actor(features), self.forward_critic(features)
+
+#     def forward_actor(self, features: th.Tensor) -> th.Tensor:
+#         return self.policy_net(features)
+
+#     def forward_critic(self, features: th.Tensor) -> th.Tensor:
+#         return self.value_net(features)
+
+
+# https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
+class AEStyleRL(nn.Module):
+    """
+    Custom network for policy and value function.
+    It receives as input the features extracted by the features extractor.
+
+    :param feature_dim: dimension of the features extracted with the features_extractor (e.g. features from a CNN)
+    :param last_layer_dim_pi: (int) number of units for the last layer of the policy network
+    :param last_layer_dim_vf: (int) number of units for the last layer of the value network
+    """
+
+    def __init__(
+        self,
+        feature_dim: int,
+    ):
+        super().__init__()
+
+        self.encoder = nn.Sequential(
+            nn.Linear(feature_dim, 64),
+            nn.Tanh(),
+            nn.Linear(64, 32),
+            nn.Tanh(),
+            nn.Linear(32, 3),
+        )
+
+        self.decoder = nn.Sequential(
+            nn.Linear(3, 32),
+            nn.Tanh(),
+            nn.Linear(32, 64),
+            nn.Tanh(),
+            nn.Linear(64, feature_dim),
+        )
+
+        # IMPORTANT:
+        # Save output dimensions, used to create the distributions
+        self.latent_dim_pi = 64
+        self.latent_dim_vf = 64
+
+        # Policy network
+        self.policy_net = nn.Sequential(
+            nn.Linear(3, 32),
+            nn.Tanh(),
+            nn.Linear(32, 64),
+            nn.Tanh(),
+        )
+
+        # Value network
+        self.value_net = nn.Sequential(
+            nn.Linear(3, 32),
+            nn.Tanh(),
+            nn.Linear(32, 64),
+            nn.Tanh(),
+        )
+
+    def ae_forward(self, features: th.Tensor) -> th.Tensor:
+        latent = self.encoder(features)
+        out = self.decoder(latent)
+        return out
+
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        latent = self.encoder(features)
+        return self.policy_net(latent)
+
+    def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        latent = self.encoder(features)
+        return self.value_net(latent)
+
+
+# https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
 class CustomNetwork(nn.Module):
     """
     Custom network for policy and value function.
@@ -30,23 +160,41 @@ class CustomNetwork(nn.Module):
 
         # IMPORTANT:
         # Save output dimensions, used to create the distributions
-        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
-        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
+        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][-1]
+        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][-1]
 
-        # Policy network
-        self.policy_net = nn.Sequential(
-            nn.Linear(feature_dim, conf.CONF["RL"]["policy_network"]["arch"][0]),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
-            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
-        )
+        # policy network
+        layers = []
+        for i in range(len(conf.CONF["RL"]["policy_network"]["arch"])):
+            in_dim = (
+                feature_dim
+                if i == 0
+                else conf.CONF["RL"]["policy_network"]["arch"][i - 1]
+            )
+            layers.append(
+                nn.Linear(in_dim, conf.CONF["RL"]["policy_network"]["arch"][i])
+            )
+            layers.append(
+                getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])()
+            ),
+        self.policy_net = nn.Sequential(*layers)
+
         # Value network
-        self.value_net = nn.Sequential(
-            nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
-            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
-            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
-            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
-        )
+        layers = []
+        for i in range(len(conf.CONF["RL"]["value_network"]["arch"])):
+            in_dim = (
+                feature_dim
+                if i == 0
+                else conf.CONF["RL"]["policy_network"]["arch"][i - 1]
+            )
+            layers.append(
+                nn.Linear(in_dim, conf.CONF["RL"]["value_network"]["arch"][i])
+            )
+            layers.append(
+                getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])()
+            ),
+        self.value_net = nn.Sequential(*layers)
+        pass
 
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         """
@@ -62,6 +210,7 @@ class CustomNetwork(nn.Module):
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
+
 
 # https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
 class sh1(nn.Module):
@@ -90,23 +239,25 @@ class sh1(nn.Module):
         self.state_history_length = int(conf.CONF["RL"]["state_history_length"])
         self.feature_dim = int(feature_dim / conf.CONF["RL"]["state_history_length"])
 
-
         # state history filters
         def get_state_history_filter():
             return nn.Sequential(
-                nn.Linear(
-                    self.state_history_length, 1
-                ),
+                nn.Linear(self.state_history_length, 1),
             )
 
-        self.state_history_filters = nn.ModuleList([get_state_history_filter().to(self.device) for i in range(self.feature_dim)])
-        
+        self.state_history_filters = nn.ModuleList(
+            [
+                get_state_history_filter().to(self.device)
+                for i in range(self.feature_dim)
+            ]
+        )
+
         # initialize weight of state history filters so that they sum up to one
         for i in range(self.feature_dim):
-            torch.nn.init.constant_(self.state_history_filters[i][0].weight, 1 / self.state_history_length)
+            torch.nn.init.constant_(
+                self.state_history_filters[i][0].weight, 1 / self.state_history_length
+            )
             self.state_history_filters[i][0].bias.data.fill_(0.0)
-
-
 
         # Policy network
         self.policy_net = nn.Sequential(
@@ -135,20 +286,33 @@ class sh1(nn.Module):
         # preprocess in state history filters
         features_ = torch.tensor([], device=self.device)
         for i in range(self.feature_dim):
-            idx = torch.tensor([i for i in range(i * self.state_history_length, (i + 1) * self.state_history_length)], device=self.device, dtype=torch.int)
-            out_ = self.state_history_filters[i](torch.index_select(features, dim=1, index=idx))
+            idx = torch.tensor(
+                [
+                    i
+                    for i in range(
+                        i * self.state_history_length,
+                        (i + 1) * self.state_history_length,
+                    )
+                ],
+                device=self.device,
+                dtype=torch.int,
+            )
+            out_ = self.state_history_filters[i](
+                torch.index_select(features, dim=1, index=idx)
+            )
             features_ = torch.cat((features_, out_), dim=1)
         return features_
 
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # pass to policy network
-        features_ = self.preprocess_state_history(features)        
+        features_ = self.preprocess_state_history(features)
         return self.policy_net(features_)
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
-        features_ = self.preprocess_state_history(features)        
+        features_ = self.preprocess_state_history(features)
         return self.value_net(features_)
-    
+
+
 class sh2(nn.Module):
     """
     Custom network for policy and value function.
@@ -175,23 +339,22 @@ class sh2(nn.Module):
         self.state_history_length = int(conf.CONF["RL"]["state_history_length"])
         self.feature_dim = int(feature_dim / conf.CONF["RL"]["state_history_length"])
 
-
         # state history filters
         def get_state_history_filter():
             return nn.Sequential(
-                nn.Linear(
-                    self.state_history_length, 1
-                ),
+                nn.Linear(self.state_history_length, 1),
             )
 
-        self.state_history_filters = nn.ModuleList([get_state_history_filter().to(self.device) for i in range(3)])
-        
+        self.state_history_filters = nn.ModuleList(
+            [get_state_history_filter().to(self.device) for i in range(3)]
+        )
+
         # initialize weight of state history filters so that they sum up to one
         for i in range(3):
-            torch.nn.init.constant_(self.state_history_filters[i][0].weight, 1 / self.state_history_length)
+            torch.nn.init.constant_(
+                self.state_history_filters[i][0].weight, 1 / self.state_history_length
+            )
             self.state_history_filters[i][0].bias.data.fill_(0.0)
-
-
 
         # Policy network
         self.policy_net = nn.Sequential(
@@ -220,21 +383,33 @@ class sh2(nn.Module):
         # preprocess in state history filters
         features_ = torch.tensor([], device=self.device)
         for i in range(self.feature_dim):
-            idx = torch.tensor([i for i in range(i * self.state_history_length, (i + 1) * self.state_history_length)], device=self.device, dtype=torch.int)
-            filter_nr = int(np.floor(i/10))
-            out_ = self.state_history_filters[filter_nr](torch.index_select(features, dim=1, index=idx))
+            idx = torch.tensor(
+                [
+                    i
+                    for i in range(
+                        i * self.state_history_length,
+                        (i + 1) * self.state_history_length,
+                    )
+                ],
+                device=self.device,
+                dtype=torch.int,
+            )
+            filter_nr = int(np.floor(i / 10))
+            out_ = self.state_history_filters[filter_nr](
+                torch.index_select(features, dim=1, index=idx)
+            )
             features_ = torch.cat((features_, out_), dim=1)
         return features_
 
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # pass to policy network
-        features_ = self.preprocess_state_history(features)        
+        features_ = self.preprocess_state_history(features)
         return self.policy_net(features_)
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
-        features_ = self.preprocess_state_history(features)        
+        features_ = self.preprocess_state_history(features)
         return self.value_net(features_)
-    
+
 
 # https://stable-baselines3.readthedocs.io/en/master/guide/custom_policy.html
 class localFeedbackShared(nn.Module):
@@ -378,9 +553,9 @@ class localFeedbackNonShared(nn.Module):
                 ),  # 1 output neuron for each action; replaces the proba_distribution_net of stable-baselines3
             )
 
-        
-        
-        self.policy_nets = nn.ModuleList([get_policy_net().to(self.device) for i in range(9)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_net().to(self.device) for i in range(9)]
+        )
 
         # handle weight initialization
         for i in range(9):
@@ -844,7 +1019,6 @@ class nn7(nn.Module):
         self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
         self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
 
-
         def get_policy_net():
             return nn.Sequential(
                 nn.Linear(
@@ -858,16 +1032,14 @@ class nn7(nn.Module):
                 nn.Linear(self.latent_dim_pi, 1),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_net().to(self.device) for i in range(9)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_net().to(self.device) for i in range(9)]
+        )
 
         # handle weight initialization
         for i in range(9):
-            torch.nn.init.orthogonal_(
-                self.policy_nets[i][0].weight, gain=np.sqrt(2)
-            )
-            torch.nn.init.orthogonal_(
-                self.policy_nets[i][2].weight, gain=np.sqrt(2)
-            )
+            torch.nn.init.orthogonal_(self.policy_nets[i][0].weight, gain=np.sqrt(2))
+            torch.nn.init.orthogonal_(self.policy_nets[i][2].weight, gain=np.sqrt(2))
             torch.nn.init.orthogonal_(self.policy_nets[i][4].weight, gain=0.01)
             self.policy_nets[i][0].bias.data.fill_(0.0)
             self.policy_nets[i][2].bias.data.fill_(0.0)
@@ -902,7 +1074,17 @@ class nn7(nn.Module):
         for i in range(8):
             idx.append(
                 torch.tensor(
-                    [0 + i, 1 + i, 2 + i, 10 + i, 11 + i, 12 + i, 20 + i, 21 + i, 22 + i],
+                    [
+                        0 + i,
+                        1 + i,
+                        2 + i,
+                        10 + i,
+                        11 + i,
+                        12 + i,
+                        20 + i,
+                        21 + i,
+                        22 + i,
+                    ],
                     device=self.device,
                     dtype=torch.int,
                 )
@@ -927,6 +1109,7 @@ class nn7(nn.Module):
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
 
+
 class enn7(nn.Module):
     def __init__(
         self,
@@ -944,7 +1127,6 @@ class enn7(nn.Module):
         self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
         self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
 
-
         def get_policy_net():
             return nn.Sequential(
                 nn.Linear(
@@ -958,16 +1140,14 @@ class enn7(nn.Module):
                 nn.Linear(self.latent_dim_pi, 1),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_net().to(self.device) for i in range(2)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_net().to(self.device) for i in range(2)]
+        )
 
         # handle weight initialization
         for i in range(2):
-            torch.nn.init.orthogonal_(
-                self.policy_nets[i][0].weight, gain=np.sqrt(2)
-            )
-            torch.nn.init.orthogonal_(
-                self.policy_nets[i][2].weight, gain=np.sqrt(2)
-            )
+            torch.nn.init.orthogonal_(self.policy_nets[i][0].weight, gain=np.sqrt(2))
+            torch.nn.init.orthogonal_(self.policy_nets[i][2].weight, gain=np.sqrt(2))
             torch.nn.init.orthogonal_(self.policy_nets[i][4].weight, gain=0.01)
             self.policy_nets[i][0].bias.data.fill_(0.0)
             self.policy_nets[i][2].bias.data.fill_(0.0)
@@ -1002,7 +1182,17 @@ class enn7(nn.Module):
         for i in range(8):
             idx.append(
                 torch.tensor(
-                    [0 + i, 1 + i, 2 + i, 10 + i, 11 + i, 12 + i, 20 + i, 21 + i, 22 + i],
+                    [
+                        0 + i,
+                        1 + i,
+                        2 + i,
+                        10 + i,
+                        11 + i,
+                        12 + i,
+                        20 + i,
+                        21 + i,
+                        22 + i,
+                    ],
                     device=self.device,
                     dtype=torch.int,
                 )
@@ -1058,7 +1248,9 @@ class nn8(nn.Module):
                 nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_nets().to(self.device) for i in range(3)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_nets().to(self.device) for i in range(3)]
+        )
 
         # handle weight initialization
         for i in range(3):
@@ -1138,7 +1330,9 @@ class nn9(nn.Module):
                 nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_net().to(self.device) for i in range(3)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_net().to(self.device) for i in range(3)]
+        )
 
         # handle weight initialization
         for i in range(3):
@@ -1176,19 +1370,19 @@ class nn9(nn.Module):
 
         # body
         idx_0 = torch.tensor(
-            [0,1,2,3,4,10,11,12,13,14,20,21,22,23,24],
+            [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 20, 21, 22, 23, 24],
             device=self.device,
             dtype=torch.int,
         )
 
         idx_1 = torch.tensor(
-            [3,4,5,6,7,13,14,15,16,17,23,24,25,26,27],
+            [3, 4, 5, 6, 7, 13, 14, 15, 16, 17, 23, 24, 25, 26, 27],
             device=self.device,
             dtype=torch.int,
         )
 
         idx_2 = torch.tensor(
-            [5, 6, 7, 8, 9, 15, 16, 17, 18, 19,25,26,27,2,29],
+            [5, 6, 7, 8, 9, 15, 16, 17, 18, 19, 25, 26, 27, 2, 29],
             device=self.device,
             dtype=torch.int,
         )
@@ -1197,7 +1391,6 @@ class nn9(nn.Module):
         x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_0))
         x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx_1))
         x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx_2))
-        
 
         out = torch.cat((x0, x1, x2), dim=1)
 
@@ -1207,6 +1400,7 @@ class nn9(nn.Module):
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
+
 
 class enn8(nn.Module):
     def __init__(
@@ -1238,7 +1432,9 @@ class enn8(nn.Module):
                 nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_net().to(self.device) for i in range(2)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_net().to(self.device) for i in range(2)]
+        )
 
         # handle weight initialization
         for i in range(2):
@@ -1276,19 +1472,19 @@ class enn8(nn.Module):
 
         # body
         idx_0 = torch.tensor(
-            [0,1,2,3,4,10,11,12,13,14,20,21,22,23,24],
+            [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 20, 21, 22, 23, 24],
             device=self.device,
             dtype=torch.int,
         )
 
         idx_1 = torch.tensor(
-            [3,4,5,6,7,13,14,15,16,17,23,24,25,26,27],
+            [3, 4, 5, 6, 7, 13, 14, 15, 16, 17, 23, 24, 25, 26, 27],
             device=self.device,
             dtype=torch.int,
         )
 
         idx_2 = torch.tensor(
-            [5, 6, 7, 8, 9, 15, 16, 17, 18, 19,25,26,27,2,29],
+            [5, 6, 7, 8, 9, 15, 16, 17, 18, 19, 25, 26, 27, 2, 29],
             device=self.device,
             dtype=torch.int,
         )
@@ -1297,7 +1493,6 @@ class enn8(nn.Module):
         x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_0))
         x1 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_1))
         x2 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx_2))
-        
 
         out = torch.cat((x0, x1, x2), dim=1)
 
@@ -1339,7 +1534,9 @@ class enn1(nn.Module):
                 nn.Linear(self.latent_dim_pi, 1),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_nets().to(self.device) for i in range(9)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_nets().to(self.device) for i in range(9)]
+        )
 
         # handle weight initialization
         for i in range(9):
@@ -1385,7 +1582,7 @@ class enn1(nn.Module):
         x7 = self.policy_nets[7](features)
         x8 = self.policy_nets[8](features)
 
-        out = torch.cat((x0, x1, x2, x3,x4,x5,x6,x7,x8), dim=1)
+        out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
         assert out.shape[1] == self.action_dim  # test action dim
 
@@ -1425,7 +1622,9 @@ class enn2(nn.Module):
                 nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_nets().to(self.device) for i in range(3)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_nets().to(self.device) for i in range(3)]
+        )
 
         # handle weight initialization
         for i in range(3):
@@ -1505,7 +1704,9 @@ class enn3(nn.Module):
                 nn.Linear(self.latent_dim_pi, 1),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_nets().to(self.device) for i in range(9)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_nets().to(self.device) for i in range(9)]
+        )
 
         # handle weight initialization
         for i in range(9):
@@ -1542,26 +1743,113 @@ class enn3(nn.Module):
         # features: 0-9: joint positions; 10-19: phases; 20-29 joint vels
 
         idx_0 = torch.tensor(
-            [0,1,2,3,4,5,6,10,11,12,13,14,15,16,20,21,22,23,24,25,26],
+            [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+            ],
             device=self.device,
             dtype=torch.int,
         )
         idx_1 = torch.tensor(
-            [1,2,3,4,5,6,7,11,12,13,14,15,16,17,21,22,23,24,25,26,27],
+            [
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+            ],
             device=self.device,
             dtype=torch.int,
         )
         idx_2 = torch.tensor(
-            [2,3,4,5,6,7,8,12,13,14,15,16,17,18,22,23,24,25,26,27,28],
+            [
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+            ],
             device=self.device,
             dtype=torch.int,
         )
         idx_3 = torch.tensor(
-            [3,4,5,6,7,8,9,13,14,15,16,17,18,19,23,24,25,26,27,28,29],
+            [
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+            ],
             device=self.device,
             dtype=torch.int,
         )
-
 
         # pay attention on order or actions! It must go head to tail.
         x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_0))
@@ -1573,7 +1861,6 @@ class enn3(nn.Module):
         x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=idx_3))
         x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=idx_3))
         x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=idx_3))
-        
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -1583,7 +1870,7 @@ class enn3(nn.Module):
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
-    
+
 
 class enn4(nn.Module):
     def __init__(
@@ -1615,7 +1902,9 @@ class enn4(nn.Module):
                 nn.Linear(self.latent_dim_pi, 1),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_nets().to(self.device) for i in range(9)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_nets().to(self.device) for i in range(9)]
+        )
 
         # handle weight initialization
         for i in range(9):
@@ -1651,17 +1940,31 @@ class enn4(nn.Module):
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # features: 0-9: joint positions; 10-19: phases; 20-29 joint vels
 
-        
         idx = []
         for i in range(6):
             idx.append(
                 torch.tensor(
-                    [0 + i, 1 + i, 2 + i, 3 + i, 4 + i, 10 + i, 11 + i, 12 + i, 13 + i, 14 + i, 20 + i, 21 + i, 22 + i, 23 + i, 24 + i ],
+                    [
+                        0 + i,
+                        1 + i,
+                        2 + i,
+                        3 + i,
+                        4 + i,
+                        10 + i,
+                        11 + i,
+                        12 + i,
+                        13 + i,
+                        14 + i,
+                        20 + i,
+                        21 + i,
+                        22 + i,
+                        23 + i,
+                        24 + i,
+                    ],
                     device=self.device,
                     dtype=torch.int,
                 )
             )
-
 
         # pay attention on order or actions! It must go head to tail.
         x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[0]))
@@ -1673,7 +1976,6 @@ class enn4(nn.Module):
         x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=idx[5]))
         x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=idx[5]))
         x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=idx[5]))
-        
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -1683,6 +1985,7 @@ class enn4(nn.Module):
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
+
 
 class enn6(nn.Module):
     def __init__(
@@ -1714,7 +2017,9 @@ class enn6(nn.Module):
                 nn.Linear(self.latent_dim_pi, 1),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_nets().to(self.device) for i in range(4)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_nets().to(self.device) for i in range(4)]
+        )
 
         # handle weight initialization
         for i in range(4):
@@ -1750,17 +2055,31 @@ class enn6(nn.Module):
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # features: 0-9: joint positions; 10-19: phases; 20-29 joint vels
 
-        
         idx = []
         for i in range(6):
             idx.append(
                 torch.tensor(
-                    [0 + i, 1 + i, 2 + i, 3 + i, 4 + i, 10 + i, 11 + i, 12 + i, 13 + i, 14 + i, 20 + i, 21 + i, 22 + i, 23 + i, 24 + i ],
+                    [
+                        0 + i,
+                        1 + i,
+                        2 + i,
+                        3 + i,
+                        4 + i,
+                        10 + i,
+                        11 + i,
+                        12 + i,
+                        13 + i,
+                        14 + i,
+                        20 + i,
+                        21 + i,
+                        22 + i,
+                        23 + i,
+                        24 + i,
+                    ],
                     device=self.device,
                     dtype=torch.int,
                 )
             )
-
 
         # pay attention on order or actions! It must go head to tail.
         x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[0]))
@@ -1772,7 +2091,6 @@ class enn6(nn.Module):
         x6 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[5]))
         x7 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx[5]))
         x8 = self.policy_nets[3](torch.index_select(features, dim=1, index=idx[5]))
-        
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -1814,7 +2132,9 @@ class enn5(nn.Module):
                 nn.Linear(self.latent_dim_pi, 3),
             )
 
-        self.policy_nets = nn.ModuleList([get_policy_net().to(self.device) for i in range(3)])
+        self.policy_nets = nn.ModuleList(
+            [get_policy_net().to(self.device) for i in range(3)]
+        )
 
         # handle weight initialization
         for i in range(3):
@@ -1852,17 +2172,83 @@ class enn5(nn.Module):
 
         # body
         idx_0 = torch.tensor(
-            [0,1,2,3,4,5,6,10,11,12,13,14,15,16,20,21,22,23,24,25,26],
+            [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                20,
+                21,
+                22,
+                23,
+                24,
+                25,
+                26,
+            ],
             device=self.device,
             dtype=torch.int,
         )
         idx_1 = torch.tensor(
-            [2,3,4,5,6,7,8,12,13,14,15,16,17,18,22,23,24,25,26,27,28],
+            [
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                22,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+            ],
             device=self.device,
             dtype=torch.int,
         )
         idx_2 = torch.tensor(
-            [3,4,5,6,7,8,9,13,14,15,16,17,18,19,23,24,25,26,27,28,29],
+            [
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                23,
+                24,
+                25,
+                26,
+                27,
+                28,
+                29,
+            ],
             device=self.device,
             dtype=torch.int,
         )
@@ -1870,7 +2256,6 @@ class enn5(nn.Module):
         x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_0))
         x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx_1))
         x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx_2))
-        
 
         out = torch.cat((x0, x1, x2), dim=1)
 
@@ -1879,7 +2264,8 @@ class enn5(nn.Module):
         return out
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
-        return self.value_net(features)  
+        return self.value_net(features)
+
 
 class CustomActorCriticPolicy(ActorCriticPolicy):
     def __init__(
@@ -1903,7 +2289,10 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
 
     def _build_mlp_extractor(self, action_dim: int) -> None:
         # choose correct network
-        if conf.CONF["RL"]["localFeedback"] or "stateHistoryController" in conf.CONF["RL"]:
+        if (
+            conf.CONF["RL"]["localFeedback"]
+            or "stateHistoryController" in conf.CONF["RL"]
+        ):
             if conf.CONF["RL"]["localFeedback"] == "shared":
                 self.mlp_extractor = localFeedbackShared(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "non-shared":
@@ -1948,8 +2337,16 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
 
         else:
             self.mlp_extractor = CustomNetwork(self.features_dim)
-        
+
         try:
-            conf.CONF["misc"]["log_num_trainable_params"] = sum(p.numel() for p in self.mlp_extractor.policy_net.parameters() if p.requires_grad)
+            conf.CONF["misc"]["log_num_trainable_params"] = sum(
+                p.numel()
+                for p in self.mlp_extractor.policy_net.parameters()
+                if p.requires_grad
+            )
         except:
-            conf.CONF["misc"]["log_num_trainable_params"] = sum(p.numel() for p in self.mlp_extractor.policy_nets.parameters() if p.requires_grad)
+            conf.CONF["misc"]["log_num_trainable_params"] = sum(
+                p.numel()
+                for p in self.mlp_extractor.policy_nets.parameters()
+                if p.requires_grad
+            )

@@ -200,6 +200,9 @@ class PPO(OnPolicyAlgorithm):
         pg_losses, value_losses = [], []
         clip_fractions = []
 
+        # pretrain encoder network
+        # use self.rollout_buffer.get method to get experience from buffer and only extract experiences from it
+
         continue_training = True
         # train for n_epochs epochs
         for epoch in range(self.n_epochs):

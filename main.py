@@ -9,11 +9,9 @@ from farms_sim.utils.parse_args import sim_parse_args
 from farms_sim.simulation import setup_from_clargs
 from farms_amphibious.model.options import AmphibiousOptions, AmphibiousArenaOptions
 from numpy import require
-from rlgym.rl_gym import ActionChoice, ObservationChoice, ObservationType, ActionType
 
 from utils.limbless_experiment_options import ExperimentConditions as ExpCond
 from utils.limbless_network import RobotFeedbackSenstivity
-from utils.train_test import TrainTestClass
 
 import conf
 
@@ -21,7 +19,7 @@ import conf
 parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--experiment_id", required=False, default=None)
 parser.add_argument("-m", "--base_test_path", required=False, default=None)
-parser.add_argument("-l", "--log_level", required=False, default='min')
+parser.add_argument("-l", "--log_level", required=False, default="min")
 args = parser.parse_args()
 
 # santity check on args
@@ -39,11 +37,18 @@ try:
         conf.init(_conf[args.experiment_id], args.experiment_id, args.base_test_path)
 except:
     # legacy
-    with open(f"./experiments/{args.experiment_id}/" + "conf.yaml") as experiment_config:
+    with open(
+        f"./experiments/{args.experiment_id}/" + "conf.yaml"
+    ) as experiment_config:
         conf.init(experiment_config, args.experiment_id, args.base_test_path)
+
+# imports that depend on 'conf'
+from rlgym.rl_gym import ActionChoice, ObservationChoice, ObservationType, ActionType
+from utils.train_test import TrainTestClass
 
 # assign args
 conf.CONF["log_level"] = args.log_level
+
 
 def main() -> None:
     # setup clargs

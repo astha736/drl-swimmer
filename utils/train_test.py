@@ -133,7 +133,7 @@ class TrainTestClass:
                 arena_options=self.arena_options,
                 sim_options=self.sim_options,
                 simulator=self.simulator,
-                is_eval_env = True,
+                is_eval_env=True,
             )
             return env
 
@@ -221,11 +221,11 @@ class TrainTestClass:
             total_timesteps=self.learn_total_timesteps,
             callback=[eval_callback],
         )
-        # model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
-        # if conf.CONF["RL"]["normWrapper"]:
-        #     model.get_vec_normalize_env().save(
-        #         os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl")
-        #     )
+        model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
+        if conf.CONF["RL"]["normWrapper"]:
+            model.get_vec_normalize_env().save(
+                os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl")
+            )
 
         print("#######################")
         print("MODEL TRAINING FINISHED")
@@ -238,11 +238,11 @@ class TrainTestClass:
         print("START MODEL TESTING")
         print("#######################")
 
-        self.sim_options.record = False
-        
+        self.sim_options.record = True
+
         # reset animat_options (required because random sampling of init cond. during training)
         RobotInitialState.set_initial_conditions_parallel(
-                animat_options=self.animat_options
+            animat_options=self.animat_options
         )
 
         self.sim_options.n_iterations = conf.CONF[
@@ -280,7 +280,7 @@ class TrainTestClass:
             raise ValueError("Policy not implemented")
 
         # log gradients during one testing episode
-        # onf.CONF["misc"]["log_grads"] will contain a list of all the gradients for each timestep (all outputs wrt to the inputs)
+        # conf.CONF["misc"]["log_grads"] will contain a list of all the gradients for each timestep (all outputs wrt to the inputs)
         conf.CONF["misc"]["log_grads"] = []
 
         rew, len_ = evaluate_policy(
@@ -294,16 +294,20 @@ class TrainTestClass:
         grads = conf.CONF["misc"]["log_grads"]  # shape (timestep, outputs, 1, inputs)
         conf.CONF["misc"]["log_grads"] = False
 
-        rew_standardized = [10 * rew / conf.CONF['simulation_time_testing'] for rew in rew] # norm by episode length; * 10 to keep legacy experiments comparable
+        rew_standardized = [
+            10 * rew / conf.CONF["simulation_time_testing"] for rew in rew
+        ]  # norm by episode length; * 10 to keep legacy experiments comparable
 
         # log reward of best model to performance_metrics.txt
         with open(
             os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a"
         ) as f:
             f.write("\n")
-            f.write(f"best model reward: {rew_standardized}") 
+            f.write(f"best model reward: {rew_standardized}")
             f.write("\n")
-            f.write(f"policy network(s) # trainable params: {conf.CONF['misc']['log_num_trainable_params']}")
+            f.write(
+                f"policy network(s) # trainable params: {conf.CONF['misc']['log_num_trainable_params']}"
+            )
         f.close()
 
         # log reward of best model to common results file: results.yaml
@@ -314,8 +318,7 @@ class TrainTestClass:
             f.write(yaml.dump(results))
         f.close()
 
-        if conf.CONF["log_level"] == 'max':
-
+        if conf.CONF["log_level"] == "max":
             # create temp dir
             _temp_dir = f"{conf.TEMP_DIR}/{1000 * time.time()}"
             os.makedirs(f"{_temp_dir}")
@@ -328,7 +331,9 @@ class TrainTestClass:
                 min = grads_numpy[:, k, :, :].min()
 
                 # save accumulated gradients
-                accumulated_gradients = np.sum(np.abs(grads_numpy[:, k, :, :]), axis=(0, 1))
+                accumulated_gradients = np.sum(
+                    np.abs(grads_numpy[:, k, :, :]), axis=(0, 1)
+                )
                 fig = plt.figure(f"Accumulated gradients for output neuron {k}")
                 plt.title(f"Accumulated gradients for output neuron {k}")
                 plt.bar(

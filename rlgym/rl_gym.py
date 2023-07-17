@@ -21,6 +21,7 @@ from farms_mujoco.simulation.task import TaskCallback
 from farms_mujoco.simulation.mjcf import euler2mjcquat
 from farms_sim.simulation import postprocessing_from_clargs
 
+from rlgym.rl_gym import ActionChoice, ObservationChoice, ObservationType, ActionType
 
 import gym
 from gym import spaces
@@ -59,7 +60,7 @@ class ActionType(Enum):
     STRETCH = 1  # stretch
     CONTACT = 2  # contact
     DRIVE = 3  # drive
-    STRETCH_BIAS = 4 # bias with sin, cos
+    STRETCH_BIAS = 4  # bias with sin, cos
 
 
 class ObservationType(Enum):
@@ -82,10 +83,10 @@ class ActionChoice:
     """
 
     action_output_scale = {
-        ActionType.STRETCH: 30,
+        ActionType.STRETCH: conf.CONF["stretch_action_output_scaling"],
         ActionType.CONTACT: 10,
-        ActionType.DRIVE: [2.5, 4.5],
-        ActionType.STRETCH_BIAS: 15, # try half
+        ActionType.DRIVE: [1.5, 3.0],
+        ActionType.STRETCH_BIAS: 15,  # try half
     }
 
     def __init__(self, action_list: List[ActionType], n_body_joints: int = 10):
@@ -109,7 +110,7 @@ class ActionChoice:
         low = np.array([-1] * self.action_length[ActionType.STRETCH])
         high = np.array([1] * self.action_length[ActionType.STRETCH])
         return low, high
-    
+
     def action_bound_STRETCH_BIAS(self):
         if not conf.CONF["robot_arch"]["s_local_weight"] == None:
             self.action_length[ActionType.STRETCH_BIAS] = self.n_body_joints * 2
@@ -172,28 +173,40 @@ class ActionChoice:
             robot_parameters[i * 2 + 1] = action_val * -1  # right oscillator assignment
         pass
 
-    def set_action_STRETCH_BIAS(self, action, network_parameters, iteration, data_states):
+    def set_action_STRETCH_BIAS(
+        self, action, network_parameters, iteration, data_states
+    ):
         action = action * ActionChoice.action_output_scale[ActionType.STRETCH_BIAS]
 
         robot_parameters = network_parameters.joints2osc_map.weights.array
 
         # TODO technically this is wrong as the phases from the LAST step are used
         # maybe this error is small enough
-        if not iteration == 0: iteration = iteration - 1
+        #
+        if not iteration == 0:
+            iteration = iteration - 1
         phases_left = np.array(data_states.phases(iteration))[
-                        conf.LEFT_OSCILLATOR_INDEXES
-                    ]
-        
+            conf.LEFT_OSCILLATOR_INDEXES
+        ]
+
         phases_right = np.array(data_states.phases(iteration))[
-                        conf.RIGHT_OSCILLATOR_INDEXES
-                    ]
-        
+            conf.RIGHT_OSCILLATOR_INDEXES
+        ]
+
         # two actions for each joint
         for i, j in enumerate(range(0, len(action), 2)):
-            action_biased_left = action[j] * np.cos(phases_left[i]) + action[j+1] * np.sin(phases_left[i])
-            action_biased_right = - action[j] * np.cos(phases_right[i]) - action[j+1] * np.sin(phases_right[i])
-            robot_parameters[i * 2 + 0] = action_biased_left  # left oscillator assignment
-            robot_parameters[i * 2 + 1] = action_biased_right  # right oscillator assignment
+            action_biased_left = action[j] * np.cos(phases_left[i]) + action[
+                j + 1
+            ] * np.sin(phases_left[i])
+            action_biased_right = -action[j] * np.cos(phases_right[i]) - action[
+                j + 1
+            ] * np.sin(phases_right[i])
+            robot_parameters[
+                i * 2 + 0
+            ] = action_biased_left  # left oscillator assignment
+            robot_parameters[
+                i * 2 + 1
+            ] = action_biased_right  # right oscillator assignment
         pass
 
     def set_action_CONTACT(self, action, network_parameters, iteration, data_states):
@@ -229,7 +242,7 @@ class ActionChoice:
             ActionType.STRETCH: self.set_action_STRETCH,
             ActionType.CONTACT: self.set_action_CONTACT,
             ActionType.DRIVE: self.set_action_DRIVE,
-            ActionType.STRETCH_BIAS: self.set_action_STRETCH_BIAS,      
+            ActionType.STRETCH_BIAS: self.set_action_STRETCH_BIAS,
         }
 
         return switcher.get(observation, "Invalid observation Type")
@@ -266,7 +279,7 @@ class ObservationChoice:
         low = np.array([-np.inf] * (self.n_body_joints))
         high = np.array([np.inf] * (self.n_body_joints))
         return low, high
-    
+
     def observation_bound_JOINT_VEL(self):
         """JOINT POSITION"""
         low = np.array([-np.inf] * (self.n_body_joints))
@@ -358,14 +371,13 @@ class ObservationChoice:
         joints_pos = np.array(data_sensors.joints.positions(iteration=iteration))
 
         return joints_pos
-    
+
     def extract_observation_JOINT_VEL(self, data_sensors, data_states, iteration):
         joints_vel = np.array(data_sensors.joints.velocities(iteration=iteration))
 
         return joints_vel
 
     def extract_observation_VELOCITIES(self, data_sensors, data_states, iteration):
-
         if "target_velocity" in conf.CONF["RL"]:
             target = np.array(
                 conf.CONF["RL"]["target_velocity"],
@@ -373,7 +385,17 @@ class ObservationChoice:
             current = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
         elif "target_speed" in conf.CONF["RL"]:
             target = np.array([0.0, conf.CONF["RL"]["target_speed"]])
-            current = np.array([0.0, np.linalg.norm(np.array(data_sensors.links.global_com_velocity(iteration))[0:2])])
+            current = np.array(
+                [
+                    0.0,
+                    np.linalg.norm(
+                        np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
+                    ),
+                ]
+            )
+        elif "x_com_vel" in conf.CONF["RL"]["RewardFnc"]:
+            target = np.array([1.0, 0.0])
+            current = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
         else:
             raise ValueError("Check the objectives of this experiment.")
 
@@ -569,9 +591,15 @@ class FarmsGym(gym.Env):
             self.log_tracking_error = []
 
         if "state_history_length" in conf.CONF["RL"]:
-            self.state_history = np.zeros((self.n_obs, conf.CONF["RL"]["state_history_length"])) # [n_obs, state_history]
-            self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.n_obs * conf.CONF["RL"]["state_history_length"],))
-            
+            self.state_history = np.zeros(
+                (self.n_obs, conf.CONF["RL"]["state_history_length"])
+            )  # [n_obs, state_history]
+            self.observation_space = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(self.n_obs * conf.CONF["RL"]["state_history_length"],),
+            )
+
         self.sim, _ = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
@@ -648,10 +676,14 @@ class FarmsGym(gym.Env):
         velocity_com = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
 
         # sign forward
-        head_pos = np.array(data_sensors.links.com_position(iteration=iteration,link_i = 0))[0:2]
-        tail_pos = np.array(data_sensors.links.com_position(iteration=iteration,link_i = 10))[0:2]
+        head_pos = np.array(
+            data_sensors.links.com_position(iteration=iteration, link_i=0)
+        )[0:2]
+        tail_pos = np.array(
+            data_sensors.links.com_position(iteration=iteration, link_i=10)
+        )[0:2]
         tail_head_vec = head_pos - tail_pos
-        sign_fwd = np.sign(np.dot(velocity_com, tail_head_vec) + 0.1) # +/- ~100°
+        sign_fwd = np.sign(np.dot(velocity_com, tail_head_vec) + 0.1)  # +/- ~100°
 
         # distance of closest link to COM; sum of link distances to COM
         # link_dist_to_com = np.zeros(10)
@@ -667,9 +699,7 @@ class FarmsGym(gym.Env):
 
         reward = 0.0
         if "vel_com" in conf.CONF["RL"]["RewardFnc"]:
-            reward += (
-                conf.CONF["RL"]["RewardFnc"]["vel_com"] * speed_com * sign_fwd
-            )
+            reward += conf.CONF["RL"]["RewardFnc"]["vel_com"] * speed_com * sign_fwd
         if "joints_power" in conf.CONF["RL"]["RewardFnc"]:
             reward += conf.CONF["RL"]["RewardFnc"]["joints_power"] * joints_power
         if "forward_x" in conf.CONF["RL"]["RewardFnc"]:
@@ -698,11 +728,20 @@ class FarmsGym(gym.Env):
             reward += conf.CONF["RL"]["RewardFnc"]["velocity_error"] * np.sum(
                 np.abs(velocity_com - conf.CONF["RL"]["target_velocity"])
             )
+        if "x_com_vel" in conf.CONF["RL"]["RewardFnc"]:
+            reward += (
+                conf.CONF["RL"]["RewardFnc"]["x_com_vel"][0] * velocity_com[0]
+            )  # reward
+            reward += conf.CONF["RL"]["RewardFnc"]["x_com_vel"][1] * velocity_com[1]
 
         return reward
 
     def set_action(
-        action, network_parameters, action_choice: ActionChoice, iteration: int, data_states
+        action,
+        network_parameters,
+        action_choice: ActionChoice,
+        iteration: int,
+        data_states,
     ):
         """Apply the computed action to the concerned variables"""
         if np.isnan(action).any():
@@ -725,13 +764,14 @@ class FarmsGym(gym.Env):
         if action is None:
             print("should not be allowed")
 
-        FarmsGym.set_action(
-            action=action,
-            network_parameters=self.sim.task.data.network,
-            action_choice=self.action_choice,
-            iteration=iteration,
-            data_states = self.sim.task.data.state,
-        )
+        if iteration % conf.CONF["frame_skipping"] == 0:
+            FarmsGym.set_action(
+                action=action,
+                network_parameters=self.sim.task.data.network,
+                action_choice=self.action_choice,
+                iteration=iteration,
+                data_states=self.sim.task.data.state,
+            )
 
         # @ASTHA makes simulation go forward # @CHECK
         env_step = self.sim._env.step(
@@ -747,8 +787,10 @@ class FarmsGym(gym.Env):
 
         if "state_history_length" in conf.CONF["RL"]:
             for i in range(self.n_obs):
-                self.state_history[i] = np.roll(self.state_history[i], 1) # move all elements one entry to the right
-                self.state_history[i][0] = self.observation[i] # replace first entry
+                self.state_history[i] = np.roll(
+                    self.state_history[i], 1
+                )  # move all elements one entry to the right
+                self.state_history[i][0] = self.observation[i]  # replace first entry
             self.observation = self.state_history.flatten()
 
         # REWARD
@@ -769,8 +811,16 @@ class FarmsGym(gym.Env):
             self.done = True  # early termination on backwards movement
 
         if self.done:
-            self.jointPosLastEpisode = np.copy(np.array(self.sim.task.data.sensors.joints.positions(iteration=iteration)))
-            self.jointVelLastEpisode = np.copy(np.array(self.sim.task.data.sensors.joints.velocities(iteration=iteration)))
+            self.jointPosLastEpisode = np.copy(
+                np.array(
+                    self.sim.task.data.sensors.joints.positions(iteration=iteration)
+                )
+            )
+            self.jointVelLastEpisode = np.copy(
+                np.array(
+                    self.sim.task.data.sensors.joints.velocities(iteration=iteration)
+                )
+            )
 
         if self.is_test_env:
             self.log_fb_weights.append(
@@ -780,11 +830,23 @@ class FarmsGym(gym.Env):
                 target = np.array(
                     conf.CONF["RL"]["target_velocity"],
                 )
-                current = np.array(self.sim.task.data.sensors.links.global_com_velocity(iteration))[0:2]
+                current = np.array(
+                    self.sim.task.data.sensors.links.global_com_velocity(iteration)
+                )[0:2]
                 self.log_tracking_error.append(np.sum(np.abs(target - current)))
             elif "target_speed" in conf.CONF["RL"]:
                 target = np.array([conf.CONF["RL"]["target_speed"]])
-                current = np.array([np.linalg.norm(np.array(self.sim.task.data.sensors.links.global_com_velocity(iteration))[0:2])])
+                current = np.array(
+                    [
+                        np.linalg.norm(
+                            np.array(
+                                self.sim.task.data.sensors.links.global_com_velocity(
+                                    iteration
+                                )
+                            )[0:2]
+                        )
+                    ]
+                )
                 self.log_tracking_error.append(np.abs(target - current))
             else:
                 pass
@@ -793,13 +855,13 @@ class FarmsGym(gym.Env):
             additionalMetrics = None
             if len(self.log_tracking_error) > 0:
                 additionalMetrics = {
-                    'mean abs tracking error': np.mean(self.log_tracking_error),
+                    "mean abs tracking error": np.mean(self.log_tracking_error),
                 }
             utils.save_performance_metrics(
                 self.sim,
                 self.timestep,
                 self.sim_options.n_iterations,
-                additionalMetrics=additionalMetrics
+                additionalMetrics=additionalMetrics,
             )
             fb_weights = np.array(self.log_fb_weights)
             _times = np.arange(
@@ -850,25 +912,33 @@ class FarmsGym(gym.Env):
 
         """
 
-
         # NOTE oscillator states are reset manually in agnathax_control/network.py
 
         if not (self.is_eval_env or self.is_test_env):
-            if conf.CONF["RL"]["useRandStartCond"] =="jointPosEndLastEpisode" and not self.jointPosLastEpisode is None:
+            if (
+                conf.CONF["RL"]["useRandStartCond"] == "jointPosEndLastEpisode"
+                and not self.jointPosLastEpisode is None
+            ):
                 RobotInitialState.set_user_defined_shape_pose(
                     animat_options=self.sim.task.animat_options,
-                    shape_pose = self.jointPosLastEpisode
+                    shape_pose=self.jointPosLastEpisode,
                 )
-            elif conf.CONF["RL"]["useRandStartCond"] =="jointPosEndLastEpisodeVelRand" and not self.jointPosLastEpisode is None:
+            elif (
+                conf.CONF["RL"]["useRandStartCond"] == "jointPosEndLastEpisodeVelRand"
+                and not self.jointPosLastEpisode is None
+            ):
                 RobotInitialState.set_user_defined_shape_pose_vel_rand(
                     animat_options=self.sim.task.animat_options,
-                    shape_pose = self.jointPosLastEpisode
+                    shape_pose=self.jointPosLastEpisode,
                 )
-            elif conf.CONF["RL"]["useRandStartCond"] =="jointPosVelEndLastEpisode" and not self.jointPosLastEpisode is None:
+            elif (
+                conf.CONF["RL"]["useRandStartCond"] == "jointPosVelEndLastEpisode"
+                and not self.jointPosLastEpisode is None
+            ):
                 RobotInitialState.set_user_defined_shape_pose_vel(
                     animat_options=self.sim.task.animat_options,
-                    shape_pose = self.jointPosLastEpisode,
-                    vel = self.jointVelLastEpisode
+                    shape_pose=self.jointPosLastEpisode,
+                    vel=self.jointVelLastEpisode,
                 )
             elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandSampled":
                 RobotInitialState.set_randomly_sampled_shape_pose(
@@ -895,10 +965,14 @@ class FarmsGym(gym.Env):
         )
 
         if "state_history_length" in conf.CONF["RL"]:
-            self.state_history = np.zeros((self.n_obs, conf.CONF["RL"]["state_history_length"])) # [n_obs, state_history]
+            self.state_history = np.zeros(
+                (self.n_obs, conf.CONF["RL"]["state_history_length"])
+            )  # [n_obs, state_history]
             for i in range(self.n_obs):
-                self.state_history[i] = np.roll(self.state_history[i], 1) # move all elements one entry to the right
-                self.state_history[i][0] = self.observation[i] # replace first entry
+                self.state_history[i] = np.roll(
+                    self.state_history[i], 1
+                )  # move all elements one entry to the right
+                self.state_history[i][0] = self.observation[i]  # replace first entry
             self.observation = self.state_history.flatten()
 
         # for internal use?
@@ -929,12 +1003,21 @@ class ArchTestCallback(TaskCallback):
     ):
         super().__init__()
         self.reward = 0.0
+        self.obs = []
 
     def after_step(self, task, physics):
         self.reward += FarmsGym.compute_reward(task.data.sensors, task.iteration - 1)
         # if task.iteration > 1499:
         #     print(f"iteration: {task.iteration}")
         #     print(f"reward: {self.reward}")
+        self.obs.append(
+            FarmsGym.get_observations(
+                data_sensors=task.data.sensors,
+                data_states=task.data.state,
+                iteration=task.iteration - 1,
+                observation_choice=ObservationChoice([ObservationType.JOINT_POSITION]),
+            )
+        )
 
 
 class GymTestCallback(TaskCallback):
