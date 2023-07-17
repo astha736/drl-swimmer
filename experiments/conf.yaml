@@ -18,7 +18,6 @@
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_mini.yaml'
     target_velocity: [0.4, 0.0] # [x , y]
-  save_observations: True
 '466':
   run_type: 'train' # [arch_testing, train, test]
   config:
@@ -983,7 +982,6 @@
       arch: [128, 128]
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
-  save_observations: True
   stretch_action_output_scaling: 15
 '482':
   run_type: 'train' # [arch_testing, train, test]
@@ -1004,7 +1002,6 @@
       arch: [128, 128]
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
-  save_observations: True
   stretch_action_output_scaling: 5
 '483':
   run_type: 'train' # [arch_testing, train, test]
@@ -1025,7 +1022,6 @@
       arch: [128, 128]
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
-  save_observations: True
   stretch_action_output_scaling: 3
 '484':
   run_type: 'train' # [arch_testing, train, test]
@@ -1046,7 +1042,6 @@
       arch: [128, 128]
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
-  save_observations: True
   stretch_action_output_scaling: 1
 '485':
   run_type: 'train' # [arch_testing, train, test]
@@ -1067,7 +1062,6 @@
       arch: [128, 128]
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
-  save_observations: True
   stretch_action_output_scaling: 0.3
 '486':
   run_type: 'train' # [arch_testing, train, test]
@@ -1088,7 +1082,6 @@
       arch: [128, 128]
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
-  save_observations: True
   frame_skipping: 2
 '487':
   run_type: 'train' # [arch_testing, train, test]
@@ -1109,5 +1102,4 @@
       arch: [128, 128]
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
-  save_observations: True
   frame_skipping: 10
