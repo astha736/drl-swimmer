@@ -205,7 +205,7 @@ class TrainTestClass:
             deterministic=True,
             warn=True,
             verbose=1,
-            n_eval_episodes=10,
+            n_eval_episodes=20,
             # log_path=conf.LOG_DIR_TENSORBOARD, # don't know how to read the log and what's in there
             best_model_save_path=conf.LOG_DIR_RESULTS,
             callback_on_new_best=SaveVecNormalizeCallback(
@@ -273,7 +273,7 @@ class TrainTestClass:
 
         conf.CONF["misc"]["log_grads"] = False
 
-        n_eval_episodes = 10
+        n_eval_episodes = 50
         mean_rew, std_rew, metrics = evaluate_policy(
             model,
             eval_venv,

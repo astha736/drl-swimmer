@@ -84,7 +84,7 @@ class ActionChoice:
     action_output_scale = {
         ActionType.STRETCH: conf.CONF["stretch_action_output_scaling"],
         ActionType.CONTACT: 10,
-        ActionType.DRIVE: [1.5, 3.0],
+        ActionType.DRIVE: [2.0, 2.5],
         ActionType.STRETCH_BIAS: 15,  # try half
     }
 
@@ -731,7 +731,9 @@ class FarmsGym(gym.Env):
             reward += (
                 conf.CONF["RL"]["RewardFnc"]["x_com_vel"][0] * velocity_com[0]
             )  # reward
-            reward += conf.CONF["RL"]["RewardFnc"]["x_com_vel"][1] * velocity_com[1]
+            reward += conf.CONF["RL"]["RewardFnc"]["x_com_vel"][1] * np.abs(
+                velocity_com[1]
+            )  # penalty
 
         return reward
 
