@@ -99,6 +99,44 @@ class TrainTestClass:
         self.learn_total_timesteps = learn_total_timesteps
         self.clargs = clargs
 
+    def _get_env(self):
+        env = FarmsGym(
+            timestep=self.sim_options.timestep,
+            observation_choice=self.observation_choice,
+            action_choice=self.action_choice,
+            animat_options=self.animat_options,
+            arena_options=self.arena_options,
+            sim_options=self.sim_options,
+            simulator=self.simulator,
+        )
+        return env
+
+    def _get_test_env(self):
+        test_env = FarmsGym(
+            timestep=self.sim_options.timestep,
+            observation_choice=self.observation_choice,
+            action_choice=self.action_choice,
+            animat_options=self.animat_options,
+            arena_options=self.arena_options,
+            sim_options=self.sim_options,
+            simulator=self.simulator,
+            is_test_env=True,
+        )
+        return test_env
+
+    def _get_eval_env(self):
+        eval_env = FarmsGym(
+            timestep=self.sim_options.timestep,
+            observation_choice=self.observation_choice,
+            action_choice=self.action_choice,
+            animat_options=self.animat_options,
+            arena_options=self.arena_options,
+            sim_options=self.sim_options,
+            simulator=self.simulator,
+            is_eval_env=True,
+        )
+        return eval_env
+
     # Train and test
     def exp_training(
         self,
@@ -112,41 +150,12 @@ class TrainTestClass:
         print("START MODEL TRAINING")
         print("#######################")
 
-        def get_env():
-            env = FarmsGym(
-                timestep=self.sim_options.timestep,
-                observation_choice=self.observation_choice,
-                action_choice=self.action_choice,
-                animat_options=self.animat_options,
-                arena_options=self.arena_options,
-                sim_options=self.sim_options,
-                simulator=self.simulator,
-            )
-            return env
-
-        def get_eval_env():
-            env = FarmsGym(
-                timestep=self.sim_options.timestep,
-                observation_choice=self.observation_choice,
-                action_choice=self.action_choice,
-                animat_options=self.animat_options,
-                arena_options=self.arena_options,
-                sim_options=self.sim_options,
-                simulator=self.simulator,
-                is_eval_env=True,
-            )
-            return env
-
-        venv = make_vec_env(get_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
-        eval_venv = make_vec_env(get_eval_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
+        venv = make_vec_env(self._get_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
         # vec_env_cls=SubprocVecEnv
 
         if conf.CONF["RL"]["normWrapper"]:
             venv = VecNormalize(
                 venv, norm_obs=True, norm_reward=conf.CONF["RL"]["norm_reward"]
-            )
-            eval_venv = VecNormalize(
-                eval_venv, norm_obs=True, norm_reward=False, training=False
             )
 
         if "PPOparams" in conf.CONF["RL"]:
@@ -191,11 +200,12 @@ class TrainTestClass:
         model.set_logger(new_logger)
 
         eval_callback = EvalCallback(
-            eval_venv,
-            eval_freq=25_000,
+            venv,
+            eval_freq=50_000,
             deterministic=True,
             warn=True,
             verbose=1,
+            n_eval_episodes=10,
             # log_path=conf.LOG_DIR_TENSORBOARD, # don't know how to read the log and what's in there
             best_model_save_path=conf.LOG_DIR_RESULTS,
             callback_on_new_best=SaveVecNormalizeCallback(
@@ -221,11 +231,11 @@ class TrainTestClass:
             total_timesteps=self.learn_total_timesteps,
             callback=[eval_callback],
         )
-        model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
-        if conf.CONF["RL"]["normWrapper"]:
-            model.get_vec_normalize_env().save(
-                os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl")
-            )
+        # model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
+        # if conf.CONF["RL"]["normWrapper"]:
+        #     model.get_vec_normalize_env().save(
+        #         os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl")
+        #     )
 
         print("#######################")
         print("MODEL TRAINING FINISHED")
@@ -238,31 +248,65 @@ class TrainTestClass:
         print("START MODEL TESTING")
         print("#######################")
 
-        self.sim_options.record = True
+        self.sim_options.n_iterations = conf.CONF["n_iterations_testing"]
+
+        self.sim_options.record = False
+
+        eval_venv = make_vec_env(
+            self._get_eval_env, n_envs=1, seed=conf.CONF["RL"]["seed"]
+        )
+
+        if conf.CONF["RL"]["normWrapper"]:
+            eval_venv = VecNormalize.load(
+                os.path.join(conf.LOG_DIR_RESULTS, "best_model_normalize.pkl"),
+                eval_venv,
+            )
+            eval_venv.training = False
+            eval_venv.norm_reward = False
+
+        if "PPOparams" in conf.CONF["RL"]:
+            model = PPO.load(os.path.join(conf.LOG_DIR_RESULTS, "best_model.zip"))
+        elif "SACparams" in conf.CONF["RL"]:
+            model = SAC.load(os.path.join(conf.LOG_DIR_RESULTS, "best_model.zip"))
+        else:
+            raise ValueError("Policy not implemented")
+
+        conf.CONF["misc"]["log_grads"] = False
+
+        n_eval_episodes = 10
+        mean_rew, std_rew, metrics = evaluate_policy(
+            model,
+            eval_venv,
+            n_eval_episodes=n_eval_episodes,  # if more than one: dont log and plot gradients!
+            deterministic=True,
+            return_episode_rewards=False,
+            custom_metrics=True,
+        )
+
+        standardized_reward = f"{10 * mean_rew / conf.CONF['simulation_time_testing']} ± {10 * std_rew / conf.CONF['simulation_time_testing']}"
+
+        with open(
+            os.path.join(f"{conf.LOG_DIR_RESULTS}", "eval_metrics.txt"), "w"
+        ) as f:
+            f.write(f"n_eval_episodes: {n_eval_episodes}")
+            f.write("\n")
+            f.write(f"reward: {standardized_reward}")
+            f.write("\n")
+            for name, metric in metrics.items():
+                f.write(f"{name}: {metric}\n")
+        f.close()
+
+        # record for single test_env
+        self.sim_options.record = False
 
         # reset animat_options (required because random sampling of init cond. during training)
         RobotInitialState.set_initial_conditions_parallel(
             animat_options=self.animat_options
         )
 
-        self.sim_options.n_iterations = conf.CONF[
-            "n_iterations_testing"
-        ]  # longer training than testing
-
-        def get_test_env():
-            test_env = FarmsGym(
-                timestep=self.sim_options.timestep,
-                observation_choice=self.observation_choice,
-                action_choice=self.action_choice,
-                animat_options=self.animat_options,
-                arena_options=self.arena_options,
-                sim_options=self.sim_options,
-                simulator=self.simulator,
-                is_test_env=True,
-            )
-            return test_env
-
-        venv_test = make_vec_env(get_test_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
+        venv_test = make_vec_env(
+            self._get_test_env, n_envs=1, seed=conf.CONF["RL"]["seed"]
+        )
 
         if conf.CONF["RL"]["normWrapper"]:
             venv_test = VecNormalize.load(
@@ -272,18 +316,11 @@ class TrainTestClass:
             venv_test.training = False
             venv_test.norm_reward = False
 
-        if "PPOparams" in conf.CONF["RL"]:
-            model = PPO.load(os.path.join(conf.LOG_DIR_RESULTS, "best_model.zip"))
-        elif "SACparams" in conf.CONF["RL"]:
-            model = SAC.load(os.path.join(conf.LOG_DIR_RESULTS, "best_model.zip"))
-        else:
-            raise ValueError("Policy not implemented")
-
         # log gradients during one testing episode
         # conf.CONF["misc"]["log_grads"] will contain a list of all the gradients for each timestep (all outputs wrt to the inputs)
         conf.CONF["misc"]["log_grads"] = []
 
-        rew, len_ = evaluate_policy(
+        rew, len_, _ = evaluate_policy(
             model,
             venv_test,
             n_eval_episodes=1,  # if more than one: dont log and plot gradients!
@@ -298,9 +335,9 @@ class TrainTestClass:
             10 * rew / conf.CONF["simulation_time_testing"] for rew in rew
         ]  # norm by episode length; * 10 to keep legacy experiments comparable
 
-        # log reward of best model to performance_metrics.txt
+        # append reward of best model and #_trainable_params to single_test_env_metrics.txt
         with open(
-            os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a"
+            os.path.join(conf.LOG_DIR_RESULTS, "single_test_env_metrics.txt"), "a"
         ) as f:
             f.write("\n")
             f.write(f"best model reward: {rew_standardized}")
@@ -308,14 +345,6 @@ class TrainTestClass:
             f.write(
                 f"policy network(s) # trainable params: {conf.CONF['misc']['log_num_trainable_params']}"
             )
-        f.close()
-
-        # log reward of best model to common results file: results.yaml
-        results_file = "./experiments/results.yaml"
-        results = yaml.load((open(results_file, "r")), Loader=yaml.FullLoader)
-        results[conf.CONF["experiment_id"]]["best model reward"] = f"{rew_standardized}"
-        with open(results_file, "w") as f:
-            f.write(yaml.dump(results))
         f.close()
 
         if conf.CONF["log_level"] == "max":
@@ -470,29 +499,20 @@ class TrainTestClass:
         sim._env.reset()
         sim.run()
 
-        # get and save plots and data
-        utils.save_performance_metrics(
+        self.metrics, self.plots = utils.get_performance_metrics(
             sim,
             self.sim_options.timestep,
             self.sim_options.n_iterations,
+            do_plots=True,
         )
+        utils.save_performance_metrics(self.metrics, self.plots)
 
         # log reward of best model to performance_metrics.txt
         with open(
-            os.path.join(conf.LOG_DIR_RESULTS, "performance_metrics.txt"), "a"
+            os.path.join(conf.LOG_DIR_RESULTS, "single_test_env_metrics.txt"), "a"
         ) as f:
             f.write("\n")
             f.write(f"best model reward: {archTestCallback.reward} \n")
-        f.close()
-
-        # log reward of best model to common results file: results.yaml
-        results_file = "./experiments/results.yaml"
-        results = yaml.load((open(results_file, "r")), Loader=yaml.FullLoader)
-        results[conf.CONF["experiment_id"]][
-            "best model reward"
-        ] = f"{archTestCallback.reward}"
-        with open(results_file, "w") as f:
-            f.write(yaml.dump(results))
         f.close()
 
 

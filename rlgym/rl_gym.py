@@ -21,7 +21,6 @@ from farms_mujoco.simulation.task import TaskCallback
 from farms_mujoco.simulation.mjcf import euler2mjcquat
 from farms_sim.simulation import postprocessing_from_clargs
 
-from rlgym.rl_gym import ActionChoice, ObservationChoice, ObservationType, ActionType
 
 import gym
 from gym import spaces
@@ -810,17 +809,17 @@ class FarmsGym(gym.Env):
         if curr_x < start_x - 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True:
             self.done = True  # early termination on backwards movement
 
-        if self.done:
-            self.jointPosLastEpisode = np.copy(
-                np.array(
-                    self.sim.task.data.sensors.joints.positions(iteration=iteration)
-                )
-            )
-            self.jointVelLastEpisode = np.copy(
-                np.array(
-                    self.sim.task.data.sensors.joints.velocities(iteration=iteration)
-                )
-            )
+        # if self.done:
+        #     self.jointPosLastEpisode = np.copy(
+        #         np.array(
+        #             self.sim.task.data.sensors.joints.positions(iteration=iteration)
+        #         )
+        #     )
+        #     self.jointVelLastEpisode = np.copy(
+        #         np.array(
+        #             self.sim.task.data.sensors.joints.velocities(iteration=iteration)
+        #         )
+        #     )
 
         if self.is_test_env:
             self.log_fb_weights.append(
@@ -851,18 +850,29 @@ class FarmsGym(gym.Env):
             else:
                 pass
 
+        if self.done and self.is_eval_env:
+            self.metrics, _ = utils.get_performance_metrics(
+                self.sim,
+                self.timestep,
+                self.sim_options.n_iterations,
+                do_plots=False,
+            )
+
         if self.done and self.is_test_env:
             additionalMetrics = None
             if len(self.log_tracking_error) > 0:
                 additionalMetrics = {
                     "mean abs tracking error": np.mean(self.log_tracking_error),
                 }
-            utils.save_performance_metrics(
+            self.metrics, self.plots = utils.get_performance_metrics(
                 self.sim,
                 self.timestep,
                 self.sim_options.n_iterations,
+                do_plots=True,
                 additionalMetrics=additionalMetrics,
             )
+            utils.save_performance_metrics(self.metrics, self.plots)
+
             fb_weights = np.array(self.log_fb_weights)
             _times = np.arange(
                 0,
@@ -885,7 +895,7 @@ class FarmsGym(gym.Env):
             plt.grid(True)
 
             with PdfPages(
-                os.path.join(conf.LOG_DIR_RESULTS, "performance_plots_test_env.pdf")
+                os.path.join(conf.LOG_DIR_RESULTS, "single_test_env_plots_rl_gym.pdf")
             ) as pdf:
                 pdf.savefig(fig, bbox_inches="tight")
             if self.sim_options.record == True:
@@ -914,46 +924,50 @@ class FarmsGym(gym.Env):
 
         # NOTE oscillator states are reset manually in agnathax_control/network.py
 
-        if not (self.is_eval_env or self.is_test_env):
-            if (
-                conf.CONF["RL"]["useRandStartCond"] == "jointPosEndLastEpisode"
-                and not self.jointPosLastEpisode is None
-            ):
-                RobotInitialState.set_user_defined_shape_pose(
-                    animat_options=self.sim.task.animat_options,
-                    shape_pose=self.jointPosLastEpisode,
-                )
-            elif (
-                conf.CONF["RL"]["useRandStartCond"] == "jointPosEndLastEpisodeVelRand"
-                and not self.jointPosLastEpisode is None
-            ):
-                RobotInitialState.set_user_defined_shape_pose_vel_rand(
-                    animat_options=self.sim.task.animat_options,
-                    shape_pose=self.jointPosLastEpisode,
-                )
-            elif (
-                conf.CONF["RL"]["useRandStartCond"] == "jointPosVelEndLastEpisode"
-                and not self.jointPosLastEpisode is None
-            ):
-                RobotInitialState.set_user_defined_shape_pose_vel(
-                    animat_options=self.sim.task.animat_options,
-                    shape_pose=self.jointPosLastEpisode,
-                    vel=self.jointVelLastEpisode,
-                )
-            elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandSampled":
-                RobotInitialState.set_randomly_sampled_shape_pose(
-                    animat_options=self.sim.task.animat_options
-                )
-            elif conf.CONF["RL"]["useRandStartCond"] == "jointPosVelRandSampled":
-                RobotInitialState.set_randomly_sampled_shape_pose_vel(
-                    animat_options=self.sim.task.animat_options
-                )
-            elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandomFromPreset":
-                RobotInitialState.set_random_shape_pose(
-                    animat_options=self.sim.task.animat_options
-                )
-            else:
-                pass
+        if not self.is_test_env:
+            # if (
+            #     conf.CONF["RL"]["useRandStartCond"] == "jointPosEndLastEpisode"
+            #     and not self.jointPosLastEpisode is None
+            # ):
+            #     RobotInitialState.set_user_defined_shape_pose(
+            #         animat_options=self.sim.task.animat_options,
+            #         shape_pose=self.jointPosLastEpisode,
+            #     )
+            # elif (
+            #     conf.CONF["RL"]["useRandStartCond"] == "jointPosEndLastEpisodeVelRand"
+            #     and not self.jointPosLastEpisode is None
+            # ):
+            #     RobotInitialState.set_user_defined_shape_pose_vel_rand(
+            #         animat_options=self.sim.task.animat_options,
+            #         shape_pose=self.jointPosLastEpisode,
+            #     )
+            # elif (
+            #     conf.CONF["RL"]["useRandStartCond"] == "jointPosVelEndLastEpisode"
+            #     and not self.jointPosLastEpisode is None
+            # ):
+            #     RobotInitialState.set_user_defined_shape_pose_vel(
+            #         animat_options=self.sim.task.animat_options,
+            #         shape_pose=self.jointPosLastEpisode,
+            #         vel=self.jointVelLastEpisode,
+            #     )
+            # elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandSampled":
+            #     RobotInitialState.set_randomly_sampled_shape_pose(
+            #         animat_options=self.sim.task.animat_options
+            #     )
+            # elif conf.CONF["RL"]["useRandStartCond"] == "jointPosVelRandSampled":
+            RobotInitialState.set_randomly_sampled_shape_pose_vel(
+                animat_options=self.sim.task.animat_options
+            )
+            # elif conf.CONF["RL"]["useRandStartCond"] == "jointPosRandomFromPreset":
+            #     RobotInitialState.set_random_shape_pose(
+            #         animat_options=self.sim.task.animat_options
+            #     )
+            # else:
+            #     pass
+        else:
+            RobotInitialState.set_initial_conditions_parallel(
+                animat_options=self.animat_options
+            )
 
         self.sim._env.reset()
 
