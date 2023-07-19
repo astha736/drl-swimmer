@@ -150,7 +150,7 @@ class TrainTestClass:
         print("START MODEL TRAINING")
         print("#######################")
 
-        venv = make_vec_env(self._get_env, n_envs=1, seed=conf.CONF["RL"]["seed"])
+        venv = make_vec_env(self._get_env, n_envs=1, seed=conf.SEED)
         # vec_env_cls=SubprocVecEnv
 
         if conf.CONF["RL"]["normWrapper"]:
@@ -172,7 +172,7 @@ class TrainTestClass:
                 CustomActorCriticPolicy,
                 venv,
                 tensorboard_log=conf.LOG_DIR_TENSORBOARD,
-                seed=conf.CONF["RL"]["seed"],
+                seed=conf.SEED,
                 learning_rate=linear_schedule(
                     conf.CONF["RL"]["PPOparams"]["lr_start"],
                     conf.CONF["RL"]["PPOparams"]["lr_end"],
@@ -252,9 +252,7 @@ class TrainTestClass:
 
         self.sim_options.record = False
 
-        eval_venv = make_vec_env(
-            self._get_eval_env, n_envs=1, seed=conf.CONF["RL"]["seed"]
-        )
+        eval_venv = make_vec_env(self._get_eval_env, n_envs=1, seed=conf.SEED)
 
         if conf.CONF["RL"]["normWrapper"]:
             eval_venv = VecNormalize.load(
@@ -273,7 +271,7 @@ class TrainTestClass:
 
         conf.CONF["misc"]["log_grads"] = False
 
-        n_eval_episodes = 50
+        n_eval_episodes = 100
         mean_rew, std_rew, metrics = evaluate_policy(
             model,
             eval_venv,
@@ -283,30 +281,28 @@ class TrainTestClass:
             custom_metrics=True,
         )
 
-        standardized_reward = f"{10 * mean_rew / conf.CONF['simulation_time_testing']} ± {10 * std_rew / conf.CONF['simulation_time_testing']}"
+        metrics[
+            "1_standardized_reward"
+        ] = f"[{10 * mean_rew / conf.CONF['simulation_time_testing']}, {10 * std_rew / conf.CONF['simulation_time_testing']}]"
+
+        metrics["0_n_eval_episodes"] = n_eval_episodes
+        metrics["0_data_format"] = "[mean, std]"
+        metrics["0_seed"] = conf.SEED
 
         with open(
-            os.path.join(f"{conf.LOG_DIR_RESULTS}", "eval_metrics.txt"), "w"
+            os.path.join(f"{conf.LOG_DIR_RESULTS}", "eval_metrics.yaml"), "w"
         ) as f:
-            f.write(f"n_eval_episodes: {n_eval_episodes}")
-            f.write("\n")
-            f.write(f"reward: {standardized_reward}")
-            f.write("\n")
-            for name, metric in metrics.items():
-                f.write(f"{name}: {metric}\n")
-        f.close()
+            yaml.dump(metrics, f)
 
         # record for single test_env
-        self.sim_options.record = False
+        self.sim_options.record = True
 
         # reset animat_options (required because random sampling of init cond. during training)
         RobotInitialState.set_initial_conditions_parallel(
             animat_options=self.animat_options
         )
 
-        venv_test = make_vec_env(
-            self._get_test_env, n_envs=1, seed=conf.CONF["RL"]["seed"]
-        )
+        venv_test = make_vec_env(self._get_test_env, n_envs=1, seed=conf.SEED)
 
         if conf.CONF["RL"]["normWrapper"]:
             venv_test = VecNormalize.load(
@@ -349,7 +345,7 @@ class TrainTestClass:
 
         if conf.CONF["log_level"] == "max":
             # create temp dir
-            _temp_dir = f"{conf.TEMP_DIR}/{1000 * time.time()}"
+            _temp_dir = f"{conf.TEMP_DIR}/{conf.SEED}/{1000 * time.time()}"
             os.makedirs(f"{_temp_dir}")
 
             # create plots of gradients

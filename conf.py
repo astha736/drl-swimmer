@@ -6,13 +6,14 @@ import os
 from datetime import datetime
 
 
-def init(experiment_config, experiment_id, base_test_path):
+def init(experiment_config, experiment_id, base_test_path, date, seed):
     global CONF
     global LOG_DIR_RESULTS
     global LOG_DIR_TENSORBOARD
     global TEMP_DIR
     global RIGHT_OSCILLATOR_INDEXES
     global LEFT_OSCILLATOR_INDEXES
+    global SEED
 
     RIGHT_OSCILLATOR_INDEXES = [i * 2 - 1 for i in range(1, 11)]
     LEFT_OSCILLATOR_INDEXES = [i * 2 for i in range(0, 10)]
@@ -33,47 +34,63 @@ def init(experiment_config, experiment_id, base_test_path):
     if base_test_path is not None:
         if not os.path.isdir(base_test_path):
             raise ValueError("base_test_path does not exist.")
-        print(f"Perform only testing on models in path: {base_test_path}.")
         LOG_DIR_RESULTS = base_test_path
+        SEED = int(base_test_path.rsplit("/", 1)[1])
+        print(
+            f"Perform only testing on models in path: {base_test_path}. Seed is {SEED}."
+        )
+
     else:  # else: run training and testing
         # log results to home/.../experiments on local PC
         # log tensorboard logs to /shared/.. if on HPC
+        SEED = int(seed)
+
         print(f"Perform training and testing.")
         LOG_DIR_RESULTS = (
             "./experiments/"
             + CONF["experiment_id"]
             + "/logs/"
-            + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+            + str(date)
+            + "/"
+            + str(seed)
         )
         if os.path.isdir("/shared"):  # cluster
             LOG_DIR_TENSORBOARD = (
                 "/shared/hausdoer/experiments/"
                 + CONF["experiment_id"]
                 + "/logs"
-                + datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
+                + str(date)
+                + "/"
+                + str(seed)
             )
-            global LOG_DIR_OBSERVATION_BUFFER
-            LOG_DIR_OBSERVATION_BUFFER = (
-                "/shared/hausdoer/observation_buffers/" + CONF["experiment_id"]
-            )
-            if not os.path.isdir(LOG_DIR_OBSERVATION_BUFFER):
-                os.makedirs(LOG_DIR_OBSERVATION_BUFFER)
-            else:
-                import glob
+            if "save_observations" in CONF:
+                if CONF["save_observations"] == True:
+                    global LOG_DIR_OBSERVATION_BUFFER
+                    LOG_DIR_OBSERVATION_BUFFER = (
+                        "/shared/hausdoer/observation_buffers/"
+                        + CONF["experiment_id"]
+                        + "/"
+                        + str(seed)
+                    )
+                    if not os.path.isdir(LOG_DIR_OBSERVATION_BUFFER):
+                        os.makedirs(LOG_DIR_OBSERVATION_BUFFER)
+                    else:
+                        import glob
 
-                for f in glob.glob(f"{LOG_DIR_OBSERVATION_BUFFER}/*"):
-                    os.remove(f)
+                        for f in glob.glob(f"{LOG_DIR_OBSERVATION_BUFFER}/*"):
+                            os.remove(f)
         else:
             LOG_DIR_TENSORBOARD = LOG_DIR_RESULTS
 
         if not os.path.isdir(LOG_DIR_TENSORBOARD):
             os.makedirs(LOG_DIR_TENSORBOARD)
+        else:
+            raise ValueError(
+                "Log dir tb already exists. Possibly overwrite existing data. Aborted."
+            )
 
         print(f"LOG_DIR_RESULTS: {LOG_DIR_RESULTS}")
         print(f"LOG_DIR_TENSORBOARD: {LOG_DIR_TENSORBOARD}")
-
-    if not os.path.isdir(LOG_DIR_RESULTS):
-        os.makedirs(LOG_DIR_RESULTS)
 
     # create _temp folder if not existent. But dont delete it if it exists, it might be used by other processes
     if os.path.isdir("/shared"):  # cluster

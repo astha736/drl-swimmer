@@ -14,7 +14,7 @@
     observation_choice: ['JOINT_POSITION'] # add more here!
     phase_preprocessing: "sin" # [sin, cos, mod]
     policy_network:
-      arch: [200, 200]
+      arch: [64, 64]
       act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
     PPOparams: './config/PPO_params/PPO_mini.yaml'
     target_velocity: [0.4, 0.0] # [x , y]

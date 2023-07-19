@@ -20,6 +20,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-e", "--experiment_id", required=False, default=None)
 parser.add_argument("-m", "--base_test_path", required=False, default=None)
 parser.add_argument("-l", "--log_level", required=False, default="min")
+parser.add_argument("-d", "--date", required=False)
+parser.add_argument("-s", "--seed", required=False)
 args = parser.parse_args()
 
 # santity check on args
@@ -29,18 +31,33 @@ if args.experiment_id is None and args.base_test_path is None:
 if args.base_test_path is not None and args.experiment_id is None:
     raise ValueError("Provide experiment_id if base_test_path is provided.")
 
+if args.base_test_path is None and (args.date is None or args.seed is None):
+    raise ValueError("Provide date and seed for training.")
+
 
 # Load experiment config and setup *_DIRs
 try:
     with open(f"./experiments/conf.yaml") as experiments_config:
         _conf = yaml.full_load(experiments_config)
-        conf.init(_conf[args.experiment_id], args.experiment_id, args.base_test_path)
+        conf.init(
+            _conf[args.experiment_id],
+            args.experiment_id,
+            args.base_test_path,
+            args.date,
+            args.seed,
+        )
 except:
     # legacy
     with open(
         f"./experiments/{args.experiment_id}/" + "conf.yaml"
     ) as experiment_config:
-        conf.init(experiment_config, args.experiment_id, args.base_test_path)
+        conf.init(
+            experiment_config,
+            args.experiment_id,
+            args.base_test_path,
+            args.date,
+            args.seed,
+        )
 
 # imports that depend on 'conf'
 from rlgym.rl_gym import ActionChoice, ObservationChoice, ObservationType, ActionType
