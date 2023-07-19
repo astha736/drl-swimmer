@@ -85,7 +85,7 @@ class ActionChoice:
         ActionType.STRETCH: conf.CONF["stretch_action_output_scaling"],
         ActionType.CONTACT: 10,
         ActionType.DRIVE: [2.0, 2.5],
-        ActionType.STRETCH_BIAS: 15,  # try half
+        ActionType.STRETCH_BIAS: 5,  # try half
     }
 
     def __init__(self, action_list: List[ActionType], n_body_joints: int = 10):
@@ -181,31 +181,20 @@ class ActionChoice:
 
         # TODO technically this is wrong as the phases from the LAST step are used
         # maybe this error is small enough
-        #
+
         if not iteration == 0:
             iteration = iteration - 1
         phases_left = np.array(data_states.phases(iteration))[
             conf.LEFT_OSCILLATOR_INDEXES
         ]
 
-        phases_right = np.array(data_states.phases(iteration))[
-            conf.RIGHT_OSCILLATOR_INDEXES
-        ]
-
         # two actions for each joint
         for i, j in enumerate(range(0, len(action), 2)):
-            action_biased_left = action[j] * np.cos(phases_left[i]) + action[
-                j + 1
-            ] * np.sin(phases_left[i])
-            action_biased_right = -action[j] * np.cos(phases_right[i]) - action[
-                j + 1
-            ] * np.sin(phases_right[i])
-            robot_parameters[
-                i * 2 + 0
-            ] = action_biased_left  # left oscillator assignment
-            robot_parameters[
-                i * 2 + 1
-            ] = action_biased_right  # right oscillator assignment
+            action_biased = action[j] * np.cos(phases_left[i]) + action[j + 1] * np.sin(
+                phases_left[i]
+            )
+            robot_parameters[i * 2 + 0] = action_biased  # left oscillator assignment
+            robot_parameters[i * 2 + 1] = -action_biased  # right oscillator assignment
         pass
 
     def set_action_CONTACT(self, action, network_parameters, iteration, data_states):
