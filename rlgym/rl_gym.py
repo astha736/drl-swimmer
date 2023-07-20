@@ -85,7 +85,7 @@ class ActionChoice:
         ActionType.STRETCH: conf.CONF["stretch_action_output_scaling"],
         ActionType.CONTACT: 10,
         ActionType.DRIVE: [2.0, 2.5],
-        ActionType.STRETCH_BIAS: 5,  # try half
+        ActionType.STRETCH_BIAS: 3,  # try half
     }
 
     def __init__(self, action_list: List[ActionType], n_body_joints: int = 10):
@@ -621,28 +621,20 @@ class FarmsGym(gym.Env):
         )
         forward_x = curr_x - prev_x  # range of 0.003 per step
 
-        # torques
-        cmd_torques = np.sum(
-            np.abs(np.array(data_sensors.joints.cmd_torques())[iteration])
-        )  # range of ~3-4 per step for 001
         # Astha said active_torques is good for bioinspiration
-        active_torques = np.array(data_sensors.joints.active_torques())[
-            iteration
-        ]  # range of ~1-2 per step for 001
-        active_torques_prev = (
-            np.array(data_sensors.joints.active_torques())[iteration - 1]
-            if iteration > 0
-            else 0.0
-        )
-        active_torque = np.sum(np.abs(active_torques))  # range of ~7 per step for 001
-        active_torque_diff = np.sum(
-            np.abs(active_torques - active_torques_prev)
-        )  # range of ~0.3 per step for 001
+        # active_torques = np.array(data_sensors.joints.active_torques())[
+        #     iteration
+        # ]  # range of ~1-2 per step for 001
+        # active_torques_prev = (
+        #     np.array(data_sensors.joints.active_torques())[iteration - 1]
+        #     if iteration > 0
+        #     else 0.0
+        # )
+        # active_torque = np.sum(np.abs(active_torques))  # range of ~7 per step for 001
+        # active_torque_diff = np.sum(
+        #     np.abs(active_torques - active_torques_prev)
+        # )  # range of ~0.3 per step for 001
 
-        # power
-        joints_power = np.sum(
-            data_sensors.joints.sum_power_joints_timestep()[iteration]
-        )
 
         # forward way COM; positive if forward_x is positive
         curr_com = np.array(data_sensors.links.global_com_position(iteration))
@@ -663,16 +655,6 @@ class FarmsGym(gym.Env):
         # velocity
         velocity_com = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
 
-        # sign forward
-        head_pos = np.array(
-            data_sensors.links.com_position(iteration=iteration, link_i=0)
-        )[0:2]
-        tail_pos = np.array(
-            data_sensors.links.com_position(iteration=iteration, link_i=10)
-        )[0:2]
-        tail_head_vec = head_pos - tail_pos
-        sign_fwd = np.sign(np.dot(velocity_com, tail_head_vec) + 0.1)  # +/- ~100°
-
         # distance of closest link to COM; sum of link distances to COM
         # link_dist_to_com = np.zeros(10)
         # curr_com_ = curr_com[0:2]
@@ -687,15 +669,31 @@ class FarmsGym(gym.Env):
 
         reward = 0.0
         if "vel_com" in conf.CONF["RL"]["RewardFnc"]:
+            # sign forward
+            head_pos = np.array(
+                data_sensors.links.com_position(iteration=iteration, link_i=0)
+            )[0:2]
+            tail_pos = np.array(
+                data_sensors.links.com_position(iteration=iteration, link_i=10)
+            )[0:2]
+            tail_head_vec = head_pos - tail_pos
+            sign_fwd = np.sign(np.dot(velocity_com, tail_head_vec) + 0.1)  # +/- ~100°
             reward += conf.CONF["RL"]["RewardFnc"]["vel_com"] * speed_com * sign_fwd
         if "joints_power" in conf.CONF["RL"]["RewardFnc"]:
+            joints_power = np.sum(
+                data_sensors.joints.sum_power_joints_timestep()[iteration]
+            )
             reward += conf.CONF["RL"]["RewardFnc"]["joints_power"] * joints_power
         if "forward_x" in conf.CONF["RL"]["RewardFnc"]:
             reward += conf.CONF["RL"]["RewardFnc"]["forward_x"] * forward_x
         if "cmd_torques" in conf.CONF["RL"]["RewardFnc"]:
+            cmd_torques = np.sum(
+                np.abs(np.array(data_sensors.joints.cmd_torques())[iteration])
+            )  # range of ~3-4 per step for 001
             reward += conf.CONF["RL"]["RewardFnc"]["cmd_torques"] * cmd_torques
         if "active_torques" in conf.CONF["RL"]["RewardFnc"]:
-            reward += conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torque
+            raise NotImplementedError
+            # reward += conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torque
         if "healthy" in conf.CONF["RL"]["RewardFnc"]:
             reward += conf.CONF["RL"]["RewardFnc"]["healthy"]
         # TODO catch error if target_speed || speed_error is not defined
@@ -707,9 +705,10 @@ class FarmsGym(gym.Env):
                 np.abs(speed_com - conf.CONF["RL"]["target_speed"])
             )
         if "active_torque_diff" in conf.CONF["RL"]["RewardFnc"]:
-            reward += (
-                conf.CONF["RL"]["RewardFnc"]["active_torque_diff"] * active_torque_diff
-            )
+            raise NotImplementedError
+            # reward += (
+            #     conf.CONF["RL"]["RewardFnc"]["active_torque_diff"] * active_torque_diff
+            # )
         if "forward_com" in conf.CONF["RL"]["RewardFnc"]:
             reward += conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
         if "velocity_error" in conf.CONF["RL"]["RewardFnc"]:
@@ -793,12 +792,12 @@ class FarmsGym(gym.Env):
         if env_step.step_type == StepType.LAST:
             self.done = True  # end of episode
 
-        curr_x = np.array(
-            self.sim.task.data.sensors.links.global_com_position(iteration)
-        )[0]
-        start_x = np.array(self.sim.task.data.sensors.links.global_com_position(0))[0]
-        if curr_x < start_x - 0.2 and conf.CONF["RL"]["useEarlyTerm"] == True:
-            self.done = True  # early termination on backwards movement
+        
+        if conf.CONF["RL"]["useEarlyTerm"] == True:
+            curr_x = np.array(self.sim.task.data.sensors.links.global_com_position(iteration))[0]
+            start_x = np.array(self.sim.task.data.sensors.links.global_com_position(0))[0]
+            if curr_x < start_x - 0.2:
+                self.done = True  # early termination on backwards movement
 
         # if self.done:
         #     self.jointPosLastEpisode = np.copy(

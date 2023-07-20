@@ -201,7 +201,7 @@ class TrainTestClass:
 
         eval_callback = EvalCallback(
             venv,
-            eval_freq=50_000,
+            eval_freq=100_000,
             deterministic=True,
             warn=True,
             verbose=1,
@@ -224,8 +224,9 @@ class TrainTestClass:
         # )
 
         # profile.profile(
-        #     function=model.learn, total_timesteps=20_000, profile_filename="profile_prod_cluster_603.profile"
+        #     function=model.learn, total_timesteps=20_000 profile_filename="profile_prod_cluster_450_20-07-2023.profile"
         # )
+
 
         model.learn(
             total_timesteps=self.learn_total_timesteps,
@@ -295,7 +296,7 @@ class TrainTestClass:
             yaml.dump(metrics, f)
 
         # record for single test_env
-        self.sim_options.record = True
+        self.sim_options.record = False
 
         # reset animat_options (required because random sampling of init cond. during training)
         RobotInitialState.set_initial_conditions_parallel(

@@ -21,10 +21,11 @@ if not os.path.isdir(results_path):
 subdirs = [f.name for f in os.scandir(args.eval_path) if f.is_dir()]
 
 metrics_to_skip = ["0_n_eval_episodes", "0_data_format"]
+subdirs_to_skip = ["results", "999"]
 
 
 for subdir in subdirs:
-    if subdir == "results":
+    if subdir in subdirs_to_skip:
         continue
     # read eval results
     with open(f"{args.eval_path}/{subdir}/eval_metrics.yaml") as f:

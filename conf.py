@@ -58,7 +58,7 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             LOG_DIR_TENSORBOARD = (
                 "/shared/hausdoer/experiments/"
                 + CONF["experiment_id"]
-                + "/logs"
+                + "/logs/"
                 + str(date)
                 + "/"
                 + str(seed)
@@ -84,6 +84,9 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
 
         if not os.path.isdir(LOG_DIR_TENSORBOARD):
             os.makedirs(LOG_DIR_TENSORBOARD)
+        elif SEED == 999:
+            # reserved for testing w/ debugger
+            pass
         else:
             raise ValueError(
                 "Log dir tb already exists. Possibly overwrite existing data. Aborted."
@@ -91,6 +94,9 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
 
         print(f"LOG_DIR_RESULTS: {LOG_DIR_RESULTS}")
         print(f"LOG_DIR_TENSORBOARD: {LOG_DIR_TENSORBOARD}")
+
+    if not os.path.isdir(LOG_DIR_RESULTS):
+        os.makedirs(LOG_DIR_RESULTS)
 
     # create _temp folder if not existent. But dont delete it if it exists, it might be used by other processes
     if os.path.isdir("/shared"):  # cluster
@@ -155,18 +161,18 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
         # value network is equal to policy_network by default
         if not "value_network" in CONF["RL"]:
             CONF["RL"]["value_network"] = CONF["RL"]["policy_network"]
-        if not "seed" in CONF["RL"]:
-            CONF["RL"]["seed"] = 123
         if not "norm_reward" in CONF["RL"]:
             CONF["RL"]["norm_reward"] = True
+        if not "useRandStartCondPhases" in CONF["RL"]:
+            CONF["RL"]["useRandStartCondPhases"] = 2  # default
 
     # other settings
     if not "save_observations" in CONF:
         CONF["save_observations"] = False
     if not "stretch_action_output_scaling" in CONF:
-        CONF["stretch_action_output_scaling"] = 30
+        CONF["stretch_action_output_scaling"] = 5
     if not "frame_skipping" in CONF:
-        CONF["frame_skipping"] = 1
+        CONF["frame_skipping"] = 2
 
     # sanity checks
     if (
