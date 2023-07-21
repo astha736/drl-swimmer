@@ -84,7 +84,7 @@ class ActionChoice:
     action_output_scale = {
         ActionType.STRETCH: conf.CONF["stretch_action_output_scaling"],
         ActionType.CONTACT: 10,
-        ActionType.DRIVE: [2.5, 3.0],
+        ActionType.DRIVE: [2.2, 3.0],
         ActionType.STRETCH_BIAS: 3,  # try half
     }
 
@@ -960,6 +960,16 @@ class FarmsGym(gym.Env):
         as the function is called through sim._env.reset() calls
 
         """
+
+        # sample velocity vector
+        # constrained by: angle between velocity vector and x-axis is max 45°
+        # constrained by: speed range provided by conf.CONF["RL"]["sample_target_velocity_from_speed_range"]
+        if conf.CONF["RL"]["sample_target_velocity_from_speed_range"]:
+            range = conf.CONF["RL"]["sample_target_velocity_from_speed_range"]
+            speed = np.random.uniform(range[0], range[1])
+            x = np.random.uniform(speed / 2, speed)
+            y = random.choice([-1, 1]) * np.sqrt(speed**2 - x**2)
+            conf.CONF["RL"]["target_velocity"] = [x, y]
 
         # NOTE oscillator states are reset manually in agnathax_control/network.py
 

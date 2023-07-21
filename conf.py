@@ -167,6 +167,10 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             CONF["RL"]["useRandStartCondPhases"] = 2  # default
         if not "useRandStartCond" in CONF["RL"]:
             CONF["RL"]["useRandStartCond"] = 3
+        if not "sample_target_velocity_from_speed_range" in CONF["RL"]:
+            CONF["RL"]["sample_target_velocity_from_speed_range"] = False
+        else:
+            CONF["RL"]["target_velocity"] = [0.0, 0.0]
 
     # other settings
     if not "save_observations" in CONF:

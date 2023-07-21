@@ -145,7 +145,7 @@ def main() -> None:
 
     # Set action and observation spaces
     action_list = []
-    # KEEP ORDER OF OBSERVATIONS. NO MATTER WHAT!
+    # KEEP ORDER OF ACTIONS. NO MATTER WHAT!
     if "DRIVE" in conf.CONF["RL"]["action_choice"]:
         action_list.append(ActionType.DRIVE)
     if "STRETCH" in conf.CONF["RL"]["action_choice"]:
@@ -154,10 +154,9 @@ def main() -> None:
         action_list.append(ActionType.STRETCH_BIAS)
 
     observation_list = []
+    # KEEP ORDER OF OBSERVATIONS. NO MATTER WHAT!
     if "VELOCITIES" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.VELOCITIES)
-    if "REACTION_XY" in conf.CONF["RL"]["observation_choice"]:
-        observation_list.append(ObservationType.REACTION_XY)
     if "JOINT_POSITION" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.JOINT_POSITION)
     if "PHASES" in conf.CONF["RL"]["observation_choice"]:
@@ -166,6 +165,8 @@ def main() -> None:
         observation_list.append(ObservationType.AMPLITUDES)
     if "JOINT_VEL" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.JOINT_VEL)
+    if "REACTION_XY" in conf.CONF["RL"]["observation_choice"]:
+        observation_list.append(ObservationType.REACTION_XY)
 
     # Setup the TrainTest class
     train_test = TrainTestClass(
