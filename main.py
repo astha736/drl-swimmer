@@ -138,27 +138,30 @@ def main() -> None:
     exp_cond_experiment.setup(animat_options)
 
     total_timesteps = (
-        sim_options.n_iterations * conf.CONF["RL"]["episodes_per_training"]
+        sim_options.n_iterations
+        * conf.CONF["RL"]["episodes_per_training"]
+        # / conf.CONF["frames_per_action"]
     )
 
     # Set action and observation spaces
     action_list = []
-    if "STRETCH" in conf.CONF["RL"]["action_choice"]:
-        action_list.append(ActionType.STRETCH)
+    # KEEP ORDER OF OBSERVATIONS. NO MATTER WHAT!
     if "DRIVE" in conf.CONF["RL"]["action_choice"]:
         action_list.append(ActionType.DRIVE)
+    if "STRETCH" in conf.CONF["RL"]["action_choice"]:
+        action_list.append(ActionType.STRETCH)
     if "STRETCH_BIAS" in conf.CONF["RL"]["action_choice"]:
         action_list.append(ActionType.STRETCH_BIAS)
 
     observation_list = []
+    if "VELOCITIES" in conf.CONF["RL"]["observation_choice"]:
+        observation_list.append(ObservationType.VELOCITIES)
     if "REACTION_XY" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.REACTION_XY)
     if "JOINT_POSITION" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.JOINT_POSITION)
     if "PHASES" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.PHASES)
-    if "VELOCITIES" in conf.CONF["RL"]["observation_choice"]:
-        observation_list.append(ObservationType.VELOCITIES)
     if "AMPLITUDES" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.AMPLITUDES)
     if "JOINT_VEL" in conf.CONF["RL"]["observation_choice"]:

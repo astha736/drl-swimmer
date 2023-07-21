@@ -165,14 +165,16 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             CONF["RL"]["norm_reward"] = True
         if not "useRandStartCondPhases" in CONF["RL"]:
             CONF["RL"]["useRandStartCondPhases"] = 2  # default
+        if not "useRandStartCond" in CONF["RL"]:
+            CONF["RL"]["useRandStartCond"] = 3
 
     # other settings
     if not "save_observations" in CONF:
         CONF["save_observations"] = False
     if not "stretch_action_output_scaling" in CONF:
-        CONF["stretch_action_output_scaling"] = 5
-    if not "frame_skipping" in CONF:
-        CONF["frame_skipping"] = 2
+        CONF["stretch_action_output_scaling"] = 3
+    if not "frames_per_action" in CONF:
+        CONF["frames_per_action"] = 1
 
     # sanity checks
     if (

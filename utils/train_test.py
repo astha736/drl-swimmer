@@ -227,7 +227,6 @@ class TrainTestClass:
         #     function=model.learn, total_timesteps=20_000 profile_filename="profile_prod_cluster_450_20-07-2023.profile"
         # )
 
-
         model.learn(
             total_timesteps=self.learn_total_timesteps,
             callback=[eval_callback],
@@ -253,7 +252,9 @@ class TrainTestClass:
 
         self.sim_options.record = False
 
-        eval_venv = make_vec_env(self._get_eval_env, n_envs=1, seed=conf.SEED)
+        eval_venv = make_vec_env(
+            self._get_eval_env, n_envs=1, seed=123
+        )  # fixed seed for evaluation
 
         if conf.CONF["RL"]["normWrapper"]:
             eval_venv = VecNormalize.load(
@@ -303,7 +304,9 @@ class TrainTestClass:
             animat_options=self.animat_options
         )
 
-        venv_test = make_vec_env(self._get_test_env, n_envs=1, seed=conf.SEED)
+        venv_test = make_vec_env(
+            self._get_test_env, n_envs=1, seed=123
+        )  # fixed seed for testing
 
         if conf.CONF["RL"]["normWrapper"]:
             venv_test = VecNormalize.load(

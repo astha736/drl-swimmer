@@ -54,7 +54,7 @@ class NetworkODETEST(AnimatNetwork):
     def __reset(self):
         # sets initial values of oscillators
         self.dstate = np.zeros_like(self.state_array_init[0, :])  # reset dstate
-        if conf.CONF["RL"]["useRandStartCond"]:
+        if conf.CONF["RL"]["useRandStartCondPhases"]:
             self.__set_random_initial_oscillator_states()
             self.solver.set_initial_value(y=self.data.state.array[0, :], t=0.0)
         else:
@@ -64,18 +64,14 @@ class NetworkODETEST(AnimatNetwork):
         return
 
     def __set_random_initial_oscillator_states(self):
-        # generate states
-        if conf.CONF["RL"]["useRandStartCondPhases"] == 0:
-            # sample in [0, pi]
-            initial_phase_l = np.random.random_sample(10) * (np.pi)
-        elif conf.CONF["RL"]["useRandStartCondPhases"] == 1:
+        if conf.CONF["RL"]["useRandStartCondPhases"] == 1:
             # perfect init cond
             initial_phase_l = np.linspace(2 * np.pi, 0, 10)
         elif conf.CONF["RL"]["useRandStartCondPhases"] == 2:
             # perfect init cond + noise
             # DEFAULT
             initial_phase_l = np.linspace(2 * np.pi, 0, 10) + np.random.uniform(
-                -1.0, 1.0, size=10
+                -0.3, 0.3, size=10
             )
         elif conf.CONF["RL"]["useRandStartCondPhases"] == 3:
             # sample in [0, 2pi]

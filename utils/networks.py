@@ -1402,6 +1402,204 @@ class nn9(nn.Module):
         return self.value_net(features)
 
 
+class dnn1(nn.Module):
+    def __init__(
+        self,
+        feature_dim: int,
+        action_dim: int,
+    ):
+        super().__init__()
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.action_dim = action_dim
+
+        # IMPORTANT:
+        # Save output dimensions, used to create the distributions
+        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
+        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
+
+        self.policy_net_fb = nn.Sequential(
+            nn.Linear(feature_dim - 4, conf.CONF["RL"]["policy_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(self.latent_dim_pi, self.action_dim - 2),
+        )
+
+        self.policy_net_drive = nn.Sequential(
+            nn.Linear(4, 16),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(16, 16),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(16, 2),
+        )
+
+        # handle weight initialization
+        torch.nn.init.orthogonal_(self.policy_net_fb[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_fb[2].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_fb[4].weight, gain=0.01)
+        self.policy_net_fb[0].bias.data.fill_(0.0)
+        self.policy_net_fb[2].bias.data.fill_(0.0)
+        self.policy_net_fb[4].bias.data.fill_(0.0)
+
+        torch.nn.init.orthogonal_(self.policy_net_drive[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_drive[2].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_drive[4].weight, gain=0.01)
+        self.policy_net_drive[0].bias.data.fill_(0.0)
+        self.policy_net_drive[2].bias.data.fill_(0.0)
+        self.policy_net_drive[4].bias.data.fill_(0.0)
+
+        # Value network
+        self.value_net = nn.Sequential(
+            nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+        )
+
+        torch.nn.init.orthogonal_(self.value_net[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.value_net[2].weight, gain=np.sqrt(2))
+        self.value_net[0].bias.data.fill_(0.0)
+        self.value_net[2].bias.data.fill_(0.0)
+
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases
+
+        # body
+        idx_0 = torch.tensor(
+            [0, 1, 2, 3],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        idx_1 = torch.tensor(
+            [i for i in range(4, features.shape[1])],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        # pay attention on order or actions! It must go head to tail.
+        x0 = self.policy_net_drive(torch.index_select(features, dim=1, index=idx_0))
+        x1 = self.policy_net_fb(torch.index_select(features, dim=1, index=idx_1))
+
+        out = torch.cat((x0, x1), dim=1)
+
+        assert out.shape[1] == self.action_dim  # test action dim
+
+        return out
+
+    def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        return self.value_net(features)
+
+
+class dnn2(nn.Module):
+    def __init__(
+        self,
+        feature_dim: int,
+        action_dim: int,
+    ):
+        super().__init__()
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.action_dim = action_dim
+
+        # IMPORTANT:
+        # Save output dimensions, used to create the distributions
+        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
+        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
+
+        self.policy_net_fb = nn.Sequential(
+            nn.Linear(feature_dim - 4, conf.CONF["RL"]["policy_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(self.latent_dim_pi, self.action_dim - 2),
+        )
+
+        self.policy_net_drive = nn.Sequential(
+            nn.Linear(14, 16),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(16, 16),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(16, 2),
+        )
+
+        # handle weight initialization
+        torch.nn.init.orthogonal_(self.policy_net_fb[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_fb[2].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_fb[4].weight, gain=0.01)
+        self.policy_net_fb[0].bias.data.fill_(0.0)
+        self.policy_net_fb[2].bias.data.fill_(0.0)
+        self.policy_net_fb[4].bias.data.fill_(0.0)
+
+        torch.nn.init.orthogonal_(self.policy_net_drive[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_drive[2].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_drive[4].weight, gain=0.01)
+        self.policy_net_drive[0].bias.data.fill_(0.0)
+        self.policy_net_drive[2].bias.data.fill_(0.0)
+        self.policy_net_drive[4].bias.data.fill_(0.0)
+
+        # Value network
+        self.value_net = nn.Sequential(
+            nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+        )
+
+        torch.nn.init.orthogonal_(self.value_net[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.value_net[2].weight, gain=np.sqrt(2))
+        self.value_net[0].bias.data.fill_(0.0)
+        self.value_net[2].bias.data.fill_(0.0)
+
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases
+
+        # body
+        idx_0 = torch.tensor(
+            [0, 1, 2, 3],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        idx_1 = torch.tensor(
+            [i for i in range(4, features.shape[1])],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        # pay attention on order or actions! It must go head to tail.
+        x0 = self.policy_net_drive(torch.index_select(features, dim=1, index=idx_0))
+        x1 = self.policy_net_fb(torch.index_select(features, dim=1, index=idx_1))
+
+        out = torch.cat((x0, x1), dim=1)
+
+        assert out.shape[1] == self.action_dim  # test action dim
+
+        return out
+
+    def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        return self.value_net(features)
+
+
 class enn8(nn.Module):
     def __init__(
         self,
@@ -2330,10 +2528,17 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
                 self.mlp_extractor = enn7(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "enn8":
                 self.mlp_extractor = enn8(self.features_dim, action_dim)
+            elif conf.CONF["RL"]["localFeedback"] == "dnn1":
+                self.mlp_extractor = dnn1(self.features_dim, action_dim)
+            elif conf.CONF["RL"]["localFeedback"] == "dnn2":
+                self.mlp_extractor = dnn2(self.features_dim, action_dim)
+            # KEEP "stateHistoryController" last as it has no default value
             elif conf.CONF["RL"]["stateHistoryController"] == "sh1":
                 self.mlp_extractor = sh1(self.features_dim)
             elif conf.CONF["RL"]["stateHistoryController"] == "sh2":
                 self.mlp_extractor = sh2(self.features_dim)
+            else:
+                raise NotImplementedError
 
         else:
             self.mlp_extractor = CustomNetwork(self.features_dim)
@@ -2345,8 +2550,13 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
                 if p.requires_grad
             )
         except:
-            conf.CONF["misc"]["log_num_trainable_params"] = sum(
-                p.numel()
-                for p in self.mlp_extractor.policy_nets.parameters()
-                if p.requires_grad
-            )
+            try:
+                conf.CONF["misc"]["log_num_trainable_params"] = sum(
+                    p.numel()
+                    for p in self.mlp_extractor.policy_nets.parameters()
+                    if p.requires_grad
+                )
+            except:
+                conf.CONF["misc"][
+                    "log_num_trainable_params"
+                ] = f"policy_net_drive: {sum(p.numel()for p in self.mlp_extractor.policy_net_drive.parameters()if p.requires_grad)}, policy_net_fb: {sum(p.numel() for p in self.mlp_extractor.policy_net_fb.parameters() if p.requires_grad)}"
