@@ -171,6 +171,8 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             CONF["RL"]["sample_target_velocity_from_speed_range"] = False
         else:
             CONF["RL"]["target_velocity"] = [0.0, 0.0]
+        if not "sample_init_velocity_from_speed_range" in CONF["RL"]:
+            CONF["RL"]["sample_init_velocity_from_speed_range"] = False
 
     # other settings
     if not "save_observations" in CONF:

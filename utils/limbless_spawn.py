@@ -278,6 +278,11 @@ class RobotInitialState:
                 random.uniform(-0.01, 0.01),
             ]  # +/- 11°; +/- 0.5°/s
         return
+    
+    def set_init_cond_vel_com(animat_options, vel_com):
+        # I guess entires are vx, vy, vz, -, -, -
+        # vel_com of type [vx, vy]
+        animat_options.spawn.velocity = [vel_com[0], vel_com[1], 0.0, 0.0, 0.0, 0.0]
 
     @staticmethod
     def set_random_shape_pose(animat_options):

@@ -974,6 +974,7 @@ class FarmsGym(gym.Env):
         # NOTE oscillator states are reset manually in agnathax_control/network.py
 
         if not self.is_test_env:
+            # shape and velocities of joints and links
             if conf.CONF["RL"]["useRandStartCond"] == 1:
                 RobotInitialState.set_initial_conditions_parallel(
                     animat_options=self.animat_options
@@ -989,9 +990,23 @@ class FarmsGym(gym.Env):
                 )
             else:
                 raise NotImplementedError
+            # com
+            if conf.CONF["RL"]["sample_init_velocity_from_speed_range"]:
+                # sample init velocity vector
+                # constrained by: angle between velocity vector and x-axis is max 45°
+                range = conf.CONF["RL"]["sample_init_velocity_from_speed_range"]
+                speed = np.random.uniform(range[0], range[1])
+                x_start = np.random.uniform(speed / 2, speed)
+                y_start = random.choice([-1, 1]) * np.sqrt(speed**2 - x_start**2)
+                RobotInitialState.set_init_cond_vel_com(
+                    animat_options=self.sim.task.animat_options, vel_com=[x_start, y_start]
+                )
         else:
             RobotInitialState.set_initial_conditions_parallel(
                 animat_options=self.animat_options
+            )
+            RobotInitialState.set_init_cond_vel_com(
+                animat_options=self.sim.task.animat_options, vel_com=[0.0, 0.0]
             )
 
         self.sim._env.reset()
