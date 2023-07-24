@@ -167,6 +167,10 @@ def main() -> None:
         observation_list.append(ObservationType.JOINT_VEL)
     if "REACTION_XY" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.REACTION_XY)
+    if "PHASE_DIFF_REL" in conf.CONF["RL"]["observation_choice"]:
+        observation_list.append(ObservationType.PHASE_DIFF_REL)
+    if "PHASE_DIFF_ABS" in conf.CONF["RL"]["observation_choice"]:
+        observation_list.append(ObservationType.PHASE_DIFF_ABS)
 
     # Setup the TrainTest class
     train_test = TrainTestClass(

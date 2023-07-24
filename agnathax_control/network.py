@@ -81,6 +81,9 @@ class NetworkODETEST(AnimatNetwork):
             initial_phase_l = np.linspace(2 * np.pi, 0, 10) + np.random.uniform(
                 -1.0, 1.0, size=10
             )
+        elif conf.CONF["RL"]["useRandStartCondPhases"] == 5:
+            # sample in [0, 2pi]
+            initial_phase_l = np.random.uniform(0.0, 1.0, size=10) * 4 * np.pi
 
         initial_phase_r = initial_phase_l - np.pi  # np.linspace(np.pi, -np.pi, 10)
 

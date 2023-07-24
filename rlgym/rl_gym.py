@@ -73,6 +73,8 @@ class ObservationType(Enum):
     VELOCITIES = 8
     AMPLITUDES = 9
     JOINT_VEL = 10
+    PHASE_DIFF_REL = 11  # between neighbouring oscillators
+    PHASE_DIFF_ABS = 12  # between every oscillator and the first one
 
 
 class ActionChoice:
@@ -84,7 +86,7 @@ class ActionChoice:
     action_output_scale = {
         ActionType.STRETCH: conf.CONF["stretch_action_output_scaling"],
         ActionType.CONTACT: 10,
-        ActionType.DRIVE: [2.2, 3.0],
+        ActionType.DRIVE: [1.5, 3.0],
         ActionType.STRETCH_BIAS: 3,  # try half
     }
 
@@ -322,6 +324,20 @@ class ObservationChoice:
         high = np.array([np.inf] * (4))  # 2 * target + 2 * current
         return low, high
 
+    def observation_bound_PHASE_DIFF_REL(self):
+        """PHASES"""
+        # keep 10 for consistency
+        low = np.array([-np.inf] * (self.n_body_joints))
+        high = np.array([np.inf] * (self.n_body_joints))
+        return low, high
+
+    def observation_bound_PHASE_DIFF_ABS(self):
+        """PHASES"""
+        # keep 10 for consistency
+        low = np.array([-np.inf] * (self.n_body_joints))
+        high = np.array([np.inf] * (self.n_body_joints))
+        return low, high
+
     def get_observation_bound(self, observation: ObservationType):
         switcher = {
             ObservationType.JOINT_POSITION: self.observation_bound_JOINT_POSITION,
@@ -332,6 +348,8 @@ class ObservationChoice:
             ObservationType.REACTION_XY: self.observation_bound_REACTION_XY,
             ObservationType.REACTION_XYZ: self.observation_bound_REACTION_XYZ,
             ObservationType.PHASES: self.observation_bound_PHASES,
+            ObservationType.PHASE_DIFF_REL: self.observation_bound_PHASE_DIFF_REL,
+            ObservationType.PHASE_DIFF_ABS: self.observation_bound_PHASE_DIFF_ABS,
             ObservationType.AMPLITUDES: self.observation_bound_AMPLITUDES,
             ObservationType.VELOCITIES: self.observation_bound_VELOCITIES,
         }
@@ -424,6 +442,31 @@ class ObservationChoice:
                 raise ValueError("Unknown phase preprocessing method")
         return phases_right
 
+    def extract_observation_PHASE_DIFF_REL(self, data_sensors, data_states, iteration):
+        # only return right oscillators for now.
+        # this is technical not correct, as left and right oscillators are not initialized ideally
+        # so they need some time to sync
+        # however, I want to reduce input observation space for now
+
+        # return 10 phases for consistency
+        phases_right = np.array(data_states.phases(iteration))[
+            conf.RIGHT_OSCILLATOR_INDEXES
+        ]
+        return np.diff(phases_right, prepend=phases_right[0])
+
+    def extract_observation_PHASE_DIFF_ABS(self, data_sensors, data_states, iteration):
+        # only return right oscillators for now.
+        # this is technical not correct, as left and right oscillators are not initialized ideally
+        # so they need some time to sync
+        # however, I want to reduce input observation space for now
+
+        # return 10 phases for consistency
+        # difference between each oscillators phase and the first one
+        phases_right = np.array(data_states.phases(iteration))[
+            conf.RIGHT_OSCILLATOR_INDEXES
+        ]
+        return phases_right - phases_right[0]
+
     def extract_observation_REACTION_X(self, data_sensors, data_states, iteration):
         data_reaction_x = np.array(data_sensors.contacts.array[iteration, :, 0])
         isNaN = np.isnan(data_reaction_x).any()
@@ -500,6 +543,8 @@ class ObservationChoice:
             ObservationType.REACTION_XY: self.extract_observation_REACTION_XY_NORM,
             ObservationType.REACTION_XYZ: self.extract_observation_REACTION_XYZ_NORM,
             ObservationType.PHASES: self.extract_observation_PHASES,
+            ObservationType.PHASE_DIFF_REL: self.extract_observation_PHASE_DIFF_REL,
+            ObservationType.PHASE_DIFF_ABS: self.extract_observation_PHASE_DIFF_ABS,
             ObservationType.AMPLITUDES: self.extract_observation_AMPLITUDES,
             ObservationType.VELOCITIES: self.extract_observation_VELOCITIES,
         }
@@ -757,7 +802,19 @@ class FarmsGym(gym.Env):
             phase_diff_ideal = -0.6981317  # = 2*np.pi / 9
             phase_error = np.abs(phase_diff - phase_diff_ideal)
             reward += conf.CONF["RL"]["RewardFnc"]["phase_lock"] * np.sum(phase_error)
-
+        if "frequency_lock" in conf.CONF["RL"]["RewardFnc"]:
+            if iteration == 0:
+                return 0
+            phases_left = np.array(data_states.phases(iteration))[
+                conf.LEFT_OSCILLATOR_INDEXES
+            ]
+            phases_left_prev = np.array(data_states.phases(iteration - 1))[
+                conf.LEFT_OSCILLATOR_INDEXES
+            ]
+            d_phase = phases_left - phases_left_prev
+            d_phase_mean = np.mean(d_phase)
+            d_phase_diff = np.sum(np.abs(d_phase - d_phase_mean))
+            reward += conf.CONF["RL"]["RewardFnc"]["frequency_lock"] * d_phase_diff
         return reward
 
     def set_action(
@@ -988,6 +1045,10 @@ class FarmsGym(gym.Env):
                 RobotInitialState.set_randomly_sampled_shape_pose_vel(
                     animat_options=self.sim.task.animat_options
                 )
+            elif conf.CONF["RL"]["useRandStartCond"] == 4:
+                RobotInitialState.set_randomly_sampled_shape_pose_vel_1(
+                    animat_options=self.sim.task.animat_options
+                )
             else:
                 raise NotImplementedError
             # com
@@ -999,7 +1060,8 @@ class FarmsGym(gym.Env):
                 x_start = np.random.uniform(speed / 2, speed)
                 y_start = random.choice([-1, 1]) * np.sqrt(speed**2 - x_start**2)
                 RobotInitialState.set_init_cond_vel_com(
-                    animat_options=self.sim.task.animat_options, vel_com=[x_start, y_start]
+                    animat_options=self.sim.task.animat_options,
+                    vel_com=[x_start, y_start],
                 )
         else:
             RobotInitialState.set_initial_conditions_parallel(
