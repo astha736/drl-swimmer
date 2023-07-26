@@ -282,8 +282,8 @@ class RobotInitialState:
     def set_randomly_sampled_shape_pose_vel_1(animat_options):
         for i, elem in enumerate(animat_options.morphology.joints):
             elem.initial = [
-                random.uniform(-0.4, 0.4),
-                random.uniform(-0.5, 0.5),
+                random.uniform(-0.3, 0.3),
+                random.uniform(-0.1, 0.1),
             ]  # +/- 11°; +/- 0.5°/s
         return
 

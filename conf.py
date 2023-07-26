@@ -156,6 +156,8 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
 
     # rl settings
     if "RL" in CONF:
+        if not "episodes_per_training" in CONF["RL"]:
+            CONF["RL"]["episodes_per_training"] = 10_000
         if not "localFeedback" in CONF["RL"]:
             CONF["RL"]["localFeedback"] = None
         # value network is equal to policy_network by default
@@ -173,6 +175,8 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             CONF["RL"]["target_velocity"] = [0.0, 0.0]
         if not "sample_init_velocity_from_speed_range" in CONF["RL"]:
             CONF["RL"]["sample_init_velocity_from_speed_range"] = False
+        if not "randomInitDrive" in CONF["RL"]:
+            CONF["RL"]["randomInitDrive"] = False
 
     # other settings
     if not "save_observations" in CONF:
@@ -194,7 +198,11 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
     ):
         raise ValueError("State history controller not fully specified 2.")
 
-    CONF["n_iterations_testing"] = 1500
+    if not "n_iterations_testing" in CONF:
+        CONF["n_iterations_testing"] = 2500
+    if not "n_iterations" in CONF:
+        CONF["n_iterations"] = 1000
+
     CONF["testing_transient"] = 3.0  # s
 
     CONF["misc"] = {}
