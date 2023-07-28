@@ -177,6 +177,9 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             CONF["RL"]["sample_init_velocity_from_speed_range"] = False
         if not "randomInitDrive" in CONF["RL"]:
             CONF["RL"]["randomInitDrive"] = False
+        if not "curriculum" in CONF["RL"]:
+            CONF["RL"]["curriculum"] = {}
+            CONF["RL"]["curriculum"]["level"] = False
 
     # other settings
     if not "save_observations" in CONF:

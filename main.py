@@ -102,10 +102,10 @@ def main() -> None:
             "drive"
         ]
 
-    if "n_iterations" in conf.CONF["config"]:
-        sim_options.n_iterations = conf.CONF["config"]["n_iterations"]
+    if "n_iterations" in conf.CONF:
+        sim_options.n_iterations = conf.CONF["n_iterations"]
     else:
-        conf.CONF["config"]["n_iterations"] = sim_options.n_iterations
+        conf.CONF["n_iterations"] = sim_options.n_iterations
 
     if "timestep" in conf.CONF["config"]:
         sim_options.timestep = conf.CONF["config"]["timestep"]

@@ -3,6 +3,8 @@
 from mimetypes import init
 import os
 from textwrap import wrap
+
+# from turtle import st
 import warnings
 import traceback
 from enum import Enum
@@ -452,7 +454,7 @@ class ObservationChoice:
         phases_right = np.array(data_states.phases(iteration))[
             conf.RIGHT_OSCILLATOR_INDEXES
         ]
-        return np.diff(phases_right, prepend=phases_right[0])
+        return np.sin(np.diff(phases_right, prepend=phases_right[0]))
 
     def extract_observation_PHASE_DIFF_ABS(self, data_sensors, data_states, iteration):
         # only return right oscillators for now.
@@ -465,7 +467,7 @@ class ObservationChoice:
         phases_right = np.array(data_states.phases(iteration))[
             conf.RIGHT_OSCILLATOR_INDEXES
         ]
-        return phases_right - phases_right[0]
+        return np.sin(phases_right - phases_right[0])
 
     def extract_observation_REACTION_X(self, data_sensors, data_states, iteration):
         data_reaction_x = np.array(data_sensors.contacts.array[iteration, :, 0])
@@ -619,6 +621,8 @@ class FarmsGym(gym.Env):
         self.is_test_env = is_test_env
         self.is_eval_env = is_eval_env
 
+        self.reset_counter = 0
+
         if self.is_test_env or self.is_eval_env:
             self.log_fb_weights = []
             self.log_tracking_error = []
@@ -683,6 +687,9 @@ class FarmsGym(gym.Env):
         # print(f"{min_link_dist_to_com}")
         # print(f"######## {sum_link_dist_to_com}")
 
+        # set True to print reward components
+        debug = False
+
         reward = 0.0
         if "vel_com" in conf.CONF["RL"]["RewardFnc"]:
             # velocity
@@ -703,11 +710,15 @@ class FarmsGym(gym.Env):
             tail_head_vec = head_pos - tail_pos
             sign_fwd = np.sign(np.dot(velocity_com, tail_head_vec) + 0.1)  # +/- ~100°
             reward += conf.CONF["RL"]["RewardFnc"]["vel_com"] * speed_com * sign_fwd
+            if debug:
+                print(conf.CONF["RL"]["RewardFnc"]["vel_com"] * speed_com * sign_fwd)
         if "joints_power" in conf.CONF["RL"]["RewardFnc"]:
             joints_power = np.sum(
                 data_sensors.joints.sum_power_joints_timestep()[iteration]
             )
             reward += conf.CONF["RL"]["RewardFnc"]["joints_power"] * joints_power
+            if debug:
+                print(conf.CONF["RL"]["RewardFnc"]["joints_power"] * joints_power)
         if "forward_x" in conf.CONF["RL"]["RewardFnc"]:
             # forward way x
             curr_x = np.array(data_sensors.links.global_com_position(iteration))[0]
@@ -794,6 +805,13 @@ class FarmsGym(gym.Env):
             reward += conf.CONF["RL"]["RewardFnc"]["x_vel_target"][1] * np.abs(
                 velocity_com[1] - conf.CONF["RL"]["target_velocity"][1]
             )  # reward y
+            if debug:
+                print(
+                    conf.CONF["RL"]["RewardFnc"]["x_vel_target"][0]
+                    * np.abs(velocity_com[0] - conf.CONF["RL"]["target_velocity"][0])
+                    + conf.CONF["RL"]["RewardFnc"]["x_vel_target"][1]
+                    * np.abs(velocity_com[1] - conf.CONF["RL"]["target_velocity"][1])
+                )
         if "phase_lock" in conf.CONF["RL"]["RewardFnc"]:
             phases_left = np.array(data_states.phases(iteration))[
                 conf.LEFT_OSCILLATOR_INDEXES
@@ -802,6 +820,8 @@ class FarmsGym(gym.Env):
             phase_diff_ideal = -0.6981317  # = 2*np.pi / 9
             phase_error = np.abs(phase_diff - phase_diff_ideal)
             reward += conf.CONF["RL"]["RewardFnc"]["phase_lock"] * np.sum(phase_error)
+            if debug:
+                print(conf.CONF["RL"]["RewardFnc"]["phase_lock"] * np.sum(phase_error))
         if "frequency_lock" in conf.CONF["RL"]["RewardFnc"]:
             if iteration == 0:
                 return 0
@@ -815,6 +835,41 @@ class FarmsGym(gym.Env):
             d_phase_mean = np.mean(d_phase)
             d_phase_diff = np.sum(np.abs(d_phase - d_phase_mean))
             reward += conf.CONF["RL"]["RewardFnc"]["frequency_lock"] * d_phase_diff
+        if "straightness" in conf.CONF["RL"]["RewardFnc"]:
+            # reward straightness at end of episode
+            # TODO implement for eval and testing env
+            if iteration == conf.CONF["n_iterations"] - 2:  # -2 is last iteration
+                x_diff = (
+                    np.array(data_sensors.links.global_com_position(iteration))[0]
+                    - np.array(data_sensors.links.global_com_position(1))[0]
+                )
+
+                dist_start_end = np.array(
+                    data_sensors.links.com_distance_travelled_start_end()
+                )
+                path_length_swimming_plane = np.array(
+                    data_sensors.links.com_path_length_in_swimming_plane()
+                )
+                rew_straightness = dist_start_end / path_length_swimming_plane - 0.8
+                if rew_straightness > 0.0 and np.sign(x_diff) > 0.0:
+                    rew_straightness = (
+                        rew_straightness * conf.CONF["RL"]["RewardFnc"]["straightness"]
+                    )
+                else:
+                    rew_straightness = 0.0
+
+                reward += rew_straightness
+
+                if debug:
+                    print(rew_straightness)
+                    pass
+        if "y_pos_penalty" in conf.CONF["RL"]["RewardFnc"]:
+            y_pos = np.array(data_sensors.links.global_com_position(iteration))[0]
+            reward += conf.CONF["RL"]["RewardFnc"]["y_pos_penalty"] * np.abs(y_pos)
+            if debug:
+                print(conf.CONF["RL"]["RewardFnc"]["y_pos_penalty"] * np.abs(y_pos))
+        if debug:
+            print("########")
         return reward
 
     def set_action(
@@ -884,7 +939,15 @@ class FarmsGym(gym.Env):
         if env_step.step_type == StepType.LAST:
             self.done = True  # end of episode
 
-        # if conf.CONF["RL"]["useEarlyTerm"] == True:
+        if conf.CONF["RL"]["useEarlyTerm"] and not self.is_test_env:
+            phases_right = np.array(self.sim.task.data.state.phases(iteration))[
+                conf.RIGHT_OSCILLATOR_INDEXES
+            ]
+
+            phase_spread = np.max(phases_right) - np.min(phases_right)
+
+            if phase_spread > 3 * np.pi:
+                self.done = True
         #     curr_x = np.array(
         #         self.sim.task.data.sensors.links.global_com_position(iteration)
         #     )[0]
@@ -970,7 +1033,7 @@ class FarmsGym(gym.Env):
                 self.timestep,
             )
             plots = {}
-            for i in [0, 2, 4, 6, 8]:
+            for i in [0, 2, 4, 6, 8, 10, 12, 14, 16]:
                 fig = plt.figure(f"Feedback weights {i}")
                 plt.plot(
                     _times,
@@ -1018,6 +1081,18 @@ class FarmsGym(gym.Env):
 
         """
 
+        # curriculum
+        if conf.CONF["RL"]["curriculum"]["level"] == 1:
+            # Assuming:
+            # total_timesteps = (
+            #     self.sim_options.n_iterations * conf.CONF["RL"]["episodes_per_training"]
+            # )
+            self.reset_counter += 1
+            if self.reset_counter == 3_000:
+                conf.CONF["RL"]["useRandStartCondPhases"] = 8
+            elif self.reset_counter == 6_000:
+                conf.CONF["RL"]["useRandStartCondPhases"] = 9
+
         # sample velocity vector
         # constrained by: angle between velocity vector and x-axis is max 45°
         # constrained by: speed range provided by conf.CONF["RL"]["sample_target_velocity_from_speed_range"]
@@ -1027,6 +1102,10 @@ class FarmsGym(gym.Env):
             x = np.random.uniform(speed / 2, speed)
             y = random.choice([-1, 1]) * np.sqrt(speed**2 - x**2)
             conf.CONF["RL"]["target_velocity"] = [x, y]
+            # conf.CONF["RL"]["target_velocity"] = [
+            #     np.random.uniform(range[0], range[1]),
+            #     0.0,
+            # ]
 
         # NOTE oscillator states are reset manually in agnathax_control/network.py
 
@@ -1062,6 +1141,21 @@ class FarmsGym(gym.Env):
                 RobotInitialState.set_init_cond_vel_com(
                     animat_options=self.sim.task.animat_options,
                     vel_com=[x_start, y_start],
+                )
+
+            # drive
+            if conf.CONF["RL"]["randomInitDrive"]:
+                self.sim.task.animat_options.control.network.drives[
+                    0
+                ].initial_value = np.random.uniform(
+                    conf.CONF["RL"]["randomInitDrive"][0],
+                    conf.CONF["RL"]["randomInitDrive"][1],
+                )
+                self.sim.task.animat_options.control.network.drives[
+                    1
+                ].initial_value = np.random.uniform(
+                    conf.CONF["RL"]["randomInitDrive"][0],
+                    conf.CONF["RL"]["randomInitDrive"][1],
                 )
         else:
             RobotInitialState.set_initial_conditions_parallel(

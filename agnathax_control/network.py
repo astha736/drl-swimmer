@@ -79,13 +79,34 @@ class NetworkODETEST(AnimatNetwork):
         elif conf.CONF["RL"]["useRandStartCondPhases"] == 4:
             # perfect init cond + more noise
             initial_phase_l = np.linspace(2 * np.pi, 0, 10) + np.random.uniform(
-                -1.0, 1.0, size=10
+                -0.6, 0.6, size=10
             )
         elif conf.CONF["RL"]["useRandStartCondPhases"] == 5:
             # perfect init cond + even more noise
             initial_phase_l = np.linspace(2 * np.pi, 0, 10) + np.random.uniform(
-                -2.0, 2.0, size=10
+                -1.2, 1.2, size=10
             )
+        elif conf.CONF["RL"]["useRandStartCondPhases"] == 6:
+            # zero phases
+            initial_phase_l = np.array([0 for i in range(10)])
+        elif conf.CONF["RL"]["useRandStartCondPhases"] == 7:
+            # zero phases + noise
+            initial_phase_l = np.array([0 for i in range(10)]) + np.random.uniform(
+                -0.3, 0.3, size=10
+            )
+        elif conf.CONF["RL"]["useRandStartCondPhases"] == 8:
+            # perfect init cond + even more noise
+            initial_phase_l = np.linspace(2 * np.pi, 0, 10) + np.random.uniform(
+                -1.5, 1.5, size=10
+            )
+        elif conf.CONF["RL"]["useRandStartCondPhases"] == 9:
+            # perfect init cond + even more noise
+            initial_phase_l = np.linspace(2 * np.pi, 0, 10) + np.random.uniform(
+                -1.8, 1.8, size=10
+            )
+        elif conf.CONF["RL"]["useRandStartCondPhases"] == 10:
+            # sample in [0, pi]
+            initial_phase_l = np.random.uniform(0.0, 1.0, size=10) * np.pi
         initial_phase_r = initial_phase_l - np.pi  # np.linspace(np.pi, -np.pi, 10)
 
         # set states
