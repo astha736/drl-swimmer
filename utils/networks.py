@@ -1526,7 +1526,7 @@ class dnn2(nn.Module):
         )
 
         self.policy_net_drive = nn.Sequential(
-            nn.Linear(14, 16),
+            nn.Linear(4, 16),
             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
             nn.Linear(16, 16),
             getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
@@ -1573,13 +1573,6 @@ class dnn2(nn.Module):
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # features: 0-9: joint positions; 10-19: phases
 
-        # body
-        idx_0 = torch.tensor(
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
-            device=self.device,
-            dtype=torch.int,
-        )
-
         idx_1 = torch.tensor(
             [i for i in range(4, features.shape[1])],
             device=self.device,
@@ -1587,8 +1580,24 @@ class dnn2(nn.Module):
         )
 
         # pay attention on order or actions! It must go head to tail.
-        x0 = self.policy_net_drive(torch.index_select(features, dim=1, index=idx_0))
         x1 = self.policy_net_fb(torch.index_select(features, dim=1, index=idx_1))
+
+        if conf.CONF["RL"]["curriculum"]["level"] == 2:
+            if conf.CONF["RL"]["curriculum"]["current_stage"] == 1:
+                idx_0 = torch.tensor(
+                    [0, 1, 2, 3],
+                    device=self.device,
+                    dtype=torch.int,
+                )
+                x0 = self.policy_net_drive(
+                    torch.index_select(features, dim=1, index=idx_0)
+                )
+            else:
+                # dummy value
+                x0 = torch.zeros(
+                    [x1.shape[0], 2],
+                    device=self.device,
+                )
 
         out = torch.cat((x0, x1), dim=1)
 

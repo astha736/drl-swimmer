@@ -274,6 +274,28 @@ class OnPolicyAlgorithm(BaseAlgorithm):
         callback.on_training_start(locals(), globals())
 
         while self.num_timesteps < total_timesteps:
+            if conf.CONF["RL"]["curriculum"]["level"] == 2:
+                # first stage
+                if self.num_timesteps == 0.0:
+                    for (
+                        param
+                    ) in self.policy.mlp_extractor.policy_net_drive.parameters():
+                        param.requires_grad = False
+                    pass
+                # second stage
+                if (
+                    self.num_timesteps > 3_000_000
+                    and not conf.CONF["RL"]["curriculum"]["current_stage"] == 1
+                ):
+                    conf.CONF["RL"]["curriculum"]["current_stage"] = 1
+                    for param in self.policy.mlp_extractor.policy_net_fb.parameters():
+                        param.requires_grad = False
+                    for (
+                        param
+                    ) in self.policy.mlp_extractor.policy_net_drive.parameters():
+                        param.requires_grad = True
+                    pass
+
             continue_training = self.collect_rollouts(
                 self.env, callback, self.rollout_buffer, n_rollout_steps=self.n_steps
             )

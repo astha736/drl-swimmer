@@ -217,6 +217,12 @@ class ActionChoice:
         # network_parameters = self.sim.task.data.network
         # setting data.network.drives.array
 
+        if (
+            conf.CONF["RL"]["curriculum"]["level"] == 2
+            and conf.CONF["RL"]["curriculum"]["current_stage"] == 0
+        ):
+            return
+
         # rescale action
         action = ((action - (-1)) / 2) * (
             ActionChoice.action_output_scale[ActionType.DRIVE][1]
@@ -622,6 +628,7 @@ class FarmsGym(gym.Env):
         self.is_eval_env = is_eval_env
 
         self.reset_counter = 0
+        self.prev_stage = False
 
         if self.is_test_env or self.is_eval_env:
             self.log_fb_weights = []
@@ -1083,17 +1090,60 @@ class FarmsGym(gym.Env):
 
         """
 
-        # curriculum
+        self.reset_counter += 1
+        stage_trigger = (
+            conf.CONF["RL"]["curriculum"]["current_stage"] != self.prev_stage
+        )
+        self.prev_stage = conf.CONF["RL"]["curriculum"]["current_stage"]
+
+        # Assuming:
+        # total_timesteps = (
+        #     self.sim_options.n_iterations * conf.CONF["RL"]["episodes_per_training"]
+        # )
         if conf.CONF["RL"]["curriculum"]["level"] == 1:
-            # Assuming:
-            # total_timesteps = (
-            #     self.sim_options.n_iterations * conf.CONF["RL"]["episodes_per_training"]
-            # )
-            self.reset_counter += 1
             if self.reset_counter == 3_000:
                 conf.CONF["RL"]["useRandStartCondPhases"] = 8
             elif self.reset_counter == 6_000:
                 conf.CONF["RL"]["useRandStartCondPhases"] = 9
+        elif conf.CONF["RL"]["curriculum"]["level"] == 2:
+            # first stage
+            if (
+                conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger
+            ) or self.reset_counter == 1:
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = False
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in ["vel_com", "phase_lock", "joints_power_1"]:
+                    if not rew == "joints_power_1":
+                        rew_target = rew
+                    else:
+                        rew_target = "joints_power"
+                    conf.CONF["RL"]["RewardFnc"][rew_target] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
+            # second stage
+            elif conf.CONF["RL"]["curriculum"]["current_stage"] == 1 and stage_trigger:
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = conf.CONF["misc"]["CL_settings"][key]
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in ["x_vel_target", "joints_power_2"]:
+                    if not rew == "joints_power_2":
+                        rew_target = rew
+                    else:
+                        rew_target = "joints_power"
+                    conf.CONF["RL"]["RewardFnc"][rew_target] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
 
         # sample velocity vector
         # constrained by: angle between velocity vector and x-axis is max 45°

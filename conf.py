@@ -26,6 +26,7 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
         pass
 
     CONF["experiment_id"] = experiment_id
+    CONF["misc"] = {}
 
     if not os.path.isdir(f"./experiments/{experiment_id}"):
         os.makedirs(f"./experiments/{experiment_id}")
@@ -180,6 +181,17 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
         if not "curriculum" in CONF["RL"]:
             CONF["RL"]["curriculum"] = {}
             CONF["RL"]["curriculum"]["level"] = False
+            CONF["RL"]["curriculum"]["current_stage"] = False
+        else:
+            CONF["RL"]["curriculum"]["current_stage"] = 0
+        if CONF["RL"]["curriculum"]["level"] == 2:
+            CONF["misc"]["CL_settings"] = {}
+            for key in [
+                "RewardFnc",
+                "randomInitDrive",
+                "sample_init_velocity_from_speed_range",
+            ]:
+                CONF["misc"]["CL_settings"][key] = CONF["RL"][key]
 
     # other settings
     if not "save_observations" in CONF:
@@ -208,6 +220,5 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
 
     CONF["testing_transient"] = 3.0  # s
 
-    CONF["misc"] = {}
     CONF["misc"]["log_grads"] = False
     CONF["misc"]["log_num_trainable_params"] = False
