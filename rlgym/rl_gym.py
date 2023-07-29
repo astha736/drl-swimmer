@@ -219,8 +219,8 @@ class ActionChoice:
 
         if (
             conf.CONF["RL"]["curriculum"]["level"] == 2
-            and conf.CONF["RL"]["curriculum"]["current_stage"] == 0
-        ):
+            or conf.CONF["RL"]["curriculum"]["level"] == 3
+        ) and conf.CONF["RL"]["curriculum"]["current_stage"] == 0:
             return
 
         # rescale action
@@ -1105,7 +1105,10 @@ class FarmsGym(gym.Env):
                 conf.CONF["RL"]["useRandStartCondPhases"] = 8
             elif self.reset_counter == 6_000:
                 conf.CONF["RL"]["useRandStartCondPhases"] = 9
-        elif conf.CONF["RL"]["curriculum"]["level"] == 2:
+        elif (
+            conf.CONF["RL"]["curriculum"]["level"] == 2
+            or conf.CONF["RL"]["curriculum"]["level"] == 3
+        ):
             # first stage
             if (
                 conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger

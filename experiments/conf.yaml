@@ -3927,3 +3927,30 @@
     curriculum:
       level: 2
   frames_per_action: 2
+'584':
+  run_type: 'train' # [arch_testing, train, test]
+  config:
+    animat: './config/animat_swimming.yaml'
+    arena: './config/arena_water.yaml'
+    simulation: './config/simulation.yaml'
+    drive: 2.5
+  RL:
+    localFeedback: 'dnn2'
+    normWrapper: True
+    randomInitDrive: [1.5, 3.0]
+    RewardFnc: './config/RewardFnc_params/reward583.yaml'
+    useEarlyTerm: False
+    useRandStartCondPhases: 9
+    episodes_per_training: 10_000 
+    action_choice: ['DRIVE', 'STRETCH']
+    observation_choice: ['VELOCITIES', 'JOINT_POSITION','PHASES', 'JOINT_VEL'] # add more here!
+    phase_preprocessing: "sin" # [sin, cos, mod]
+    policy_network:
+      arch: [128, 128]
+      act_fn: "Tanh" # must be valid activation function [Tanh, ReLU]
+    PPOparams: './config/PPO_params/PPO_1_old_lr.yaml'
+    target_velocity: [0.2, 0.0] # [x , y]
+    sample_init_velocity_from_speed_range: [0.0, 0.35]
+    curriculum:
+      level: 3
+  frames_per_action: 2

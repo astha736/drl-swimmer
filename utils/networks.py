@@ -1582,7 +1582,10 @@ class dnn2(nn.Module):
         # pay attention on order or actions! It must go head to tail.
         x1 = self.policy_net_fb(torch.index_select(features, dim=1, index=idx_1))
 
-        if conf.CONF["RL"]["curriculum"]["level"] == 2:
+        if (
+            conf.CONF["RL"]["curriculum"]["level"] == 2
+            or conf.CONF["RL"]["curriculum"]["level"] == 3
+        ):
             if conf.CONF["RL"]["curriculum"]["current_stage"] == 1:
                 idx_0 = torch.tensor(
                     [0, 1, 2, 3],
@@ -1593,7 +1596,7 @@ class dnn2(nn.Module):
                     torch.index_select(features, dim=1, index=idx_0)
                 )
             else:
-                # dummy value
+                # dummy value; respect correct shape
                 x0 = torch.zeros(
                     [x1.shape[0], 2],
                     device=self.device,

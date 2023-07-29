@@ -184,7 +184,10 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             CONF["RL"]["curriculum"]["current_stage"] = False
         else:
             CONF["RL"]["curriculum"]["current_stage"] = 0
-        if CONF["RL"]["curriculum"]["level"] == 2:
+        if (
+            CONF["RL"]["curriculum"]["level"] == 2
+            or CONF["RL"]["curriculum"]["level"] == 3
+        ):
             CONF["misc"]["CL_settings"] = {}
             for key in [
                 "RewardFnc",
