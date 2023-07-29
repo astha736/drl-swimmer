@@ -688,7 +688,7 @@ class FarmsGym(gym.Env):
         # print(f"######## {sum_link_dist_to_com}")
 
         # set True to print reward components
-        debug = False
+        debug = True
 
         reward = 0.0
         if "vel_com" in conf.CONF["RL"]["RewardFnc"]:
@@ -739,6 +739,8 @@ class FarmsGym(gym.Env):
             # reward += conf.CONF["RL"]["RewardFnc"]["active_torques"] * active_torque
         if "healthy" in conf.CONF["RL"]["RewardFnc"]:
             reward += conf.CONF["RL"]["RewardFnc"]["healthy"]
+            if debug:
+                print(conf.CONF["RL"]["RewardFnc"]["healthy"])
         # TODO catch error if target_speed || speed_error is not defined
         if (
             "speed_error" in conf.CONF["RL"]["RewardFnc"]
