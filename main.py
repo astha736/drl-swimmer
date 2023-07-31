@@ -101,6 +101,10 @@ def main() -> None:
         animat_options.control.network.drives[1].initial_value = conf.CONF["config"][
             "drive"
         ]
+    else:
+        # default
+        animat_options.control.network.drives[0].initial_value = 2.5
+        animat_options.control.network.drives[1].initial_value = 2.5
 
     if "n_iterations" in conf.CONF:
         sim_options.n_iterations = conf.CONF["n_iterations"]

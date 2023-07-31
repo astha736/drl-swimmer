@@ -1585,8 +1585,16 @@ class dnn2(nn.Module):
         if (
             conf.CONF["RL"]["curriculum"]["level"] == 2
             or conf.CONF["RL"]["curriculum"]["level"] == 3
+            or conf.CONF["RL"]["curriculum"]["level"] == 4
+            or conf.CONF["RL"]["curriculum"]["level"] == 5
         ):
-            if conf.CONF["RL"]["curriculum"]["current_stage"] == 1:
+            if conf.CONF["RL"]["curriculum"]["current_stage"] == 0:
+                # dummy value; respect correct shape
+                x0 = torch.zeros(
+                    [x1.shape[0], 2],
+                    device=self.device,
+                )
+            else:
                 idx_0 = torch.tensor(
                     [0, 1, 2, 3],
                     device=self.device,
@@ -1594,12 +1602,6 @@ class dnn2(nn.Module):
                 )
                 x0 = self.policy_net_drive(
                     torch.index_select(features, dim=1, index=idx_0)
-                )
-            else:
-                # dummy value; respect correct shape
-                x0 = torch.zeros(
-                    [x1.shape[0], 2],
-                    device=self.device,
                 )
 
         out = torch.cat((x0, x1), dim=1)

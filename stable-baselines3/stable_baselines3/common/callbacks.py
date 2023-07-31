@@ -6,6 +6,8 @@ from typing import Any, Callable, Dict, List, Optional, Union
 import gym
 import numpy as np
 
+import conf
+
 from stable_baselines3.common.logger import Logger
 
 try:
@@ -423,6 +425,8 @@ class EvalCallback(EventCallback):
         self._is_success_buffer = []
         self.evaluations_successes = []
 
+        self.prev_stage = False
+
     def _init_callback(self) -> None:
         # Does not work in some corner cases, where the wrapper is not the same
         if not isinstance(self.training_env, type(self.eval_env)):
@@ -463,6 +467,12 @@ class EvalCallback(EventCallback):
         continue_training = True
 
         if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
+            # reset best_mean_reward if on new stage for CL
+            if not conf.CONF["RL"]["curriculum"]["level"] == False:
+                if self.prev_stage != conf.CONF["RL"]["curriculum"]["current_stage"]:
+                    self.prev_stage = conf.CONF["RL"]["curriculum"]["current_stage"]
+                    self.best_mean_reward = -np.inf
+
             # Sync training and eval env if there is VecNormalize
             if self.model.get_vec_normalize_env() is not None:
                 try:
@@ -542,6 +552,10 @@ class EvalCallback(EventCallback):
                     self.model.save(
                         os.path.join(self.best_model_save_path, "best_model")
                     )
+                    if not conf.CONF["RL"]["curriculum"]["level"] == False:
+                        self.model.save(
+                            os.path.join(self.best_model_save_path, "best_model_stage" + str(conf.CONF["RL"]["curriculum"]["current_stage"]))
+                        )
                 self.best_mean_reward = mean_reward
                 # Trigger callback on new best model, if needed
                 if self.callback_on_new_best is not None:

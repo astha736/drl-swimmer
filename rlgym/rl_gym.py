@@ -220,8 +220,12 @@ class ActionChoice:
         if (
             conf.CONF["RL"]["curriculum"]["level"] == 2
             or conf.CONF["RL"]["curriculum"]["level"] == 3
-        ) and conf.CONF["RL"]["curriculum"]["current_stage"] == 0:
-            return
+            or conf.CONF["RL"]["curriculum"]["level"] == 4
+            or conf.CONF["RL"]["curriculum"]["level"] == 5
+        ):
+            if conf.CONF["RL"]["curriculum"]["current_stage"] == 0:
+                # Alternatively: could set drive to standard here
+                return
 
         # rescale action
         action = ((action - (-1)) / 2) * (
@@ -665,7 +669,7 @@ class FarmsGym(gym.Env):
             data_sensors=data_sensors, data_states=data_states, iteration=iteration
         )
 
-    def compute_reward(data_sensors, data_states, iteration):
+    def compute_reward(data_sensors, data_states, iteration, done):
         """used for training and testing"""
 
         # Astha said active_torques is good for bioinspiration
@@ -695,7 +699,7 @@ class FarmsGym(gym.Env):
         # print(f"######## {sum_link_dist_to_com}")
 
         # set True to print reward components
-        debug = True
+        debug = False
 
         reward = 0.0
         if "vel_com" in conf.CONF["RL"]["RewardFnc"]:
@@ -847,7 +851,7 @@ class FarmsGym(gym.Env):
         if "straightness" in conf.CONF["RL"]["RewardFnc"]:
             # reward straightness at end of episode
             # TODO implement for eval and testing env
-            if iteration == conf.CONF["n_iterations"] - 2:  # -2 is last iteration
+            if done:
                 x_diff = (
                     np.array(data_sensors.links.global_com_position(iteration))[0]
                     - np.array(data_sensors.links.global_com_position(1))[0]
@@ -860,7 +864,11 @@ class FarmsGym(gym.Env):
                     data_sensors.links.com_path_length_in_swimming_plane()
                 )
                 rew_straightness = dist_start_end / path_length_swimming_plane - 0.8
-                if rew_straightness > 0.0 and np.sign(x_diff) > 0.0:
+                if (
+                    rew_straightness > 0.0
+                    and np.sign(x_diff) > 0.0
+                    and (iteration / conf.CONF["n_iterations"] > 0.5)
+                ):
                     rew_straightness = (
                         rew_straightness * conf.CONF["RL"]["RewardFnc"]["straightness"]
                     )
@@ -937,13 +945,6 @@ class FarmsGym(gym.Env):
                 self.state_history[i][0] = self.observation[i]  # replace first entry
             self.observation = self.state_history.flatten()
 
-        # REWARD
-        self.reward = FarmsGym.compute_reward(
-            self.sim.task.data.sensors,
-            self.sim.task.data.state,
-            iteration,
-        )
-
         self.done = False
         if env_step.step_type == StepType.LAST:
             self.done = True  # end of episode
@@ -957,6 +958,12 @@ class FarmsGym(gym.Env):
 
             if phase_spread > 3 * np.pi:
                 self.done = True
+
+        # REWARD
+        self.reward = FarmsGym.compute_reward(
+            self.sim.task.data.sensors, self.sim.task.data.state, iteration, self.done
+        )
+
         #     curr_x = np.array(
         #         self.sim.task.data.sensors.links.global_com_position(iteration)
         #     )[0]
@@ -1012,6 +1019,7 @@ class FarmsGym(gym.Env):
             if len(self.log_tracking_error) > 0:
                 additionalMetrics = {
                     "5_mean abs tracking error": np.mean(self.log_tracking_error),
+                    "5_target_velocity": conf.CONF["RL"]["target_velocity"],
                 }
 
         if self.done and self.is_eval_env:
@@ -1110,9 +1118,10 @@ class FarmsGym(gym.Env):
             or conf.CONF["RL"]["curriculum"]["level"] == 3
         ):
             # first stage
-            if (
-                conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger
-            ) or self.reset_counter == 1:
+            if not conf.CONF["RL"]["curriculum"]["current_stage"] == "testing" and (
+                (conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger)
+                or (self.reset_counter == 1)
+            ):
                 # init cond
                 for key in [
                     "sample_init_velocity_from_speed_range",
@@ -1130,7 +1139,9 @@ class FarmsGym(gym.Env):
                         "CL_settings"
                     ]["RewardFnc"][rew]
             # second stage
-            elif conf.CONF["RL"]["curriculum"]["current_stage"] == 1 and stage_trigger:
+            elif (
+                conf.CONF["RL"]["curriculum"]["current_stage"] == 1 and stage_trigger
+            ) or conf.CONF["RL"]["curriculum"]["current_stage"] == "testing":
                 # init cond
                 for key in [
                     "sample_init_velocity_from_speed_range",
@@ -1147,6 +1158,110 @@ class FarmsGym(gym.Env):
                     conf.CONF["RL"]["RewardFnc"][rew_target] = conf.CONF["misc"][
                         "CL_settings"
                     ]["RewardFnc"][rew]
+        elif conf.CONF["RL"]["curriculum"]["level"] == 4:
+            # first stage
+            if not conf.CONF["RL"]["curriculum"]["current_stage"] == "testing" and (
+                (conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger)
+                or (self.reset_counter == 1)
+            ):
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = False
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in ["vel_com", "healthy_1", "joints_power_1"]:
+                    if not rew == "joints_power_1":
+                        rew_target = rew
+                    else:
+                        rew_target = "joints_power"
+                    if not rew == "healthy_1":
+                        rew_target = rew
+                    else:
+                        rew_target = "healthy"
+                    conf.CONF["RL"]["RewardFnc"][rew_target] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
+                # earlyTerm
+                conf.CONF["RL"]["useEarlyTerm"] = True
+                pass
+            # second stage
+            elif (
+                conf.CONF["RL"]["curriculum"]["current_stage"] == 1 and stage_trigger
+            ) or conf.CONF["RL"]["curriculum"]["current_stage"] == "testing":
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = conf.CONF["misc"]["CL_settings"][key]
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in ["x_vel_target", "joints_power_2", "healthy_2"]:
+                    if not rew == "joints_power_2":
+                        rew_target = rew
+                    else:
+                        rew_target = "joints_power"
+                    if not rew == "healthy_2":
+                        rew_target = rew
+                    else:
+                        rew_target = "healthy"
+                    conf.CONF["RL"]["RewardFnc"][rew_target] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
+                # earlyTerm: keep keep True
+                conf.CONF["RL"]["useEarlyTerm"] = True
+                pass
+        elif conf.CONF["RL"]["curriculum"]["level"] == 5:
+            # first stage
+            if not conf.CONF["RL"]["curriculum"]["current_stage"] == "testing" and (
+                (conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger)
+                or (self.reset_counter == 1)
+            ):
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = False
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in ["vel_com", "healthy", "joints_power_1"]:
+                    if not rew == "joints_power_1":
+                        rew_target = rew
+                    else:
+                        rew_target = "joints_power"
+                    conf.CONF["RL"]["RewardFnc"][rew_target] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
+                # earlyTerm
+                conf.CONF["RL"]["useEarlyTerm"] = True
+                pass
+            # second stage
+            elif (
+                conf.CONF["RL"]["curriculum"]["current_stage"] == 1 and stage_trigger
+            ) or conf.CONF["RL"]["curriculum"]["current_stage"] == "testing":
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = conf.CONF["misc"]["CL_settings"][key]
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in ["x_vel_target", "joints_power_2"]:
+                    if not rew == "joints_power_2":
+                        rew_target = rew
+                    else:
+                        rew_target = "joints_power"
+                    conf.CONF["RL"]["RewardFnc"][rew_target] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
+                # earlyTerm: set False
+                conf.CONF["RL"]["useEarlyTerm"] = False
+                pass
 
         # sample velocity vector
         # constrained by: angle between velocity vector and x-axis is max 45°
@@ -1271,8 +1386,10 @@ class ArchTestCallback(TaskCallback):
         self.obs = []
 
     def after_step(self, task, physics):
+        if task.iteration == 1:
+            self.reward = 0.0
         self.reward += FarmsGym.compute_reward(
-            task.data.sensors, task.data.state, task.iteration - 1
+            task.data.sensors, task.data.state, task.iteration - 1, False
         )
         # if task.iteration > 1499:
         #     print(f"iteration: {task.iteration}")

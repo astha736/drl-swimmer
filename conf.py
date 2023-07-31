@@ -87,7 +87,7 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             os.makedirs(LOG_DIR_TENSORBOARD)
         elif SEED == 999:
             # reserved for testing w/ debugger
-            pass
+            print("######## IN DEBUG MODE ##############")
         else:
             raise ValueError(
                 "Log dir tb already exists. Possibly overwrite existing data. Aborted."
@@ -187,6 +187,8 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
         if (
             CONF["RL"]["curriculum"]["level"] == 2
             or CONF["RL"]["curriculum"]["level"] == 3
+            or CONF["RL"]["curriculum"]["level"] == 4
+            or CONF["RL"]["curriculum"]["level"] == 5
         ):
             CONF["misc"]["CL_settings"] = {}
             for key in [

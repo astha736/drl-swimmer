@@ -281,7 +281,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                         param
                     ) in self.policy.mlp_extractor.policy_net_drive.parameters():
                         param.requires_grad = False
-                    pass
+                    print("Switched to CL stage #0")
                 # second stage
                 if (
                     self.num_timesteps > 3_000_000
@@ -294,15 +294,15 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                         param
                     ) in self.policy.mlp_extractor.policy_net_drive.parameters():
                         param.requires_grad = True
-                    pass
-            if conf.CONF["RL"]["curriculum"]["level"] == 3:
+                    print("Switched to CL stage #1")
+            if conf.CONF["RL"]["curriculum"]["level"] == 3 or conf.CONF["RL"]["curriculum"]["level"] == 4 or conf.CONF["RL"]["curriculum"]["level"] == 5:
                 # first stage
                 if self.num_timesteps == 0.0:
                     for (
                         param
                     ) in self.policy.mlp_extractor.policy_net_drive.parameters():
                         param.requires_grad = False
-                    pass
+                    print("Switched to CL stage #0")
                 # second stage
                 if (
                     self.num_timesteps > 3_000_000
@@ -313,7 +313,8 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                         param
                     ) in self.policy.mlp_extractor.policy_net_drive.parameters():
                         param.requires_grad = True
-                    pass
+                    print("Switched to CL stage #1")
+
 
             continue_training = self.collect_rollouts(
                 self.env, callback, self.rollout_buffer, n_rollout_steps=self.n_steps

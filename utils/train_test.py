@@ -250,6 +250,8 @@ class TrainTestClass:
 
         self.sim_options.n_iterations = conf.CONF["n_iterations_testing"]
 
+        conf.CONF["RL"]["curriculum"]["current_stage"] = "testing"
+
         self.sim_options.record = False
 
         eval_venv = make_vec_env(
@@ -340,7 +342,7 @@ class TrainTestClass:
             os.path.join(conf.LOG_DIR_RESULTS, "single_test_env_metrics.txt"), "a"
         ) as f:
             f.write("\n")
-            f.write(f"best model reward: {rew_standardized}")
+            f.write(f"best model reward standardized: {rew_standardized}")
             f.write("\n")
             f.write(
                 f"policy network(s) # trainable params: {conf.CONF['misc']['log_num_trainable_params']}"
@@ -485,6 +487,9 @@ class TrainTestClass:
 
         @brief: This function is used to check the options for FARMS and Notions(ExperimentOptions)
         """
+
+        self.sim_options.n_iterations = conf.CONF["n_iterations_testing"]
+
         archTestCallback = ArchTestCallback()
 
         # self.sim_options.record = True
@@ -496,24 +501,43 @@ class TrainTestClass:
             callbacks=[archTestCallback],
         )
 
-        sim._env.reset()
-        sim.run()
+        metrics = {}
+        plots = {}
+        n_eval_episodes = 100
 
-        self.metrics, self.plots = utils.get_performance_metrics(
-            sim,
-            self.sim_options.timestep,
-            self.sim_options.n_iterations,
-            do_plots=True,
-        )
-        utils.save_performance_metrics(self.metrics, self.plots)
 
-        # log reward of best model to performance_metrics.txt
-        with open(
-            os.path.join(conf.LOG_DIR_RESULTS, "single_test_env_metrics.txt"), "a"
-        ) as f:
-            f.write("\n")
-            f.write(f"best model reward: {archTestCallback.reward} \n")
-        f.close()
+        for i in range(n_eval_episodes):
+
+            sim._env.reset()
+            sim.run()
+
+
+            _metrics, plots = utils.get_performance_metrics(
+                sim,
+                self.sim_options.timestep,
+                self.sim_options.n_iterations,
+                do_plots=(i == n_eval_episodes - 1), # return plots on last evaluation
+            )
+
+            # standardized reward
+            _metrics["reward"] = 10 * archTestCallback.reward / conf.CONF['simulation_time_testing']
+
+
+            for metric in _metrics:
+                if not metric in metrics:
+                    metrics[metric] = []
+                metrics[metric].append(_metrics[metric])
+
+        for metric in metrics:
+            metrics[
+                metric
+            ] = f"[{np.mean(metrics[metric]):.4f}, {np.std(metrics[metric]):.4f}]"
+
+        metrics["0_n_eval_episodes"] = n_eval_episodes
+        metrics["0_data_format"] = "[mean, std]"
+
+
+        utils.save_performance_metrics(metrics, plots)
 
 
 class SaveVecNormalizeCallback(BaseCallback):
@@ -532,12 +556,17 @@ class SaveVecNormalizeCallback(BaseCallback):
         self.save_path = save_path
         self.name_prefix = name_prefix
 
+
     def _on_step(self) -> bool:
         if self.n_calls % self.save_freq == 0:
-            path = os.path.join(self.save_path, f"{self.name_prefix}_normalize.pkl")
             if self.model.get_vec_normalize_env() is not None:
                 print(f"#### New best model at {self.num_timesteps}")
+                path = os.path.join(self.save_path, f"{self.name_prefix}_normalize.pkl")
                 self.model.get_vec_normalize_env().save(path)
+                # save best model for every stage in CL
+                if not conf.CONF["RL"]["curriculum"]["level"] == False:
+                    path = os.path.join(self.save_path, f"{self.name_prefix}_stage{conf.CONF['RL']['curriculum']['current_stage']}_normalize.pkl")
+                    self.model.get_vec_normalize_env().save(path)
             else:
                 raise ValueError("Error: no VecNormalize wrapper on the model")
         return True

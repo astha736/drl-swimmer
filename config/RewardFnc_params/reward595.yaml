@@ -1,0 +1,5 @@
+vel_com: 1.0
+joints_power_1: -0.004
+healthy: 0.007
+x_vel_target: [-1.0, -2.0]
+joints_power_2: -0.002
