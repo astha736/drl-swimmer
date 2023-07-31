@@ -1058,21 +1058,9 @@ class nn7(nn.Module):
         self.value_net[0].bias.data.fill_(0.0)
         self.value_net[2].bias.data.fill_(0.0)
 
-    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
-        """
-        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
-            If all layers are shared, then ``latent_policy == latent_value``
-
-        Customized for very local feedback and shared net
-        """
-        return self.forward_actor(features), self.forward_critic(features)
-
-    def forward_actor(self, features: th.Tensor) -> th.Tensor:
-        # features: 0-9: joint positions; 10-19: phases
-
-        idx = []
+        self.idx = []
         for i in range(8):
-            idx.append(
+            self.idx.append(
                 torch.tensor(
                     [
                         0 + i,
@@ -1090,15 +1078,27 @@ class nn7(nn.Module):
                 )
             )
 
-        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[0]))
-        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[1]))
-        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx[2]))
-        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=idx[3]))
-        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=idx[4]))
-        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=idx[5]))
-        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=idx[6]))
-        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=idx[7]))
-        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=idx[7]))
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases
+
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[0]))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[1]))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=self.idx[2]))
+        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=self.idx[3]))
+        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=self.idx[4]))
+        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=self.idx[5]))
+        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=self.idx[6]))
+        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=self.idx[7]))
+        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=self.idx[7]))
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -1166,21 +1166,9 @@ class enn7(nn.Module):
         self.value_net[0].bias.data.fill_(0.0)
         self.value_net[2].bias.data.fill_(0.0)
 
-    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
-        """
-        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
-            If all layers are shared, then ``latent_policy == latent_value``
-
-        Customized for very local feedback and shared net
-        """
-        return self.forward_actor(features), self.forward_critic(features)
-
-    def forward_actor(self, features: th.Tensor) -> th.Tensor:
-        # features: 0-9: joint positions; 10-19: phases
-
-        idx = []
+        self.idx = []
         for i in range(8):
-            idx.append(
+            self.idx.append(
                 torch.tensor(
                     [
                         0 + i,
@@ -1198,15 +1186,27 @@ class enn7(nn.Module):
                 )
             )
 
-        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[0]))
-        x1 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[1]))
-        x2 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[2]))
-        x3 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[3]))
-        x4 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[4]))
-        x5 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[5]))
-        x6 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[6]))
-        x7 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[7]))
-        x8 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[7]))
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases
+
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[0]))
+        x1 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[1]))
+        x2 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[2]))
+        x3 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[3]))
+        x4 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[4]))
+        x5 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[5]))
+        x6 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[6]))
+        x7 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[7]))
+        x8 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[7]))
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -1356,6 +1356,25 @@ class nn9(nn.Module):
         self.value_net[0].bias.data.fill_(0.0)
         self.value_net[2].bias.data.fill_(0.0)
 
+        # body
+        self.idx_0 = torch.tensor(
+            [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 20, 21, 22, 23, 24],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        self.idx_1 = torch.tensor(
+            [3, 4, 5, 6, 7, 13, 14, 15, 16, 17, 23, 24, 25, 26, 27],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        self.idx_2 = torch.tensor(
+            [5, 6, 7, 8, 9, 15, 16, 17, 18, 19, 25, 26, 27, 2, 29],
+            device=self.device,
+            dtype=torch.int,
+        )
+
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         """
         :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
@@ -1368,29 +1387,10 @@ class nn9(nn.Module):
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # features: 0-9: joint positions; 10-19: phases
 
-        # body
-        idx_0 = torch.tensor(
-            [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 20, 21, 22, 23, 24],
-            device=self.device,
-            dtype=torch.int,
-        )
-
-        idx_1 = torch.tensor(
-            [3, 4, 5, 6, 7, 13, 14, 15, 16, 17, 23, 24, 25, 26, 27],
-            device=self.device,
-            dtype=torch.int,
-        )
-
-        idx_2 = torch.tensor(
-            [5, 6, 7, 8, 9, 15, 16, 17, 18, 19, 25, 26, 27, 2, 29],
-            device=self.device,
-            dtype=torch.int,
-        )
-
         # pay attention on order or actions! It must go head to tail.
-        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_0))
-        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx_1))
-        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx_2))
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx_0))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx_1))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=self.idx_2))
 
         out = torch.cat((x0, x1, x2), dim=1)
 
@@ -1670,6 +1670,25 @@ class enn8(nn.Module):
         self.value_net[0].bias.data.fill_(0.0)
         self.value_net[2].bias.data.fill_(0.0)
 
+        # body
+        self.idx_0 = torch.tensor(
+            [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 20, 21, 22, 23, 24],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        self.idx_1 = torch.tensor(
+            [3, 4, 5, 6, 7, 13, 14, 15, 16, 17, 23, 24, 25, 26, 27],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        self.idx_2 = torch.tensor(
+            [5, 6, 7, 8, 9, 15, 16, 17, 18, 19, 25, 26, 27, 2, 29],
+            device=self.device,
+            dtype=torch.int,
+        )
+
     def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
         """
         :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
@@ -1682,29 +1701,10 @@ class enn8(nn.Module):
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
         # features: 0-9: joint positions; 10-19: phases
 
-        # body
-        idx_0 = torch.tensor(
-            [0, 1, 2, 3, 4, 10, 11, 12, 13, 14, 20, 21, 22, 23, 24],
-            device=self.device,
-            dtype=torch.int,
-        )
-
-        idx_1 = torch.tensor(
-            [3, 4, 5, 6, 7, 13, 14, 15, 16, 17, 23, 24, 25, 26, 27],
-            device=self.device,
-            dtype=torch.int,
-        )
-
-        idx_2 = torch.tensor(
-            [5, 6, 7, 8, 9, 15, 16, 17, 18, 19, 25, 26, 27, 2, 29],
-            device=self.device,
-            dtype=torch.int,
-        )
-
         # pay attention on order or actions! It must go head to tail.
-        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_0))
-        x1 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_1))
-        x2 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx_2))
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx_0))
+        x1 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx_1))
+        x2 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx_2))
 
         out = torch.cat((x0, x1, x2), dim=1)
 
@@ -1942,19 +1942,7 @@ class enn3(nn.Module):
         self.value_net[0].bias.data.fill_(0.0)
         self.value_net[2].bias.data.fill_(0.0)
 
-    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
-        """
-        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
-            If all layers are shared, then ``latent_policy == latent_value``
-
-        Customized for very local feedback and shared net
-        """
-        return self.forward_actor(features), self.forward_critic(features)
-
-    def forward_actor(self, features: th.Tensor) -> th.Tensor:
-        # features: 0-9: joint positions; 10-19: phases; 20-29 joint vels
-
-        idx_0 = torch.tensor(
+        self.idx_0 = torch.tensor(
             [
                 0,
                 1,
@@ -1981,7 +1969,7 @@ class enn3(nn.Module):
             device=self.device,
             dtype=torch.int,
         )
-        idx_1 = torch.tensor(
+        self.idx_1 = torch.tensor(
             [
                 1,
                 2,
@@ -2008,7 +1996,7 @@ class enn3(nn.Module):
             device=self.device,
             dtype=torch.int,
         )
-        idx_2 = torch.tensor(
+        self.idx_2 = torch.tensor(
             [
                 2,
                 3,
@@ -2035,7 +2023,7 @@ class enn3(nn.Module):
             device=self.device,
             dtype=torch.int,
         )
-        idx_3 = torch.tensor(
+        self.idx_3 = torch.tensor(
             [
                 3,
                 4,
@@ -2063,16 +2051,28 @@ class enn3(nn.Module):
             dtype=torch.int,
         )
 
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases; 20-29 joint vels
+
         # pay attention on order or actions! It must go head to tail.
-        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_0))
-        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx_0))
-        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx_0))
-        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=idx_1))
-        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=idx_2))
-        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=idx_3))
-        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=idx_3))
-        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=idx_3))
-        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=idx_3))
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx_0))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx_0))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=self.idx_0))
+        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=self.idx_1))
+        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=self.idx_2))
+        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=self.idx_3))
+        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=self.idx_3))
+        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=self.idx_3))
+        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=self.idx_3))
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -2140,21 +2140,9 @@ class enn4(nn.Module):
         self.value_net[0].bias.data.fill_(0.0)
         self.value_net[2].bias.data.fill_(0.0)
 
-    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
-        """
-        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
-            If all layers are shared, then ``latent_policy == latent_value``
-
-        Customized for very local feedback and shared net
-        """
-        return self.forward_actor(features), self.forward_critic(features)
-
-    def forward_actor(self, features: th.Tensor) -> th.Tensor:
-        # features: 0-9: joint positions; 10-19: phases; 20-29 joint vels
-
-        idx = []
+        self.idx = []
         for i in range(6):
-            idx.append(
+            self.idx.append(
                 torch.tensor(
                     [
                         0 + i,
@@ -2178,16 +2166,28 @@ class enn4(nn.Module):
                 )
             )
 
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases; 20-29 joint vels
+
         # pay attention on order or actions! It must go head to tail.
-        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[0]))
-        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[0]))
-        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx[1]))
-        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=idx[2]))
-        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=idx[3]))
-        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=idx[4]))
-        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=idx[5]))
-        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=idx[5]))
-        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=idx[5]))
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[0]))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[0]))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=self.idx[1]))
+        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=self.idx[2]))
+        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=self.idx[3]))
+        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=self.idx[4]))
+        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=self.idx[5]))
+        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=self.idx[5]))
+        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=self.idx[5]))
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -2255,21 +2255,9 @@ class enn6(nn.Module):
         self.value_net[0].bias.data.fill_(0.0)
         self.value_net[2].bias.data.fill_(0.0)
 
-    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
-        """
-        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
-            If all layers are shared, then ``latent_policy == latent_value``
-
-        Customized for very local feedback and shared net
-        """
-        return self.forward_actor(features), self.forward_critic(features)
-
-    def forward_actor(self, features: th.Tensor) -> th.Tensor:
-        # features: 0-9: joint positions; 10-19: phases; 20-29 joint vels
-
-        idx = []
+        self.idx = []
         for i in range(6):
-            idx.append(
+            self.idx.append(
                 torch.tensor(
                     [
                         0 + i,
@@ -2293,16 +2281,28 @@ class enn6(nn.Module):
                 )
             )
 
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases; 20-29 joint vels
+
         # pay attention on order or actions! It must go head to tail.
-        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx[0]))
-        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[0]))
-        x2 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[1]))
-        x3 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[2]))
-        x4 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[3]))
-        x5 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[4]))
-        x6 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx[5]))
-        x7 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx[5]))
-        x8 = self.policy_nets[3](torch.index_select(features, dim=1, index=idx[5]))
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[0]))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[0]))
+        x2 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[1]))
+        x3 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[2]))
+        x4 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[3]))
+        x5 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[4]))
+        x6 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[5]))
+        x7 = self.policy_nets[2](torch.index_select(features, dim=1, index=self.idx[5]))
+        x8 = self.policy_nets[3](torch.index_select(features, dim=1, index=self.idx[5]))
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -2370,20 +2370,8 @@ class enn5(nn.Module):
         self.value_net[0].bias.data.fill_(0.0)
         self.value_net[2].bias.data.fill_(0.0)
 
-    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
-        """
-        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
-            If all layers are shared, then ``latent_policy == latent_value``
-
-        Customized for very local feedback and shared net
-        """
-        return self.forward_actor(features), self.forward_critic(features)
-
-    def forward_actor(self, features: th.Tensor) -> th.Tensor:
-        # features: 0-9: joint positions; 10-19: phases
-
         # body
-        idx_0 = torch.tensor(
+        self.idx_0 = torch.tensor(
             [
                 0,
                 1,
@@ -2410,7 +2398,7 @@ class enn5(nn.Module):
             device=self.device,
             dtype=torch.int,
         )
-        idx_1 = torch.tensor(
+        self.idx_1 = torch.tensor(
             [
                 2,
                 3,
@@ -2437,7 +2425,7 @@ class enn5(nn.Module):
             device=self.device,
             dtype=torch.int,
         )
-        idx_2 = torch.tensor(
+        self.idx_2 = torch.tensor(
             [
                 3,
                 4,
@@ -2464,10 +2452,23 @@ class enn5(nn.Module):
             device=self.device,
             dtype=torch.int,
         )
+
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases
+
         # pay attention on order or actions! It must go head to tail.
-        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=idx_0))
-        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=idx_1))
-        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=idx_2))
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx_0))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx_1))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=self.idx_2))
 
         out = torch.cat((x0, x1, x2), dim=1)
 
