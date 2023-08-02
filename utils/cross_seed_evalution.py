@@ -28,27 +28,33 @@ for subdir in subdirs:
     if subdir in subdirs_to_skip:
         continue
     # read eval results
-    with open(f"{args.eval_path}/{subdir}/eval_metrics.yaml") as f:
-        eval_metrics = yaml.full_load(f)
-        # convert string-list to list
-        for metric in eval_metrics:
-            if metric in metrics_to_skip:
-                continue
-            if metric == "0_seed":
-                seeds.append(eval_metrics[metric])
-                continue
-            _list = (
-                eval_metrics[metric]
-                .replace("[", "")
-                .replace("]", "")
-                .replace(" ", "")
-                .split(",")
-            )
-            eval_metrics[metric] = [float(_list[0]), float(_list[1])]  # [mean, std]
-            # collect all mean values
-            if not metric in results:
-                results[metric] = []
-            results[metric].append(eval_metrics[metric][0])
+    try:
+        with open(f"{args.eval_path}/{subdir}/eval_metrics.yaml") as f:
+            eval_metrics = yaml.full_load(f)
+            # convert string-list to list
+            for metric in eval_metrics:
+                if metric in metrics_to_skip:
+                    continue
+                if metric == "0_seed":
+                    seeds.append(eval_metrics[metric])
+                    continue
+                _list = (
+                    eval_metrics[metric]
+                    .replace("[", "")
+                    .replace("]", "")
+                    .replace(" ", "")
+                    .split(",")
+                )
+                eval_metrics[metric] = [float(_list[0]), float(_list[1])]  # [mean, std]
+                # collect all mean values
+                if not metric in results:
+                    results[metric] = []
+                results[metric].append(eval_metrics[metric][0])
+    except FileNotFoundError:
+        print(f"    Eval file for subdir not found: {subdir}")
+    except:
+        print("     DANGEROUS: unhandled error!")
+
 
 # evaluate statistics on mean values of different seeds
 for result in results:

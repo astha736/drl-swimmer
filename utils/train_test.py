@@ -224,7 +224,7 @@ class TrainTestClass:
         # )
 
         # profile.profile(
-        #     function=model.learn, total_timesteps=20_000 profile_filename="profile_prod_cluster_450_20-07-2023.profile"
+        #     function=model.learn, total_timesteps=20_000, profile_filename="profile_prod_cluster_450_20-07-2023.profile"
         # )
 
         model.learn(

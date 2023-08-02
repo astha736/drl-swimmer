@@ -217,14 +217,9 @@ class ActionChoice:
         # network_parameters = self.sim.task.data.network
         # setting data.network.drives.array
 
-        if (
-            conf.CONF["RL"]["curriculum"]["level"] == 2
-            or conf.CONF["RL"]["curriculum"]["level"] == 3
-            or conf.CONF["RL"]["curriculum"]["level"] == 4
-            or conf.CONF["RL"]["curriculum"]["level"] == 5
-        ):
+        if conf.CONF["RL"]["curriculum"]["level"] in [2, 3, 4, 5, 6, 7]:
             if conf.CONF["RL"]["curriculum"]["current_stage"] == 0:
-                # Alternatively: could set drive to standard here
+                # Alternatively: could set drive to a standard here
                 return
 
         # rescale action
@@ -236,8 +231,6 @@ class ActionChoice:
         # set action
         network_parameters.drives.array[iteration][0] = action[0]
         network_parameters.drives.array[iteration][1] = action[1]
-
-        pass
 
     def set_action_switch(self, observation: ActionType):
         switcher = {
@@ -880,11 +873,48 @@ class FarmsGym(gym.Env):
                 if debug:
                     print(rew_straightness)
                     pass
+            if "straightness_2" in conf.CONF["RL"]["RewardFnc"]:
+                # reward straightness
+                raise NotImplementedError
+                if iteration > 300:
+                    start_pos = np.array(data_sensors.links.global_com_position(0)[0:2])
+                    current_pos = np.array(
+                        data_sensors.links.global_com_position(iteration)[0:2]
+                    )
+
+                    start_curr_vec = current_pos - start_pos
+                    com_velocity = np.array(
+                        data_sensors.links.global_com_velocity(iteration)
+                    )[0:2]
+
+                    if debug:
+                        print(rew_straightness_2)
+                        pass
+
         if "y_pos_penalty" in conf.CONF["RL"]["RewardFnc"]:
             y_pos = np.array(data_sensors.links.global_com_position(iteration))[0]
             reward += conf.CONF["RL"]["RewardFnc"]["y_pos_penalty"] * np.abs(y_pos)
             if debug:
                 print(conf.CONF["RL"]["RewardFnc"]["y_pos_penalty"] * np.abs(y_pos))
+        if "phase_spread" in conf.CONF["RL"]["RewardFnc"]:
+            phases_right = np.array(data_states.phases(iteration))[
+                conf.RIGHT_OSCILLATOR_INDEXES
+            ]
+            phase_spread = np.max(phases_right) - np.min(phases_right)
+            phase_spread_treshold = 2.2 * np.pi
+            if phase_spread > phase_spread_treshold:
+                reward += conf.CONF["RL"]["RewardFnc"]["phase_spread"] * (
+                    phase_spread - phase_spread_treshold
+                )
+                if debug:
+                    print(
+                        conf.CONF["RL"]["RewardFnc"]["phase_spread"]
+                        * (phase_spread - phase_spread_treshold)
+                    )
+            else:
+                if debug:
+                    print("0.0")
+
         if debug:
             print("########")
         return reward
@@ -1098,30 +1128,34 @@ class FarmsGym(gym.Env):
 
         """
 
+        # vars for CL
         self.reset_counter += 1
         stage_trigger = (
             conf.CONF["RL"]["curriculum"]["current_stage"] != self.prev_stage
         )
         self.prev_stage = conf.CONF["RL"]["curriculum"]["current_stage"]
 
-        # Assuming:
-        # total_timesteps = (
-        #     self.sim_options.n_iterations * conf.CONF["RL"]["episodes_per_training"]
-        # )
+        # stage triggers
+        trigger_s1 = (
+            not conf.CONF["RL"]["curriculum"]["current_stage"] == "testing"
+            and (conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger)
+            or (self.reset_counter == 1)
+        )
+        trigger_s2 = (
+            conf.CONF["RL"]["curriculum"]["current_stage"] == 1 and stage_trigger
+        ) or conf.CONF["RL"]["curriculum"]["current_stage"] == "testing"
+
+        # CL 1
         if conf.CONF["RL"]["curriculum"]["level"] == 1:
-            if self.reset_counter == 3_000:
-                conf.CONF["RL"]["useRandStartCondPhases"] = 8
-            elif self.reset_counter == 6_000:
-                conf.CONF["RL"]["useRandStartCondPhases"] = 9
-        elif (
-            conf.CONF["RL"]["curriculum"]["level"] == 2
-            or conf.CONF["RL"]["curriculum"]["level"] == 3
-        ):
-            # first stage
-            if not conf.CONF["RL"]["curriculum"]["current_stage"] == "testing" and (
-                (conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger)
-                or (self.reset_counter == 1)
-            ):
+            raise NotImplementedError
+            # if self.reset_counter == 3_000:
+            #     conf.CONF["RL"]["useRandStartCondPhases"] = 8
+            # elif self.reset_counter == 6_000:
+            #     conf.CONF["RL"]["useRandStartCondPhases"] = 9
+        # CL 2, 3
+        elif conf.CONF["RL"]["curriculum"]["level"] in [2, 3]:
+            # STAGE 1
+            if trigger_s1:
                 # init cond
                 for key in [
                     "sample_init_velocity_from_speed_range",
@@ -1138,10 +1172,8 @@ class FarmsGym(gym.Env):
                     conf.CONF["RL"]["RewardFnc"][rew_target] = conf.CONF["misc"][
                         "CL_settings"
                     ]["RewardFnc"][rew]
-            # second stage
-            elif (
-                conf.CONF["RL"]["curriculum"]["current_stage"] == 1 and stage_trigger
-            ) or conf.CONF["RL"]["curriculum"]["current_stage"] == "testing":
+            # STAGE 2
+            elif trigger_s2:
                 # init cond
                 for key in [
                     "sample_init_velocity_from_speed_range",
@@ -1158,12 +1190,10 @@ class FarmsGym(gym.Env):
                     conf.CONF["RL"]["RewardFnc"][rew_target] = conf.CONF["misc"][
                         "CL_settings"
                     ]["RewardFnc"][rew]
+        # CL 4
         elif conf.CONF["RL"]["curriculum"]["level"] == 4:
-            # first stage
-            if not conf.CONF["RL"]["curriculum"]["current_stage"] == "testing" and (
-                (conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger)
-                or (self.reset_counter == 1)
-            ):
+            # STAGE 1
+            if trigger_s1:
                 # init cond
                 for key in [
                     "sample_init_velocity_from_speed_range",
@@ -1186,11 +1216,8 @@ class FarmsGym(gym.Env):
                     ]["RewardFnc"][rew]
                 # earlyTerm
                 conf.CONF["RL"]["useEarlyTerm"] = True
-                pass
-            # second stage
-            elif (
-                conf.CONF["RL"]["curriculum"]["current_stage"] == 1 and stage_trigger
-            ) or conf.CONF["RL"]["curriculum"]["current_stage"] == "testing":
+            # STAGE 2
+            elif trigger_s2:
                 # init cond
                 for key in [
                     "sample_init_velocity_from_speed_range",
@@ -1213,13 +1240,10 @@ class FarmsGym(gym.Env):
                     ]["RewardFnc"][rew]
                 # earlyTerm: keep keep True
                 conf.CONF["RL"]["useEarlyTerm"] = True
-                pass
+        # CL 5
         elif conf.CONF["RL"]["curriculum"]["level"] == 5:
-            # first stage
-            if not conf.CONF["RL"]["curriculum"]["current_stage"] == "testing" and (
-                (conf.CONF["RL"]["curriculum"]["current_stage"] == 0 and stage_trigger)
-                or (self.reset_counter == 1)
-            ):
+            # STAGE 1
+            if trigger_s1:
                 # init cond
                 for key in [
                     "sample_init_velocity_from_speed_range",
@@ -1238,11 +1262,8 @@ class FarmsGym(gym.Env):
                     ]["RewardFnc"][rew]
                 # earlyTerm
                 conf.CONF["RL"]["useEarlyTerm"] = True
-                pass
-            # second stage
-            elif (
-                conf.CONF["RL"]["curriculum"]["current_stage"] == 1 and stage_trigger
-            ) or conf.CONF["RL"]["curriculum"]["current_stage"] == "testing":
+            # STAGE 2
+            elif trigger_s2:
                 # init cond
                 for key in [
                     "sample_init_velocity_from_speed_range",
@@ -1261,14 +1282,82 @@ class FarmsGym(gym.Env):
                     ]["RewardFnc"][rew]
                 # earlyTerm: set False
                 conf.CONF["RL"]["useEarlyTerm"] = False
-                pass
+        # CL 6
+        elif conf.CONF["RL"]["curriculum"]["level"] == 6:
+            # STAGE 1
+            if trigger_s1:
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = False
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in ["vel_com", "healthy", "phase_spread", "joints_power"]:
+                    conf.CONF["RL"]["RewardFnc"][rew] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
+            # STAGE 2
+            elif trigger_s2:
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = conf.CONF["misc"]["CL_settings"][key]
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in [
+                    "x_vel_target",
+                    "joints_power",
+                    "healthy",
+                    "phase_spread",
+                ]:
+                    conf.CONF["RL"]["RewardFnc"][rew] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
+        # CL 7
+        elif conf.CONF["RL"]["curriculum"]["level"] == 7:
+            # STAGE 1
+            if trigger_s1:
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = False
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in ["vel_com", "phase_spread", "joints_power"]:
+                    conf.CONF["RL"]["RewardFnc"][rew] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
+            # STAGE 2
+            elif trigger_s2:
+                # init cond
+                for key in [
+                    "sample_init_velocity_from_speed_range",
+                    "randomInitDrive",
+                ]:
+                    conf.CONF["RL"][key] = conf.CONF["misc"]["CL_settings"][key]
+                # reward
+                conf.CONF["RL"]["RewardFnc"] = {}
+                for rew in [
+                    "x_vel_target",
+                    "joints_power",
+                    "phase_spread",
+                ]:
+                    conf.CONF["RL"]["RewardFnc"][rew] = conf.CONF["misc"][
+                        "CL_settings"
+                    ]["RewardFnc"][rew]
 
         # sample velocity vector
         # constrained by: angle between velocity vector and x-axis is max 45°
         # constrained by: speed range provided by conf.CONF["RL"]["sample_target_velocity_from_speed_range"]
         if conf.CONF["RL"]["sample_target_velocity_from_speed_range"]:
-            range = conf.CONF["RL"]["sample_target_velocity_from_speed_range"]
-            speed = np.random.uniform(range[0], range[1])
+            range_ = conf.CONF["RL"]["sample_target_velocity_from_speed_range"]
+            speed = np.random.uniform(range_[0], range_[1])
             x = np.random.uniform(speed / 2, speed)
             y = random.choice([-1, 1]) * np.sqrt(speed**2 - x**2)
             conf.CONF["RL"]["target_velocity"] = [x, y]
@@ -1304,8 +1393,8 @@ class FarmsGym(gym.Env):
             if conf.CONF["RL"]["sample_init_velocity_from_speed_range"]:
                 # sample init velocity vector
                 # constrained by: angle between velocity vector and x-axis is max 45°
-                range = conf.CONF["RL"]["sample_init_velocity_from_speed_range"]
-                speed = np.random.uniform(range[0], range[1])
+                range_ = conf.CONF["RL"]["sample_init_velocity_from_speed_range"]
+                speed = np.random.uniform(range_[0], range_[1])
                 x_start = np.random.uniform(speed / 2, speed)
                 y_start = random.choice([-1, 1]) * np.sqrt(speed**2 - x_start**2)
                 RobotInitialState.set_init_cond_vel_com(

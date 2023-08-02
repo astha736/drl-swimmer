@@ -1,0 +1,4 @@
+vel_com: 1.0
+joints_power: -0.004
+healthy: 0.05
+phase_spread: -1.0

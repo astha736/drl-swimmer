@@ -183,13 +183,12 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             CONF["RL"]["curriculum"]["level"] = False
             CONF["RL"]["curriculum"]["current_stage"] = False
         else:
+            # init CL stage
             CONF["RL"]["curriculum"]["current_stage"] = 0
-        if (
-            CONF["RL"]["curriculum"]["level"] == 2
-            or CONF["RL"]["curriculum"]["level"] == 3
-            or CONF["RL"]["curriculum"]["level"] == 4
-            or CONF["RL"]["curriculum"]["level"] == 5
-        ):
+            if not "timesteps_stage_switch" in CONF["RL"]["curriculum"]:
+                # default
+                CONF["RL"]["curriculum"]["timesteps_stage_switch"] = 3_000_000
+        if CONF["RL"]["curriculum"]["level"] in [2, 3, 4, 5, 6, 7]:
             CONF["misc"]["CL_settings"] = {}
             for key in [
                 "RewardFnc",
@@ -212,11 +211,11 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
         and not "state_history_length" in CONF["RL"]
     ):
         raise ValueError("State history controller not fully specified 1.")
-    if (
-        not "stateHistoryController" in CONF["RL"]
-        and "state_history_length" in CONF["RL"]
-    ):
-        raise ValueError("State history controller not fully specified 2.")
+    # if (
+    #     not "stateHistoryController" in CONF["RL"]
+    #     and "state_history_length" in CONF["RL"]
+    # ):
+    #     raise ValueError("State history controller not fully specified 2.")
 
     if not "n_iterations_testing" in CONF:
         CONF["n_iterations_testing"] = 2500

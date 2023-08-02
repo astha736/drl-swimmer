@@ -1582,12 +1582,7 @@ class dnn2(nn.Module):
         # pay attention on order or actions! It must go head to tail.
         x1 = self.policy_net_fb(torch.index_select(features, dim=1, index=idx_1))
 
-        if (
-            conf.CONF["RL"]["curriculum"]["level"] == 2
-            or conf.CONF["RL"]["curriculum"]["level"] == 3
-            or conf.CONF["RL"]["curriculum"]["level"] == 4
-            or conf.CONF["RL"]["curriculum"]["level"] == 5
-        ):
+        if conf.CONF["RL"]["curriculum"]["level"] in [2, 3, 4, 5, 6, 7]:
             if conf.CONF["RL"]["curriculum"]["current_stage"] == 0:
                 # dummy value; respect correct shape
                 x0 = torch.zeros(
@@ -1612,6 +1607,183 @@ class dnn2(nn.Module):
 
     def forward_critic(self, features: th.Tensor) -> th.Tensor:
         return self.value_net(features)
+
+
+class dnn3(nn.Module):
+    def __init__(
+        self,
+        feature_dim: int,
+        action_dim: int,
+    ):
+        super().__init__()
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.action_dim = action_dim
+
+        self.num_filters = 2
+
+        # IMPORTANT:
+        # Save output dimensions, used to create the distributions
+        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
+        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
+
+        # state history processing
+        self.state_history_length = int(conf.CONF["RL"]["state_history_length"])
+        self.feature_dim = int(feature_dim / conf.CONF["RL"]["state_history_length"])
+
+        # state history filters
+        def get_state_history_filter():
+            return nn.Sequential(
+                nn.Linear(self.state_history_length, 1),
+            )
+
+        self.state_history_filters = nn.ModuleList(
+            [
+                get_state_history_filter().to(self.device)
+                for i in range(self.feature_dim * self.num_filters)
+            ]
+        )
+
+        # initialize weight of state history filters so that they sum up to one
+        for i in range(self.feature_dim * self.num_filters):
+            torch.nn.init.constant_(
+                self.state_history_filters[i][0].weight, 1 / self.state_history_length
+            )
+            self.state_history_filters[i][0].bias.data.fill_(0.0)
+
+        self.policy_net_fb = nn.Sequential(
+            nn.Linear(
+                (self.feature_dim - 4) * self.num_filters,
+                conf.CONF["RL"]["policy_network"]["arch"][0],
+            ),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(self.latent_dim_pi, self.action_dim - 2),
+        )
+
+        self.policy_net_drive = nn.Sequential(
+            nn.Linear(4 * self.num_filters, 16),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(16, 16),
+            getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+            nn.Linear(16, 2),
+        )
+
+        # handle weight initialization
+        torch.nn.init.orthogonal_(self.policy_net_fb[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_fb[2].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_fb[4].weight, gain=0.01)
+        self.policy_net_fb[0].bias.data.fill_(0.0)
+        self.policy_net_fb[2].bias.data.fill_(0.0)
+        self.policy_net_fb[4].bias.data.fill_(0.0)
+
+        torch.nn.init.orthogonal_(self.policy_net_drive[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_drive[2].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.policy_net_drive[4].weight, gain=0.01)
+        self.policy_net_drive[0].bias.data.fill_(0.0)
+        self.policy_net_drive[2].bias.data.fill_(0.0)
+        self.policy_net_drive[4].bias.data.fill_(0.0)
+
+        # Value network
+        self.value_net = nn.Sequential(
+            nn.Linear(
+                self.feature_dim * self.num_filters,
+                conf.CONF["RL"]["value_network"]["arch"][0],
+            ),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+        )
+
+        torch.nn.init.orthogonal_(self.value_net[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.value_net[2].weight, gain=np.sqrt(2))
+        self.value_net[0].bias.data.fill_(0.0)
+        self.value_net[2].bias.data.fill_(0.0)
+
+        self.idx_0 = torch.tensor(
+            [i for i in range(4 * self.num_filters)],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        self.idx_1 = torch.tensor(
+            [
+                i
+                for i in range(
+                    4 * self.num_filters, self.feature_dim * self.num_filters
+                )
+            ],
+            device=self.device,
+            dtype=torch.int,
+        )
+
+        self.idxs = []
+        for i in range(self.feature_dim):
+            self.idxs.append(
+                torch.tensor(
+                    [
+                        i
+                        for i in range(
+                            i * self.state_history_length,
+                            (i + 1) * self.state_history_length,
+                        )
+                    ],
+                    device=self.device,
+                    dtype=torch.int,
+                )
+            )
+
+    def preprocess_state_history(self, features: th.Tensor) -> th.Tensor:
+        # preprocess in state history filters
+        # also process target_vel, current_vel via state history
+        features_ = torch.tensor([], device=self.device)
+        for i in range(self.feature_dim):
+            for j in range(self.num_filters):
+                out_ = self.state_history_filters[self.num_filters * i + j](
+                    torch.index_select(features, dim=1, index=self.idxs[i])
+                )
+                features_ = torch.cat((features_, out_), dim=1)
+        return features_
+
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases
+        features_ = self.preprocess_state_history(features)
+
+        # pay attention on order or actions! It must go head to tail.
+        x1 = self.policy_net_fb(torch.index_select(features_, dim=1, index=self.idx_1))
+
+        if conf.CONF["RL"]["curriculum"]["level"] in [2, 3, 4, 5, 6, 7]:
+            if conf.CONF["RL"]["curriculum"]["current_stage"] == 0:
+                # dummy value; respect correct shape
+                x0 = torch.zeros(
+                    [x1.shape[0], 2],
+                    device=self.device,
+                )
+            else:
+                x0 = self.policy_net_drive(
+                    torch.index_select(features_, dim=1, index=self.idx_0)
+                )
+
+        out = torch.cat((x0, x1), dim=1)
+
+        assert out.shape[1] == self.action_dim  # test action dim
+
+        return out
+
+    def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        features_ = self.preprocess_state_history(features)
+
+        return self.value_net(features_)
 
 
 class enn8(nn.Module):
@@ -2547,6 +2719,9 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
                 self.mlp_extractor = dnn1(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "dnn2":
                 self.mlp_extractor = dnn2(self.features_dim, action_dim)
+            elif conf.CONF["RL"]["localFeedback"] == "dnn3":
+                # w/ state history
+                self.mlp_extractor = dnn3(self.features_dim, action_dim)
             # KEEP "stateHistoryController" last as it has no default value
             elif conf.CONF["RL"]["stateHistoryController"] == "sh1":
                 self.mlp_extractor = sh1(self.features_dim)
