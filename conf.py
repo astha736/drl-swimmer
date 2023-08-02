@@ -23,7 +23,6 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
     except:
         # we assume that experiment_config is a python object already
         CONF = experiment_config
-        pass
 
     CONF["experiment_id"] = experiment_id
     CONF["misc"] = {}

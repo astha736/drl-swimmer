@@ -141,10 +141,7 @@ class TrainTestClass:
     def exp_training(
         self,
     ) -> None:
-        """Experiment training
-
-        @param model_filename (str): Name of the saved model.
-        """
+        """Experiment training"""
 
         print("#######################")
         print("START MODEL TRAINING")
@@ -505,23 +502,21 @@ class TrainTestClass:
         plots = {}
         n_eval_episodes = 100
 
-
         for i in range(n_eval_episodes):
-
             sim._env.reset()
             sim.run()
-
 
             _metrics, plots = utils.get_performance_metrics(
                 sim,
                 self.sim_options.timestep,
                 self.sim_options.n_iterations,
-                do_plots=(i == n_eval_episodes - 1), # return plots on last evaluation
+                do_plots=(i == n_eval_episodes - 1),  # return plots on last evaluation
             )
 
             # standardized reward
-            _metrics["reward"] = 10 * archTestCallback.reward / conf.CONF['simulation_time_testing']
-
+            _metrics["reward"] = (
+                10 * archTestCallback.reward / conf.CONF["simulation_time_testing"]
+            )
 
             for metric in _metrics:
                 if not metric in metrics:
@@ -535,7 +530,6 @@ class TrainTestClass:
 
         metrics["0_n_eval_episodes"] = n_eval_episodes
         metrics["0_data_format"] = "[mean, std]"
-
 
         utils.save_performance_metrics(metrics, plots)
 
@@ -556,7 +550,6 @@ class SaveVecNormalizeCallback(BaseCallback):
         self.save_path = save_path
         self.name_prefix = name_prefix
 
-
     def _on_step(self) -> bool:
         if self.n_calls % self.save_freq == 0:
             if self.model.get_vec_normalize_env() is not None:
@@ -565,7 +558,10 @@ class SaveVecNormalizeCallback(BaseCallback):
                 self.model.get_vec_normalize_env().save(path)
                 # save best model for every stage in CL
                 if not conf.CONF["RL"]["curriculum"]["level"] == False:
-                    path = os.path.join(self.save_path, f"{self.name_prefix}_stage{conf.CONF['RL']['curriculum']['current_stage']}_normalize.pkl")
+                    path = os.path.join(
+                        self.save_path,
+                        f"{self.name_prefix}_stage{conf.CONF['RL']['curriculum']['current_stage']}_normalize.pkl",
+                    )
                     self.model.get_vec_normalize_env().save(path)
             else:
                 raise ValueError("Error: no VecNormalize wrapper on the model")

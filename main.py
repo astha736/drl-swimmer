@@ -48,6 +48,7 @@ try:
         )
 except:
     # legacy
+    # NOTE: also triggered on non-legacy if 'try' yields error
     with open(
         f"./experiments/{args.experiment_id}/" + "conf.yaml"
     ) as experiment_config:
@@ -149,7 +150,7 @@ def main() -> None:
 
     # Set action and observation spaces
     action_list = []
-    # KEEP ORDER OF ACTIONS. NO MATTER WHAT!
+    # KEEP ORDER OF ACTIONS. NO MATTER WHAT! (required for neural network)
     if "DRIVE" in conf.CONF["RL"]["action_choice"]:
         action_list.append(ActionType.DRIVE)
     if "STRETCH" in conf.CONF["RL"]["action_choice"]:
@@ -158,7 +159,7 @@ def main() -> None:
         action_list.append(ActionType.STRETCH_BIAS)
 
     observation_list = []
-    # KEEP ORDER OF OBSERVATIONS. NO MATTER WHAT!
+    # KEEP ORDER OF OBSERVATIONS. NO MATTER WHAT! (required for neural network)
     if "VELOCITIES" in conf.CONF["RL"]["observation_choice"]:
         observation_list.append(ObservationType.VELOCITIES)
     if "JOINT_POSITION" in conf.CONF["RL"]["observation_choice"]:
