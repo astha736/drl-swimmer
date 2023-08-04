@@ -198,7 +198,7 @@ class TrainTestClass:
 
         eval_callback = EvalCallback(
             venv,
-            eval_freq=100_000,
+            eval_freq=200_000,
             deterministic=True,
             warn=True,
             verbose=1,

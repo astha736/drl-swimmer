@@ -62,6 +62,7 @@ class ActionType(Enum):
     CONTACT = 2  # contact
     DRIVE = 3  # drive
     STRETCH_BIAS = 4  # bias with sin, cos
+    STRETCH_2 = 5  # symmetric stretch action
 
 
 class ObservationType(Enum):
@@ -87,6 +88,7 @@ class ActionChoice:
 
     action_output_scale = {
         ActionType.STRETCH: conf.CONF["stretch_action_output_scaling"],
+        ActionType.STRETCH_2: conf.CONF["stretch_action_output_scaling"],
         ActionType.CONTACT: 10,
         ActionType.DRIVE: [1.5, 3.0],
         ActionType.STRETCH_BIAS: 3,  # try half
@@ -112,6 +114,20 @@ class ActionChoice:
             self.action_length[ActionType.STRETCH] = self.n_body_joints - 1
         low = np.array([-1] * self.action_length[ActionType.STRETCH])
         high = np.array([1] * self.action_length[ActionType.STRETCH])
+        return low, high
+
+    def action_bound_STRETCH_2(self):
+        """Stretch can be caudal connected or rostral connected
+
+        Thus one of the joint in the body can not be used as sensor
+        for a given connectivity direction
+        """
+        if not conf.CONF["robot_arch"]["s_local_weight"] == None:
+            self.action_length[ActionType.STRETCH_2] = self.n_body_joints
+        else:
+            self.action_length[ActionType.STRETCH_2] = self.n_body_joints - 1
+        low = np.array([-1] * self.action_length[ActionType.STRETCH_2])
+        high = np.array([1] * self.action_length[ActionType.STRETCH_2])
         return low, high
 
     def action_bound_STRETCH_BIAS(self):
@@ -142,6 +158,7 @@ class ActionChoice:
     def get_action_bound(self, action: ActionType):
         switcher = {
             ActionType.STRETCH: self.action_bound_STRETCH,
+            ActionType.STRETCH_2: self.action_bound_STRETCH_2,
             ActionType.CONTACT: self.action_bound_CONTACT,
             ActionType.DRIVE: self.action_bound_DRIVE,
             ActionType.STRETCH_BIAS: self.action_bound_STRETCH_BIAS,
@@ -172,9 +189,21 @@ class ActionChoice:
         robot_parameters = network_parameters.joints2osc_map.weights.array
 
         for i, action_val in enumerate(action):
-            robot_parameters[i * 2 + 0] = action_val  # left oscillator assignment
-            robot_parameters[i * 2 + 1] = action_val * -1  # right oscillator assignment
-        pass
+            robot_parameters[i] = action_val  # left oscillator assignment
+            robot_parameters[
+                i + int(len(robot_parameters) / 2)
+            ] = -action_val  # right oscillator assignment
+
+    def set_action_STRETCH_2(self, action, network_parameters, iteration, data_states):
+        action = action * ActionChoice.action_output_scale[ActionType.STRETCH_2]
+
+        robot_parameters = network_parameters.joints2osc_map.weights.array
+
+        for i, action_val in enumerate(action):
+            robot_parameters[i] = action_val  # left oscillator assignment
+            robot_parameters[
+                i + int(len(robot_parameters) / 2)
+            ] = action_val  # right oscillator assignment
 
     def set_action_STRETCH_BIAS(
         self, action, network_parameters, iteration, data_states
@@ -193,6 +222,8 @@ class ActionChoice:
         ]
 
         # two actions for each joint
+        raise NotImplementedError
+        # TODO: fix oscillator assignment
         for i, j in enumerate(range(0, len(action), 2)):
             action_biased = action[j] * np.cos(phases_left[i]) + action[j + 1] * np.sin(
                 phases_left[i]
@@ -235,6 +266,7 @@ class ActionChoice:
     def set_action_switch(self, observation: ActionType):
         switcher = {
             ActionType.STRETCH: self.set_action_STRETCH,
+            ActionType.STRETCH_2: self.set_action_STRETCH_2,
             ActionType.CONTACT: self.set_action_CONTACT,
             ActionType.DRIVE: self.set_action_DRIVE,
             ActionType.STRETCH_BIAS: self.set_action_STRETCH_BIAS,
@@ -641,6 +673,23 @@ class FarmsGym(gym.Env):
                 shape=(self.n_obs * conf.CONF["RL"]["state_history_length"],),
             )
 
+        if not conf.CONF["RL"]["selectObs"] == False:
+            self.observation_space = spaces.Box(
+                low=-np.inf,
+                high=np.inf,
+                shape=(
+                    len(conf.CONF["RL"]["selectObs"])
+                    * len(conf.CONF["RL"]["observation_choice"]),
+                ),
+            )
+            self.obs_idxs = np.array(
+                [
+                    j + i * 10
+                    for i in range(len(conf.CONF["RL"]["observation_choice"]))
+                    for j in conf.CONF["RL"]["selectObs"]
+                ]
+            )
+
         self.sim, _ = simulation.setup_simulation(
             self.animat_options,
             self.arena_options,
@@ -701,9 +750,8 @@ class FarmsGym(gym.Env):
                 0:2
             ]
             # speed
-            speed_com = np.linalg.norm(
-                np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
-            )
+            speed_com = np.linalg.norm(velocity_com)
+
             # sign forward
             head_pos = np.array(
                 data_sensors.links.com_position(iteration=iteration, link_i=0)
@@ -757,6 +805,11 @@ class FarmsGym(gym.Env):
             reward += conf.CONF["RL"]["RewardFnc"]["speed_error"] * (
                 np.abs(speed_com - conf.CONF["RL"]["target_speed"])
             )
+            if debug:
+                print(
+                    conf.CONF["RL"]["RewardFnc"]["speed_error"]
+                    * (np.abs(speed_com - conf.CONF["RL"]["target_speed"]))
+                )
         if "active_torque_diff" in conf.CONF["RL"]["RewardFnc"]:
             raise NotImplementedError
             # reward += (
@@ -975,6 +1028,9 @@ class FarmsGym(gym.Env):
                 self.state_history[i][0] = self.observation[i]  # replace first entry
             self.observation = self.state_history.flatten()
 
+        if not conf.CONF["RL"]["selectObs"] == False:
+            self.observation = self.observation[self.obs_idxs]
+
         self.done = False
         if env_step.step_type == StepType.LAST:
             self.done = True  # end of episode
@@ -1047,10 +1103,18 @@ class FarmsGym(gym.Env):
         if self.done and (self.is_eval_env or self.is_test_env):
             additionalMetrics = None
             if len(self.log_tracking_error) > 0:
-                additionalMetrics = {
-                    "5_mean abs tracking error": np.mean(self.log_tracking_error),
-                    "5_target_velocity": conf.CONF["RL"]["target_velocity"],
-                }
+                additionalMetrics = {}
+                additionalMetrics["5_mean abs tracking error"] = np.mean(
+                    self.log_tracking_error
+                )
+                try:
+                    additionalMetrics["5_target_velocity"] = conf.CONF["RL"][
+                        "target_velocity"
+                    ]
+                except:
+                    additionalMetrics["5_target_speed"] = conf.CONF["RL"][
+                        "target_speed"
+                    ]
 
         if self.done and self.is_eval_env:
             self.metrics, _ = utils.get_performance_metrics(
@@ -1432,6 +1496,9 @@ class FarmsGym(gym.Env):
             iteration=0,
             observation_choice=self.observation_choice,
         )
+
+        if not conf.CONF["RL"]["selectObs"] == False:
+            self.observation = self.observation[self.obs_idxs]
 
         if "state_history_length" in conf.CONF["RL"]:
             self.state_history = np.zeros(

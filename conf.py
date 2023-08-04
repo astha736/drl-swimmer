@@ -172,6 +172,7 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
         if not "sample_target_velocity_from_speed_range" in CONF["RL"]:
             CONF["RL"]["sample_target_velocity_from_speed_range"] = False
         else:
+            # set default starting value
             CONF["RL"]["target_velocity"] = [0.0, 0.0]
         if not "sample_init_velocity_from_speed_range" in CONF["RL"]:
             CONF["RL"]["sample_init_velocity_from_speed_range"] = False
@@ -195,6 +196,8 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
                 "sample_init_velocity_from_speed_range",
             ]:
                 CONF["misc"]["CL_settings"][key] = CONF["RL"][key]
+        if not "selectObs" in CONF["RL"]:
+            CONF["RL"]["selectObs"] = False
 
     # other settings
     if not "save_observations" in CONF:
@@ -215,6 +218,14 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
     #     and "state_history_length" in CONF["RL"]
     # ):
     #     raise ValueError("State history controller not fully specified 2.")
+
+    if (
+        "VELOCITIES" in CONF["RL"]["observation_choice"]
+        or "DRIVE" in CONF["RL"]["action_choice"]
+    ) and not CONF["RL"]["selectObs"] == False:
+        raise ValueError(
+            "Setup doesnt work with selectObs and velocity observation / active drive"
+        )
 
     if not "n_iterations_testing" in CONF:
         CONF["n_iterations_testing"] = 2500

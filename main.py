@@ -157,6 +157,8 @@ def main() -> None:
         action_list.append(ActionType.STRETCH)
     if "STRETCH_BIAS" in conf.CONF["RL"]["action_choice"]:
         action_list.append(ActionType.STRETCH_BIAS)
+    if "STRETCH_2" in conf.CONF["RL"]["action_choice"]:
+        action_list.append(ActionType.STRETCH_2)
 
     observation_list = []
     # KEEP ORDER OF OBSERVATIONS. NO MATTER WHAT! (required for neural network)

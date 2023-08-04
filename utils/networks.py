@@ -163,11 +163,14 @@ class CustomNetwork(nn.Module):
         self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][-1]
         self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][-1]
 
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.feature_dim = feature_dim
+
         # policy network
         layers = []
         for i in range(len(conf.CONF["RL"]["policy_network"]["arch"])):
             in_dim = (
-                feature_dim
+                self.feature_dim
                 if i == 0
                 else conf.CONF["RL"]["policy_network"]["arch"][i - 1]
             )
@@ -183,7 +186,7 @@ class CustomNetwork(nn.Module):
         layers = []
         for i in range(len(conf.CONF["RL"]["value_network"]["arch"])):
             in_dim = (
-                feature_dim
+                self.feature_dim
                 if i == 0
                 else conf.CONF["RL"]["policy_network"]["arch"][i - 1]
             )
@@ -203,6 +206,7 @@ class CustomNetwork(nn.Module):
 
         Customized for very local feedback and shared net
         """
+
         return self.forward_actor(features), self.forward_critic(features)
 
     def forward_actor(self, features: th.Tensor) -> th.Tensor:
@@ -1099,6 +1103,209 @@ class nn7(nn.Module):
         x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=self.idx[6]))
         x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=self.idx[7]))
         x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=self.idx[7]))
+
+        out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
+
+        assert out.shape[1] == self.action_dim  # test action dim
+
+        return out
+
+    def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        return self.value_net(features)
+
+
+class caudl2(nn.Module):
+    def __init__(
+        self,
+        feature_dim: int,
+        action_dim: int,
+    ):
+        super().__init__()
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.obs_dim_body = 2
+        self.action_dim = action_dim
+
+        # IMPORTANT:
+        # Save output dimensions, used to create the distributions
+        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
+        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
+
+        def get_policy_net():
+            return nn.Sequential(
+                nn.Linear(
+                    self.obs_dim_body, conf.CONF["RL"]["policy_network"]["arch"][0]
+                ),
+                getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+                nn.Linear(
+                    conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi
+                ),
+                getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+                nn.Linear(self.latent_dim_pi, 1),
+            )
+
+        self.policy_nets = nn.ModuleList(
+            [get_policy_net().to(self.device) for i in range(9)]
+        )
+
+        # handle weight initialization
+        for i in range(9):
+            torch.nn.init.orthogonal_(self.policy_nets[i][0].weight, gain=np.sqrt(2))
+            torch.nn.init.orthogonal_(self.policy_nets[i][2].weight, gain=np.sqrt(2))
+            torch.nn.init.orthogonal_(self.policy_nets[i][4].weight, gain=0.01)
+            self.policy_nets[i][0].bias.data.fill_(0.0)
+            self.policy_nets[i][2].bias.data.fill_(0.0)
+            self.policy_nets[i][4].bias.data.fill_(0.0)
+
+        # Value network
+        self.value_net = nn.Sequential(
+            nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+        )
+
+        torch.nn.init.orthogonal_(self.value_net[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.value_net[2].weight, gain=np.sqrt(2))
+        self.value_net[0].bias.data.fill_(0.0)
+        self.value_net[2].bias.data.fill_(0.0)
+
+        self.idx = []
+        for i in range(9):
+            self.idx.append(
+                torch.tensor(
+                    [
+                        0 + i,
+                        10 + i,
+                    ],
+                    device=self.device,
+                    dtype=torch.int,
+                )
+            )
+
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases
+
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[0]))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[1]))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=self.idx[2]))
+        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=self.idx[3]))
+        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=self.idx[4]))
+        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=self.idx[5]))
+        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=self.idx[6]))
+        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=self.idx[7]))
+        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=self.idx[8]))
+
+        out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
+
+        assert out.shape[1] == self.action_dim  # test action dim
+
+        return out
+
+    def forward_critic(self, features: th.Tensor) -> th.Tensor:
+        return self.value_net(features)
+
+
+class caudl(nn.Module):
+    def __init__(
+        self,
+        feature_dim: int,
+        action_dim: int,
+    ):
+        super().__init__()
+
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.obs_dim_body = 3
+        self.action_dim = action_dim
+
+        # IMPORTANT:
+        # Save output dimensions, used to create the distributions
+        self.latent_dim_pi = conf.CONF["RL"]["policy_network"]["arch"][1]
+        self.latent_dim_vf = conf.CONF["RL"]["policy_network"]["arch"][1]
+
+        def get_policy_net():
+            return nn.Sequential(
+                nn.Linear(
+                    self.obs_dim_body, conf.CONF["RL"]["policy_network"]["arch"][0]
+                ),
+                getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+                nn.Linear(
+                    conf.CONF["RL"]["policy_network"]["arch"][0], self.latent_dim_pi
+                ),
+                getattr(torch.nn, conf.CONF["RL"]["policy_network"]["act_fn"])(),
+                nn.Linear(self.latent_dim_pi, 1),
+            )
+
+        self.policy_nets = nn.ModuleList(
+            [get_policy_net().to(self.device) for i in range(9)]
+        )
+
+        # handle weight initialization
+        for i in range(9):
+            torch.nn.init.orthogonal_(self.policy_nets[i][0].weight, gain=np.sqrt(2))
+            torch.nn.init.orthogonal_(self.policy_nets[i][2].weight, gain=np.sqrt(2))
+            torch.nn.init.orthogonal_(self.policy_nets[i][4].weight, gain=0.01)
+            self.policy_nets[i][0].bias.data.fill_(0.0)
+            self.policy_nets[i][2].bias.data.fill_(0.0)
+            self.policy_nets[i][4].bias.data.fill_(0.0)
+
+        # Value network
+        self.value_net = nn.Sequential(
+            nn.Linear(feature_dim, conf.CONF["RL"]["value_network"]["arch"][0]),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+            nn.Linear(conf.CONF["RL"]["value_network"]["arch"][0], self.latent_dim_vf),
+            getattr(torch.nn, conf.CONF["RL"]["value_network"]["act_fn"])(),
+        )
+
+        torch.nn.init.orthogonal_(self.value_net[0].weight, gain=np.sqrt(2))
+        torch.nn.init.orthogonal_(self.value_net[2].weight, gain=np.sqrt(2))
+        self.value_net[0].bias.data.fill_(0.0)
+        self.value_net[2].bias.data.fill_(0.0)
+
+        self.idx = []
+        for i in range(9):
+            self.idx.append(
+                torch.tensor(
+                    [
+                        0 + i,
+                        10 + i,
+                        20 + i,
+                    ],
+                    device=self.device,
+                    dtype=torch.int,
+                )
+            )
+
+    def forward(self, features: th.Tensor) -> Tuple[th.Tensor, th.Tensor]:
+        """
+        :return: (th.Tensor, th.Tensor) latent_policy, latent_value of the specified network.
+            If all layers are shared, then ``latent_policy == latent_value``
+
+        Customized for very local feedback and shared net
+        """
+        return self.forward_actor(features), self.forward_critic(features)
+
+    def forward_actor(self, features: th.Tensor) -> th.Tensor:
+        # features: 0-9: joint positions; 10-19: phases
+
+        x0 = self.policy_nets[0](torch.index_select(features, dim=1, index=self.idx[0]))
+        x1 = self.policy_nets[1](torch.index_select(features, dim=1, index=self.idx[1]))
+        x2 = self.policy_nets[2](torch.index_select(features, dim=1, index=self.idx[2]))
+        x3 = self.policy_nets[3](torch.index_select(features, dim=1, index=self.idx[3]))
+        x4 = self.policy_nets[4](torch.index_select(features, dim=1, index=self.idx[4]))
+        x5 = self.policy_nets[5](torch.index_select(features, dim=1, index=self.idx[5]))
+        x6 = self.policy_nets[6](torch.index_select(features, dim=1, index=self.idx[6]))
+        x7 = self.policy_nets[7](torch.index_select(features, dim=1, index=self.idx[7]))
+        x8 = self.policy_nets[8](torch.index_select(features, dim=1, index=self.idx[8]))
 
         out = torch.cat((x0, x1, x2, x3, x4, x5, x6, x7, x8), dim=1)
 
@@ -2695,6 +2902,10 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
                 self.mlp_extractor = nn6(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "nn7":
                 self.mlp_extractor = nn7(self.features_dim, action_dim)
+            elif conf.CONF["RL"]["localFeedback"] == "caudl":
+                self.mlp_extractor = caudl(self.features_dim, action_dim)
+            elif conf.CONF["RL"]["localFeedback"] == "caudl2":
+                self.mlp_extractor = caudl2(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "nn8":
                 self.mlp_extractor = nn8(self.features_dim, action_dim)
             elif conf.CONF["RL"]["localFeedback"] == "nn9":
