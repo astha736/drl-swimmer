@@ -276,19 +276,19 @@ class RobotInitialState:
             elem.initial = [
                 random.uniform(-0.2, 0.2),
                 random.uniform(-0.01, 0.01),
-            ]  # +/- 11°; +/- 0.5°/s
+            ]
         return
 
     def set_randomly_sampled_shape_pose_vel_1(animat_options):
         for i, elem in enumerate(animat_options.morphology.joints):
             elem.initial = [
-                random.uniform(-0.3, 0.3),
+                random.uniform(-0.4, 0.4),
                 random.uniform(-0.1, 0.1),
-            ]  # +/- 11°; +/- 0.5°/s
+            ]
         return
 
     def set_init_cond_vel_com(animat_options, vel_com):
-        # I guess entires are vx, vy, vz, -, -, -
+        # I guess entries are vx, vy, vz, -, -, -
         # vel_com of type [vx, vy]
         animat_options.spawn.velocity = [vel_com[0], vel_com[1], 0.0, 0.0, 0.0, 0.0]
 

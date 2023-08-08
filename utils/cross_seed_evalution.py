@@ -31,13 +31,13 @@ for subdir in subdirs:
     try:
         with open(f"{args.eval_path}/{subdir}/eval_metrics.yaml") as f:
             eval_metrics = yaml.full_load(f)
-            # convert string-list to list
             for metric in eval_metrics:
                 if metric in metrics_to_skip:
                     continue
                 if metric == "0_seed":
                     seeds.append(eval_metrics[metric])
                     continue
+                # convert string-list to list
                 _list = (
                     eval_metrics[metric]
                     .replace("[", "")
