@@ -430,7 +430,20 @@ class TrainTestClass:
         print("MODEL TESTING FINISHED")
         print("#######################")
 
+        self.cross_seed_eval()
+
         return
+
+    def cross_seed_eval(self) -> None:
+        print("#######################")
+        print("START CROSS SEED EVAL")
+        print("#######################")
+        os.system(
+            f"python3 utils/cross_seed_evalution.py -m={conf.EVAL_PATH_CROSS_SEED}"
+        )
+        print("#######################")
+        print("CROSS SEED EVAL FINISHED")
+        print("#######################")
 
     # # This is another way to test a model; not used for now
     # def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:

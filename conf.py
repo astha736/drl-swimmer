@@ -10,6 +10,7 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
     global CONF
     global LOG_DIR_RESULTS
     global LOG_DIR_TENSORBOARD
+    global EVAL_PATH_CROSS_SEED
     global TEMP_DIR
     global RIGHT_OSCILLATOR_INDEXES
     global LEFT_OSCILLATOR_INDEXES
@@ -53,6 +54,9 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
             + str(date)
             + "/"
             + str(seed)
+        )
+        EVAL_PATH_CROSS_SEED = (
+            "./experiments/" + CONF["experiment_id"] + "/logs/" + str(date)
         )
         if os.path.isdir("/shared"):  # cluster
             LOG_DIR_TENSORBOARD = (
