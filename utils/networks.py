@@ -2879,7 +2879,10 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
         # Disable orthogonal initialization
         self.ortho_init = True
 
-    def _build_mlp_extractor(self, action_dim: int) -> None:
+    def _build_mlp_extractor(self, action_dim: int = None) -> None:
+        if action_dim is None:
+            action_dim = int(np.prod(self.action_space.shape))
+
         # choose correct network
         if (
             conf.CONF["RL"]["localFeedback"]

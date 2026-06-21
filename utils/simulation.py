@@ -115,27 +115,25 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
 
     # Additional engine-specific options
     options = {}
+    camera = None
     if simulator == Simulator.MUJOCO:
-        options["callbacks"] = setup_callbacks(animat_options)
-        if sim_options.record:
+        if sim_options.video:
             camera = CameraCallback(
-                timestep=sim_options["timestep"],
-                n_iterations=sim_options["n_iterations"],
-                fps=30,
                 camera_id=0,
+                timestep=sim_options.timestep,
+                n_iterations=sim_options.n_iterations,
+                fps=sim_options.video_fps,
+                width=sim_options.video_resolution[0],
+                height=sim_options.video_resolution[1],
             )
-            options["callbacks"] += [camera]
-        for callback in callbacks:
-            options["callbacks"] += [callback]
-    elif simulator == Simulator.PYBULLET:
-        options.update(
-            pybullet_simulation_kwargs(
-                animat_controller=animat_controller,
-                animat_options=animat_options,
-                sim_options=sim_options,
-            )
+        options['callbacks'] = setup_callbacks(
+            animat_options=animat_options,
+            arena_options=arena_options,
+            camera=camera,
         )
-
+    elif simulator == Simulator.PYBULLET:
+        raise NotImplementedError
+    
     # Simulation
     # pylog.info("Creating simulation environment")
     sim: Union[MuJoCoSimulation, AmphibiousPybulletSimulation] = create_simulation(

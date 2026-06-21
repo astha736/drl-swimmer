@@ -4,9 +4,14 @@ from re import X
 import argparse
 import yaml
 
-from farms_core.io.yaml import pyobject2yaml
+# from farms_core.io.yaml import pyobject2yaml
 from farms_sim.utils.parse_args import sim_parse_args
-from farms_sim.simulation import setup_from_clargs
+# from farms_sim.simulation import setup_from_clargs
+from farms_sim.simulation import (
+    setup_from_clargs,
+    # run_simulation,
+    # postprocessing_from_clargs,
+)
 from farms_amphibious.model.options import AmphibiousOptions, AmphibiousArenaOptions
 from numpy import require
 
@@ -17,11 +22,18 @@ import conf
 
 # parse args
 parser = argparse.ArgumentParser()
-parser.add_argument("-e", "--experiment_id", required=False, default=None)
-parser.add_argument("-m", "--base_test_path", required=False, default=None)
+parser.add_argument("-e", "--experiment_id", required=False)
+parser.add_argument("-m", "--base_test_path", required=False)
 parser.add_argument("-l", "--log_level", required=False, default="min")
 parser.add_argument("-d", "--date", required=False)
 parser.add_argument("-s", "--seed", required=False)
+parser.add_argument(
+    "-c",
+    "--experiment_config",
+    required=False,
+    default="./config/_EXPERIMENT/conf.yaml",
+    help="YAML file containing named experiment configurations.",
+)
 args = parser.parse_args()
 
 # santity check on args
@@ -37,7 +49,7 @@ if args.base_test_path is None and (args.date is None or args.seed is None):
 
 # Load experiment config and setup *_DIRs
 try:
-    with open(f"./experiments/conf.yaml") as experiments_config:
+    with open(args.experiment_config) as experiments_config:
         _conf = yaml.full_load(experiments_config)
         conf.init(
             _conf[args.experiment_id],
@@ -50,7 +62,7 @@ except:
     # legacy
     # NOTE: also triggered on non-legacy if 'try' yields error
     with open(
-        f"./experiments/{args.experiment_id}/" + "conf.yaml"
+        f"./config/_EXPERIMENT/{args.experiment_id}/" + "conf.yaml"
     ) as experiment_config:
         conf.init(
             experiment_config,
@@ -124,6 +136,21 @@ def main() -> None:
     conf.CONF["simulation_time_testing"] = (
         sim_options.timestep * conf.CONF["n_iterations_testing"]
     )
+
+    # exp_cond_experiment, _ = ExpCond.rlExp_sCaudal_ncCPG(
+    #     s_caudl_senstivity=getattr(
+    #         RobotFeedbackSenstivity,
+    #         conf.CONF["robot_arch"]["s_caudl_senstivity"],
+    #     ),
+    #     s_local_senstivity=getattr(
+    #         RobotFeedbackSenstivity,
+    #         conf.CONF["robot_arch"]["s_local_senstivity"],
+    #     ),
+    #     s_caudl_weight=None,
+    #     s_local_weight=None,
+    #     init_osci_cond=conf.CONF["robot_arch"]["init_osci_cond"],
+    #     c_inter=conf.CONF["robot_arch"]["c_inter"],
+    # )
 
     exp_cond_experiment, _ = ExpCond.rlExp_sCaudal_ncCPG(
         s_caudl_senstivity=getattr(

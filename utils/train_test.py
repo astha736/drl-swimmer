@@ -196,13 +196,14 @@ class TrainTestClass:
         new_logger = configure(conf.LOG_DIR_TENSORBOARD, ["stdout", "tensorboard"])
         model.set_logger(new_logger)
 
+        training_options = conf.CONF.get("training", {})
         eval_callback = EvalCallback(
             venv,
-            eval_freq=200_000,
+            eval_freq=training_options.get("eval_freq", 200_000),
             deterministic=True,
             warn=True,
             verbose=1,
-            n_eval_episodes=20,
+            n_eval_episodes=training_options.get("eval_episodes", 20),
             # log_path=conf.LOG_DIR_TENSORBOARD, # don't know how to read the log and what's in there
             best_model_save_path=conf.LOG_DIR_RESULTS,
             callback_on_new_best=SaveVecNormalizeCallback(
@@ -228,17 +229,27 @@ class TrainTestClass:
             total_timesteps=self.learn_total_timesteps,
             callback=[eval_callback],
         )
-        # model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
-        # if conf.CONF["RL"]["normWrapper"]:
-        #     model.get_vec_normalize_env().save(
-        #         os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl")
-        #     )
+        model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
+        best_model_path = os.path.join(conf.LOG_DIR_RESULTS, "best_model.zip")
+        if not os.path.exists(best_model_path):
+            model.save(best_model_path)
+        if conf.CONF["RL"]["normWrapper"]:
+            normalize_path = os.path.join(
+                conf.LOG_DIR_RESULTS, "last_model_trained_normalize.pkl"
+            )
+            model.get_vec_normalize_env().save(normalize_path)
+            best_normalize_path = os.path.join(
+                conf.LOG_DIR_RESULTS, "best_model_normalize.pkl"
+            )
+            if not os.path.exists(best_normalize_path):
+                model.get_vec_normalize_env().save(best_normalize_path)
 
         print("#######################")
         print("MODEL TRAINING FINISHED")
         print("#######################")
 
-        self.test()
+        if conf.CONF.get("post_training", {}).get("run_test", True):
+            self.test()
 
     def test(self) -> None:
         print("#######################")
@@ -272,7 +283,7 @@ class TrainTestClass:
 
         conf.CONF["misc"]["log_grads"] = False
 
-        n_eval_episodes = 100
+        n_eval_episodes = conf.CONF.get("evaluation", {}).get("n_eval_episodes", 100)
         mean_rew, std_rew, metrics = evaluate_policy(
             model,
             eval_venv,
@@ -430,7 +441,8 @@ class TrainTestClass:
         print("MODEL TESTING FINISHED")
         print("#######################")
 
-        self.cross_seed_eval()
+        if conf.CONF.get("evaluation", {}).get("cross_seed_eval", True):
+            self.cross_seed_eval()
 
         return
 
@@ -444,52 +456,6 @@ class TrainTestClass:
         print("#######################")
         print("CROSS SEED EVAL FINISHED")
         print("#######################")
-
-    # # This is another way to test a model; not used for now
-    # def exp_testing(self, model_filename: str, debug_random_cond: bool) -> None:
-    #     """Experiment testing
-
-    #     @param model_filename (str): Name of the saved model.
-    #     @param debug_random_cond (bool): If true, the animat is tested in random conditions.
-    #     """
-    #     # load trained model
-    #     model = PPO.load(
-    #         "experiments/051/best_model.zip",
-    #     )
-
-    #     # callback on trained model for testing
-    #     gymTestCallback = GymTestCallback(
-    #         timestep=self.sim_options.timestep,
-    #         n_iterations=self.sim_options.n_iterations,
-    #         model=model,
-    #         observation_choice=self.observation_choice,
-    #         action_choice=self.action_choice,
-    #         debug_random_cond=False,
-    #     )
-
-    #     sim, animat_data = simulation.setup_simulation(
-    #         self.animat_options,
-    #         self.arena_options,
-    #         self.sim_options,
-    #         self.simulator,
-    #         callbacks=[gymTestCallback],
-    #     )
-
-    #     gymTestCallback.set_mujoco_model(sim)
-
-    #     print("running")
-
-    #     sim.run()
-
-    #     print("did run")
-
-    #     utils.save_performance_metrics(
-    #         sim,
-    #         self.sim_options.timestep,
-    #         self.sim_options.n_iterations,
-    #     )
-
-    #     print("saved")
 
     # Testing a CPG-config without a trained model, i.e. analytical
     def arch_testing(self) -> None:
@@ -513,7 +479,7 @@ class TrainTestClass:
 
         metrics = {}
         plots = {}
-        n_eval_episodes = 100
+        n_eval_episodes = conf.CONF.get("evaluation", {}).get("n_eval_episodes", 100)
 
         for i in range(n_eval_episodes):
             sim._env.reset()

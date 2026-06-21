@@ -7,7 +7,10 @@ import numpy as np
 from scipy import integrate
 from scipy.integrate._ode import ode as ODE
 
-from .ode import ode_oscillators_sparse
+from farms_core.model.data import AnimatData
+
+from farms_amphibious.control.ode import ode_oscillators_sparse
+# from .ode import ode_oscillators_sparse # original code
 
 import conf
 

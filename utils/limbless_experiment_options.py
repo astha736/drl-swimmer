@@ -199,7 +199,6 @@ class ExperimentConditions:
         friction: float = 0.2,
         debug: bool = False,
         init_osci_cond: int = -1,
-        c_inter: float = 0,
         **kwargs,
     ) -> Tuple[RobotInitialConditions, str]:
         """Design for gym learning
@@ -209,7 +208,8 @@ class ExperimentConditions:
         return: experiment(one instance), exp_name
 
         """
-        c_intra = kwargs.pop("c_intra", 10)
+        c_intra = kwargs.pop("c_intra", 10) # within segment
+        c_inter = kwargs.pop("c_inter", 10)
 
         experiment = RobotInitialConditions(
             network_exp=RobotInitialNetwork(
