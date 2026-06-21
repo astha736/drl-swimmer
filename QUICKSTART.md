@@ -15,16 +15,26 @@ Run a headless smoke test:
 python scripts/smoke_test.py
 ```
 
-Run a short CPG/feedback architecture test:
+Run the bio-inspired caudal stretch-feedback demo:
 
 ```bash
-python main.py -c config/_EXPERIMENT/demo.yaml -e demo_arch_test -d demo -s 999
+python main.py -c config/_EXPERIMENT/demo.yaml -e demo_caudal_feedback_viewer -d demo -s 999
 ```
 
-Run a tiny PPO training demo:
+Run the open-loop CPG swimming demo:
 
 ```bash
-python main.py -c config/_EXPERIMENT/demo.yaml -e demo_short_train -d demo -s 999
+python main.py -c config/_EXPERIMENT/demo.yaml -e demo_cpg_swim_viewer -d demo -s 999
+```
+
+These viewer demos need a working display/OpenGL setup. On a headless server,
+use `demo_arch_test` instead.
+
+Run a tiny PPO training demo that learns stretch-feedback weights from an
+initially open/decoupled network:
+
+```bash
+python main.py -c config/_EXPERIMENT/demo.yaml -e demo_drl_feedback_train -d demo -s 999
 ```
 
 The demo training is intentionally small. It checks that the pipeline runs; it is not expected to reproduce paper-quality swimming.
