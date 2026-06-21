@@ -1,62 +1,68 @@
-# Obstacle based locomotion 
+# RL Obstacle-Based Locomotion for AgnathaX
 
-**Preview file**: ctrl+shift+V
+This repository contains the reinforcement-learning and simulation pipeline used to study feedback policies for an undulatory AgnathaX swimmer. It combines FARMS/MuJoCo simulation, a CPG-based limbless robot controller, and Stable-Baselines training for policies that modulate feedback terms such as stretch coupling and drive.
 
-## AgnathaX
+The public demo path is designed to show that the code can:
 
-- Robot AgnathaX 
+- initialize the AgnathaX swimmer in a water arena,
+- run a short CPG/feedback architecture test,
+- run a small PPO training job,
+- save models and metrics for later inspection.
 
+## Quick Start
 
-## Run Instruction
+Create an environment and install dependencies:
 
-- Create python venv with `python3 -m venv obstacle`. Name of the venv is `obstacle`
-- Install farms with `cd farms` & `python3 farms-install.py`
-- Generate the config files `cd config`, `python3 farms-config-gen.py`
-- Change the settings of vscode if using vscode 
-
-```
-	"settings": {
-		"python.defaultInterpreterPath": "$PATH_TO_HIGH_LEVEL_DIR/obstacle/bin/python",
-		"terminal.integrated.cwd": "$PATH_TO_HIGH_LEVEL_DIR"
-	}
-}
+```bash
+python3 -m venv obstacle
+source obstacle/bin/activate
+pip install -r requirements.txt
+bash setup.sh
 ```
 
-- Packages you need to install additionally (to be done with pip):
-	- gym@0.21.0
-	- sb3-contrib@1.8.0
-	- stable-baselines3@1.8.0
-	- tensorboard@2.13.0
-	- black@23.3.0
-	- ffmpeg: https://stackoverflow.com/questions/62470863/ffmpeg-command-not-found-but-pip-list-shows-ffmpeg
+Run a headless smoke test:
 
-- This project uses [black](https://github.com/psf/black) as the default python formatter. Please install black w/ pip and the corresponding VSCode extension.
-
-## Setup for HPC
-- https://pytorch.org/rl/reference/generated/knowledge_base/MUJOCO_INSTALLATION.html
-- https://github.com/deepmind/dm_control
-- https://github.com/deepmind/dm_control/issues/136
-
-## Folders
-- farms: Where farms repo are clone and installed 
-- config: Where AganathaX configurations files are stored & generated for the system 
-- logs: log folder 
-- models: SDF model for environment 
-- scripts: Scripts for the project
-
-
-## Tensorboard use 
-
-```
-tensorboard --logdir_spec <run_name_id>:<exact_path_tensorbord_data>/.,<run_name_id>:<exact_path_tensorbord_data>/.
+```bash
+python scripts/smoke_test.py
 ```
 
-for instance:
-```
-tensorboard --logdir_spec obstacle_sin_p:/data/asgupta/Projects/rl-obstacle-based-locomotion/logs/2022-12-22/sCaudalNP_Rall_Obs10_Act9_ideal_P/.,obstacle_np:/data/asgupta/Projects/rl-obstacle-based-locomotion/logs/2022-12-22/sCaudalNP_Rall_Obs10_Act9_ideal_P_correct/.
-```
+Run the short architecture test:
 
-```tensorboard --logdir_spec obstacle_np_rd_esp:/data/asgupta/Projects/rl-obstacle-based-locomotion/logs/2022-12-22/sCaudalNP_Rall_Obs10_Act9_randomInitPoseOsc/.
+```bash
+python main.py -c config/_EXPERIMENT/demo.yaml -e demo_arch_test -d demo -s 999
 ```
 
+Run a tiny PPO training demo:
 
+```bash
+python main.py -c config/_EXPERIMENT/demo.yaml -e demo_short_train -d demo -s 999
+```
+
+The demo training is intentionally small and is meant to verify the pipeline, not reproduce final paper performance.
+
+## Repository Layout
+
+- `main.py`: experiment entry point.
+- `conf.py`: global experiment configuration and logging setup.
+- `rlgym/`: Gym wrapper around FARMS/MuJoCo.
+- `utils/`: training, simulation setup, robot initialization, metrics, and plotting helpers.
+- `agnathax_control/`: AgnathaX network/control code.
+- `config/_EXPERIMENT/demo.yaml`: curated public demo experiments.
+- `config/_ANIMAT/`: robot/animat configs.
+- `config/_ARENA/`: arena and water configs.
+- `config/_SIMULATION/`: MuJoCo/FARMS runtime configs.
+- `models/`: SDF/MuJoCo model assets.
+- `docs/`: pipeline and configuration notes.
+
+## Documentation
+
+- [Quickstart](QUICKSTART.md)
+- [Architecture](docs/architecture.md)
+- [Experiment configs](docs/experiment_configs.md)
+- [Troubleshooting](docs/troubleshooting.md)
+
+## Notes
+
+Use `headless: true` for server or CI runs. Viewer mode requires a working OpenGL/display setup and may fail with GLFW window errors on headless machines.
+
+Old paper-scale experiments and checkpoints should be archived outside the public repository. Keep only curated examples and small reproducible demo outputs in git.
