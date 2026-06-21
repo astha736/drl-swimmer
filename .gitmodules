@@ -4,9 +4,12 @@
 [submodule "farms/farms_amphibious"]
 	path = farms/farms_amphibious
 	url = git@ponyo.epfl.ch:proj/farms/farms_amphibious.git
+	ignore = untracked
 [submodule "farms/farms_mujoco"]
 	path = farms/farms_mujoco
 	url = git@ponyo.epfl.ch:proj/farms/farms_mujoco.git
+	ignore = untracked
 [submodule "farms/farms_sim"]
 	path = farms/farms_sim
 	url = git@ponyo.epfl.ch:proj/farms/farms_sim.git
+	ignore = untracked
