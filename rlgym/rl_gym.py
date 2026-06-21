@@ -12,6 +12,7 @@ from typing import List
 import numpy as np
 import random
 
+from utils import farms_compat
 from utils import simulation
 
 from dm_control.rl.control import Environment, PhysicsError
@@ -425,20 +426,29 @@ class ObservationChoice:
             target = np.array(
                 conf.CONF["RL"]["target_velocity"],
             )
-            current = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
+            current = np.array(
+                farms_compat.global_com_velocity(data_sensors.links, iteration)
+            )[0:2]
         elif "target_speed" in conf.CONF["RL"]:
             target = np.array([0.0, conf.CONF["RL"]["target_speed"]])
             current = np.array(
                 [
                     0.0,
                     np.linalg.norm(
-                        np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
+                        np.array(
+                            farms_compat.global_com_velocity(
+                                data_sensors.links,
+                                iteration,
+                            )
+                        )[0:2]
                     ),
                 ]
             )
         elif "x_com_vel" in conf.CONF["RL"]["RewardFnc"]:
             target = np.array([1.0, 0.0])
-            current = np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
+            current = np.array(
+                farms_compat.global_com_velocity(data_sensors.links, iteration)
+            )[0:2]
         else:
             raise ValueError("Check the objectives of this experiment.")
 
@@ -746,9 +756,9 @@ class FarmsGym(gym.Env):
         reward = 0.0
         if "vel_com" in conf.CONF["RL"]["RewardFnc"]:
             # velocity
-            velocity_com = np.array(data_sensors.links.global_com_velocity(iteration))[
-                0:2
-            ]
+            velocity_com = np.array(
+                farms_compat.global_com_velocity(data_sensors.links, iteration)
+            )[0:2]
             # speed
             speed_com = np.linalg.norm(velocity_com)
 
@@ -766,7 +776,7 @@ class FarmsGym(gym.Env):
                 print(conf.CONF["RL"]["RewardFnc"]["vel_com"] * speed_com * sign_fwd)
         if "joints_power" in conf.CONF["RL"]["RewardFnc"]:
             joints_power = np.sum(
-                data_sensors.joints.sum_power_joints_timestep()[iteration]
+                farms_compat.joint_active_power(data_sensors.joints)[iteration]
             )
             reward += conf.CONF["RL"]["RewardFnc"]["joints_power"] * joints_power
             if debug:
@@ -800,7 +810,9 @@ class FarmsGym(gym.Env):
         ):
             # speed
             speed_com = np.linalg.norm(
-                np.array(data_sensors.links.global_com_velocity(iteration))[0:2]
+                np.array(
+                    farms_compat.global_com_velocity(data_sensors.links, iteration)
+                )[0:2]
             )
             reward += conf.CONF["RL"]["RewardFnc"]["speed_error"] * (
                 np.abs(speed_com - conf.CONF["RL"]["target_speed"])
@@ -837,17 +849,17 @@ class FarmsGym(gym.Env):
             reward += conf.CONF["RL"]["RewardFnc"]["forward_com"] * forward_com
         if "velocity_error" in conf.CONF["RL"]["RewardFnc"]:
             # velocity
-            velocity_com = np.array(data_sensors.links.global_com_velocity(iteration))[
-                0:2
-            ]
+            velocity_com = np.array(
+                farms_compat.global_com_velocity(data_sensors.links, iteration)
+            )[0:2]
             reward += conf.CONF["RL"]["RewardFnc"]["velocity_error"] * np.sum(
                 np.abs(velocity_com - conf.CONF["RL"]["target_velocity"])
             )
         if "x_com_vel" in conf.CONF["RL"]["RewardFnc"]:
             # velocity
-            velocity_com = np.array(data_sensors.links.global_com_velocity(iteration))[
-                0:2
-            ]
+            velocity_com = np.array(
+                farms_compat.global_com_velocity(data_sensors.links, iteration)
+            )[0:2]
             reward += (
                 conf.CONF["RL"]["RewardFnc"]["x_com_vel"][0] * velocity_com[0]
             )  # reward
@@ -855,9 +867,9 @@ class FarmsGym(gym.Env):
                 velocity_com[1]
             )  # penalty
         if "x_vel_target" in conf.CONF["RL"]["RewardFnc"]:
-            velocity_com = np.array(data_sensors.links.global_com_velocity(iteration))[
-                0:2
-            ]
+            velocity_com = np.array(
+                farms_compat.global_com_velocity(data_sensors.links, iteration)
+            )[0:2]
             reward += conf.CONF["RL"]["RewardFnc"]["x_vel_target"][0] * np.abs(
                 velocity_com[0] - conf.CONF["RL"]["target_velocity"][0]
             )  # reward x
@@ -937,7 +949,10 @@ class FarmsGym(gym.Env):
 
                     start_curr_vec = current_pos - start_pos
                     com_velocity = np.array(
-                        data_sensors.links.global_com_velocity(iteration)
+                        farms_compat.global_com_velocity(
+                            data_sensors.links,
+                            iteration,
+                        )
                     )[0:2]
 
                     if debug:
@@ -1080,7 +1095,10 @@ class FarmsGym(gym.Env):
                     conf.CONF["RL"]["target_velocity"],
                 )
                 current = np.array(
-                    self.sim.task.data.sensors.links.global_com_velocity(iteration)
+                    farms_compat.global_com_velocity(
+                        self.sim.task.data.sensors.links,
+                        iteration,
+                    )
                 )[0:2]
                 self.log_tracking_error.append(np.sum(np.abs(target - current)))
             elif "target_speed" in conf.CONF["RL"]:
@@ -1089,7 +1107,8 @@ class FarmsGym(gym.Env):
                     [
                         np.linalg.norm(
                             np.array(
-                                self.sim.task.data.sensors.links.global_com_velocity(
+                                farms_compat.global_com_velocity(
+                                    self.sim.task.data.sensors.links,
                                     iteration
                                 )
                             )[0:2]
@@ -1521,6 +1540,11 @@ class FarmsGym(gym.Env):
             self.log_tracking_error = []
 
         return self.observation
+
+    def seed(self, seed=None):
+        np.random.seed(seed)
+        random.seed(seed)
+        return [seed]
 
     def render(self, mode="rgb_array", height=480, width=480, camera_id=0):
         assert mode == "rgb_array", "only support rgb_array mode, given %s" % mode
