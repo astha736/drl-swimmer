@@ -1,0 +1,74 @@
+demo_arch_test:
+  run_type: arch_testing
+  robot_arch:
+    init_osci_cond: 0
+    s_caudl_weight: -10
+    c_inter: 0
+    s_caudl_senstivity: SIN
+    s_local_senstivity: SIN
+    s_local_weight: null
+  config:
+    animat: config/_ANIMAT/agnathaX_open.yaml
+    arena: config/_ARENA/arena_water.yaml
+    simulation: config/_SIMULATION/simulation_headless_demo.yaml
+    drive: 2.5
+  RL:
+    normWrapper: false
+    useRandStartCond: 1
+    useRandStartCondPhases: 9
+    RewardFnc: config/RewardFnc_params/reward_demo.yaml
+    useEarlyTerm: false
+    episodes_per_training: 1
+    action_choice: [STRETCH]
+    observation_choice: [JOINT_POSITION]
+    target_speed: 0.4
+    policy_network:
+      arch: [64, 64]
+      act_fn: Tanh
+    PPOparams: config/PPO_params/PPO_demo.yaml
+  n_iterations: 200
+  n_iterations_testing: 200
+  evaluation:
+    n_eval_episodes: 2
+    cross_seed_eval: false
+
+demo_short_train:
+  run_type: train
+  robot_arch:
+    init_osci_cond: 0
+    s_caudl_weight: -10
+    c_inter: 0
+    s_caudl_senstivity: SIN
+    s_local_senstivity: SIN
+    s_local_weight: null
+  config:
+    animat: config/_ANIMAT/agnathaX_open.yaml
+    arena: config/_ARENA/arena_water.yaml
+    simulation: config/_SIMULATION/simulation_headless_demo.yaml
+    drive: 2.5
+  RL:
+    normWrapper: false
+    useRandStartCond: 1
+    useRandStartCondPhases: 9
+    RewardFnc: config/RewardFnc_params/reward_demo.yaml
+    useEarlyTerm: false
+    episodes_per_training: 2
+    action_choice: [STRETCH]
+    observation_choice: [JOINT_POSITION, PHASES, JOINT_VEL]
+    phase_preprocessing: sin
+    target_speed: 0.4
+    policy_network:
+      arch: [64, 64]
+      act_fn: Tanh
+    PPOparams: config/PPO_params/PPO_demo.yaml
+  frames_per_action: 2
+  n_iterations: 200
+  n_iterations_testing: 200
+  training:
+    eval_freq: 100
+    eval_episodes: 2
+  post_training:
+    run_test: false
+  evaluation:
+    n_eval_episodes: 2
+    cross_seed_eval: false
