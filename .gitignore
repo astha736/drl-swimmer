@@ -7,14 +7,19 @@
 *.csv
 *.out
 *.gif
-
-!**/best_model.zip
-!**/best_model_normalize.pkl
+*.profile  # profile of the experiments
 
 _temp/*
+backup/*
+experiments/*/logs/*
+# vscode 
+.vscode/launch.json
+.vscode/settings.json
 
 # env
 obstacle/*
+venv_*/*
+
 
 # logs
 *events.out.tfevents*
