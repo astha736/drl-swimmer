@@ -2883,84 +2883,86 @@ class CustomActorCriticPolicy(ActorCriticPolicy):
         if action_dim is None:
             action_dim = int(np.prod(self.action_space.shape))
 
-        # choose correct network
-        if (
-            conf.CONF["RL"]["localFeedback"]
-            or "stateHistoryController" in conf.CONF["RL"]
-        ):
-            if conf.CONF["RL"]["localFeedback"] == "shared":
-                self.mlp_extractor = localFeedbackShared(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "non-shared":
-                self.mlp_extractor = localFeedbackNonShared(
+        network_registry = {
+            "shared": localFeedbackShared,
+            "non-shared": localFeedbackNonShared,
+            "nn3": nn3,
+            "nn4": nn4,
+            "nn6": nn6,
+            "nn7": nn7,
+            "caudl": caudl,
+            "caudl2": caudl2,
+            "nn8": nn8,
+            "nn9": nn9,
+            "enn1": enn1,
+            "enn2": enn2,
+            "enn3": enn3,
+            "enn4": enn4,
+            "enn5": enn5,
+            "enn6": enn6,
+            "enn7": enn7,
+            "enn8": enn8,
+            "dnn1": dnn1,
+            "dnn2": dnn2,
+            "dnn3": dnn3,
+        }
+        state_history_registry = {
+            "sh1": sh1,
+            "sh2": sh2,
+        }
+
+        local_feedback = conf.CONF["RL"].get("localFeedback")
+        state_history_controller = conf.CONF["RL"].get("stateHistoryController")
+
+        if local_feedback or state_history_controller:
+            if local_feedback == "nn5":
+                raise NotImplementedError
+            if local_feedback in network_registry:
+                self.mlp_extractor = network_registry[local_feedback](
                     self.features_dim, action_dim
                 )
-            elif conf.CONF["RL"]["localFeedback"] == "nn3":
-                self.mlp_extractor = nn3(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "nn4":
-                self.mlp_extractor = nn4(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "nn5":
-                raise NotImplementedError
-                self.mlp_extractor = nn5(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "nn6":
-                self.mlp_extractor = nn6(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "nn7":
-                self.mlp_extractor = nn7(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "caudl":
-                self.mlp_extractor = caudl(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "caudl2":
-                self.mlp_extractor = caudl2(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "nn8":
-                self.mlp_extractor = nn8(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "nn9":
-                self.mlp_extractor = nn9(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "enn1":
-                self.mlp_extractor = enn1(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "enn2":
-                self.mlp_extractor = enn2(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "enn3":
-                self.mlp_extractor = enn3(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "enn4":
-                self.mlp_extractor = enn4(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "enn5":
-                self.mlp_extractor = enn5(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "enn6":
-                self.mlp_extractor = enn6(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "enn7":
-                self.mlp_extractor = enn7(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "enn8":
-                self.mlp_extractor = enn8(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "dnn1":
-                self.mlp_extractor = dnn1(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "dnn2":
-                self.mlp_extractor = dnn2(self.features_dim, action_dim)
-            elif conf.CONF["RL"]["localFeedback"] == "dnn3":
-                # w/ state history
-                self.mlp_extractor = dnn3(self.features_dim, action_dim)
-            # KEEP "stateHistoryController" last as it has no default value
-            elif conf.CONF["RL"]["stateHistoryController"] == "sh1":
-                self.mlp_extractor = sh1(self.features_dim)
-            elif conf.CONF["RL"]["stateHistoryController"] == "sh2":
-                self.mlp_extractor = sh2(self.features_dim)
+            elif state_history_controller in state_history_registry:
+                self.mlp_extractor = state_history_registry[state_history_controller](
+                    self.features_dim
+                )
             else:
-                raise NotImplementedError
+                raise NotImplementedError(
+                    f"Unknown localFeedback/stateHistoryController: "
+                    f"{local_feedback}/{state_history_controller}"
+                )
 
         else:
             self.mlp_extractor = CustomNetwork(self.features_dim)
 
-        try:
+        if hasattr(self.mlp_extractor, "policy_net"):
             conf.CONF["misc"]["log_num_trainable_params"] = sum(
                 p.numel()
                 for p in self.mlp_extractor.policy_net.parameters()
                 if p.requires_grad
             )
-        except:
-            try:
-                conf.CONF["misc"]["log_num_trainable_params"] = sum(
-                    p.numel()
-                    for p in self.mlp_extractor.policy_nets.parameters()
-                    if p.requires_grad
-                )
-            except:
-                conf.CONF["misc"][
-                    "log_num_trainable_params"
-                ] = f"policy_net_drive: {sum(p.numel()for p in self.mlp_extractor.policy_net_drive.parameters()if p.requires_grad)}, policy_net_fb: {sum(p.numel() for p in self.mlp_extractor.policy_net_fb.parameters() if p.requires_grad)}"
+        elif hasattr(self.mlp_extractor, "policy_nets"):
+            conf.CONF["misc"]["log_num_trainable_params"] = sum(
+                p.numel()
+                for p in self.mlp_extractor.policy_nets.parameters()
+                if p.requires_grad
+            )
+        elif hasattr(self.mlp_extractor, "policy_net_drive") and hasattr(
+            self.mlp_extractor, "policy_net_fb"
+        ):
+            drive_params = sum(
+                p.numel()
+                for p in self.mlp_extractor.policy_net_drive.parameters()
+                if p.requires_grad
+            )
+            fb_params = sum(
+                p.numel()
+                for p in self.mlp_extractor.policy_net_fb.parameters()
+                if p.requires_grad
+            )
+            conf.CONF["misc"][
+                "log_num_trainable_params"
+            ] = f"policy_net_drive: {drive_params}, policy_net_fb: {fb_params}"
+        else:
+            raise AttributeError(
+                "Could not find a policy network on the selected extractor."
+            )
