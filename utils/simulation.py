@@ -2,7 +2,6 @@
 """Simulation utils for gym environment"""
 # import os
 # from datetime import date
-from re import X
 from typing import Union
 import numpy as np
 

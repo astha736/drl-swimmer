@@ -1,12 +1,7 @@
 """Simulation"""
 
-from mimetypes import init
 import os
-from textwrap import wrap
-
-# from turtle import st
 import warnings
-import traceback
 from enum import Enum
 from typing import List
 import numpy as np
@@ -15,32 +10,17 @@ import random
 from utils import farms_compat
 from utils import simulation
 
-from dm_control.rl.control import Environment, PhysicsError
-from dm_env import TimeStep, StepType
+from dm_env import StepType
 
-from farms_core import pylog
-from farms_mujoco.simulation.application import FarmsApplication
 from farms_mujoco.simulation.task import TaskCallback
-from farms_mujoco.simulation.mjcf import euler2mjcquat
 from farms_sim.simulation import postprocessing_from_clargs
-
 
 import gym
 from gym import spaces
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
-
-from stable_baselines3 import TD3
-from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.results_plotter import load_results, ts2xy
-from stable_baselines3.common.noise import NormalActionNoise
-from stable_baselines3.common.callbacks import BaseCallback
-
-import csv
-
 from utils.limbless_spawn import RobotInitialState
-from utils.limbless_oscillator import RobotInitialOscillator
 
 from utils import utils
 import conf
@@ -165,7 +145,9 @@ class ActionChoice:
             ActionType.STRETCH_BIAS: self.action_bound_STRETCH_BIAS,
         }
 
-        return switcher.get(action, "Invalid Action Type")
+        if action not in switcher:
+            raise ValueError(f"Invalid action type: {action}")
+        return switcher[action]
 
     def create_action_space(self):
         low_bound, high_bound = [], []
@@ -273,7 +255,9 @@ class ActionChoice:
             ActionType.STRETCH_BIAS: self.set_action_STRETCH_BIAS,
         }
 
-        return switcher.get(observation, "Invalid observation Type")
+        if observation not in switcher:
+            raise ValueError(f"Invalid action type: {observation}")
+        return switcher[observation]
 
     def set_action(self, actions, network_parameters, iteration: int, data_states):
         index = 0
@@ -392,7 +376,9 @@ class ObservationChoice:
             ObservationType.VELOCITIES: self.observation_bound_VELOCITIES,
         }
 
-        return switcher.get(observation, "Invalid observation Type")
+        if observation not in switcher:
+            raise ValueError(f"Invalid observation type: {observation}")
+        return switcher[observation]
 
     def create_observation_space(self):
         low_bound, high_bound = [], []
@@ -596,7 +582,9 @@ class ObservationChoice:
             ObservationType.VELOCITIES: self.extract_observation_VELOCITIES,
         }
 
-        return switcher.get(observation, "Invalid observation Type")
+        if observation not in switcher:
+            raise ValueError(f"Invalid observation type: {observation}")
+        return switcher[observation]
 
     def get_observation(self, data_sensors, data_states, iteration: int):
         observations_list = []
@@ -995,14 +983,14 @@ class FarmsGym(gym.Env):
         data_states,
     ):
         """Apply the computed action to the concerned variables"""
+        if action is None:
+            raise ValueError("Action cannot be None")
+
         if np.isnan(action).any():
             raise ValueError("Action is nan")
 
         if (action > 1).any() or (action < -1).any():
-            raise ValueError("Action is out of bounce")
-
-        if action is None:
-            raise ValueError("should not be allowed")
+            raise ValueError("Action is out of bounds")
 
         action_choice.set_action(action, network_parameters, iteration, data_states)
         return
@@ -1012,8 +1000,6 @@ class FarmsGym(gym.Env):
 
         # this MUST be defined here!
         iteration = self.sim.task.iteration
-        if action is None:
-            print("should not be allowed")
 
         FarmsGym.set_action(
             action=action,
@@ -1126,11 +1112,11 @@ class FarmsGym(gym.Env):
                 additionalMetrics["5_mean abs tracking error"] = np.mean(
                     self.log_tracking_error
                 )
-                try:
+                if "target_velocity" in conf.CONF["RL"]:
                     additionalMetrics["5_target_velocity"] = conf.CONF["RL"][
                         "target_velocity"
                     ]
-                except:
+                elif "target_speed" in conf.CONF["RL"]:
                     additionalMetrics["5_target_speed"] = conf.CONF["RL"][
                         "target_speed"
                     ]
