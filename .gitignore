@@ -12,9 +12,11 @@
 _temp/*
 backup/*
 experiments/*/logs/*
-# vscode 
+# vscode
+.vscode*
 .vscode/launch.json
 .vscode/settings.json
+*.code-workspace
 
 # env
 obstacle/*
