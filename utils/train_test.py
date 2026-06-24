@@ -1,4 +1,5 @@
 import os
+import subprocess
 import numpy as np
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import yaml
@@ -450,8 +451,14 @@ class TrainTestClass:
         print("#######################")
         print("START CROSS SEED EVAL")
         print("#######################")
-        os.system(
-            f"python3 utils/cross_seed_evalution.py -m={conf.EVAL_PATH_CROSS_SEED}"
+        subprocess.run(
+            [
+                "python3",
+                "utils/cross_seed_evalution.py",
+                "-m",
+                conf.EVAL_PATH_CROSS_SEED,
+            ],
+            check=True,
         )
         print("#######################")
         print("CROSS SEED EVAL FINISHED")
