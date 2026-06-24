@@ -1,9 +1,7 @@
 # This module loads the experiment configuration file
 # The parameters are globally accessible by importing this module: "import conf"
-from torch import Value
 import yaml
 import os
-from datetime import datetime
 
 
 def init(experiment_config, experiment_id, base_test_path, date, seed):
@@ -19,11 +17,10 @@ def init(experiment_config, experiment_id, base_test_path, date, seed):
     RIGHT_OSCILLATOR_INDEXES = [i * 2 - 1 for i in range(1, 11)]
     LEFT_OSCILLATOR_INDEXES = [i * 2 for i in range(0, 10)]
 
-    try:
-        CONF = yaml.full_load(experiment_config)
-    except:
-        # we assume that experiment_config is a python object already
+    if isinstance(experiment_config, dict):
         CONF = experiment_config
+    else:
+        CONF = yaml.full_load(experiment_config)
 
     CONF["experiment_id"] = experiment_id
     CONF["misc"] = {}
