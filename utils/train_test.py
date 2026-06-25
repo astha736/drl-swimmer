@@ -20,7 +20,6 @@ from . import simulation
 from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.logger import configure
-from stable_baselines3.common.evaluation import evaluate_policy
 
 from stable_baselines3.common.callbacks import (
     EvalCallback,
@@ -32,6 +31,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, SubprocV
 from farms_sim.simulation import postprocessing_from_clargs
 from farms_core.utils import profile
 from . import utils
+from .evaluation import evaluate_policy_with_metrics
 
 from utils.networks import CustomActorCriticPolicy
 from utils.limbless_spawn import RobotInitialState
@@ -225,9 +225,15 @@ class TrainTestClass:
         #     function=model.learn, total_timesteps=20_000, profile_filename="profile_prod_cluster_450_20-07-2023.profile"
         # )
 
+        callbacks = [eval_callback]
+        if conf.CONF["save_observations"]:
+            callbacks.append(SaveRolloutObservationsCallback())
+        if conf.CONF["RL"]["curriculum"]["level"] in [2, 3, 4, 5, 6, 7]:
+            callbacks.append(CurriculumStageCallback())
+
         model.learn(
             total_timesteps=self.learn_total_timesteps,
-            callback=[eval_callback],
+            callback=callbacks,
         )
         model.save(os.path.join(conf.LOG_DIR_RESULTS, "last_model_trained.zip"))
         best_model_path = os.path.join(conf.LOG_DIR_RESULTS, "best_model.zip")
@@ -284,7 +290,7 @@ class TrainTestClass:
         conf.CONF["misc"]["log_grads"] = False
 
         n_eval_episodes = conf.CONF.get("evaluation", {}).get("n_eval_episodes", 100)
-        mean_rew, std_rew, metrics = evaluate_policy(
+        mean_rew, std_rew, metrics = evaluate_policy_with_metrics(
             model,
             eval_venv,
             n_eval_episodes=n_eval_episodes,  # if more than one: dont log and plot gradients!
@@ -330,12 +336,13 @@ class TrainTestClass:
         # conf.CONF["misc"]["log_grads"] will contain a list of all the gradients for each timestep (all outputs wrt to the inputs)
         conf.CONF["misc"]["log_grads"] = []
 
-        rew, len_, _ = evaluate_policy(
+        rew, len_, _ = evaluate_policy_with_metrics(
             model,
             venv_test,
             n_eval_episodes=1,  # if more than one: dont log and plot gradients!
             deterministic=True,
             return_episode_rewards=True,
+            log_gradients=True,
         )
 
         grads = conf.CONF["misc"]["log_grads"]  # shape (timestep, outputs, 1, inputs)
@@ -544,6 +551,66 @@ class SaveVecNormalizeCallback(BaseCallback):
                     self.model.get_vec_normalize_env().save(path)
             else:
                 raise ValueError("Error: no VecNormalize wrapper on the model")
+        return True
+
+
+class SaveRolloutObservationsCallback(BaseCallback):
+    def __init__(self):
+        super().__init__(0)
+        self.num_rollout_buffers = 0
+
+    def _on_rollout_end(self) -> None:
+        self.num_rollout_buffers += 1
+        os.makedirs(conf.LOG_DIR_OBSERVATION_BUFFER, exist_ok=True)
+        np.save(
+            os.path.join(
+                conf.LOG_DIR_OBSERVATION_BUFFER, str(self.num_rollout_buffers)
+            ),
+            self.model.rollout_buffer.observations,
+        )
+
+    def _on_step(self) -> bool:
+        return True
+
+
+class CurriculumStageCallback(BaseCallback):
+    def __init__(self):
+        super().__init__(0)
+        self._stage0_applied = False
+
+    def _set_drive_trainable(self, trainable: bool) -> None:
+        policy_net_drive = getattr(
+            self.model.policy.mlp_extractor, "policy_net_drive", None
+        )
+        if policy_net_drive is None:
+            raise AttributeError(
+                "Curriculum training expects policy_net_drive on the custom policy."
+            )
+        for param in policy_net_drive.parameters():
+            param.requires_grad = trainable
+
+    def _on_rollout_start(self) -> None:
+        curriculum = conf.CONF["RL"]["curriculum"]
+        if curriculum["level"] == 2:
+            raise NotImplementedError
+
+        if curriculum["level"] not in [3, 4, 5, 6, 7]:
+            return
+
+        if self.num_timesteps == 0 and not self._stage0_applied:
+            self._set_drive_trainable(False)
+            self._stage0_applied = True
+            print("Switched to CL stage #0")
+
+        if (
+            self.num_timesteps > curriculum["timesteps_stage_switch"]
+            and curriculum["current_stage"] != 1
+        ):
+            curriculum["current_stage"] = 1
+            self._set_drive_trainable(True)
+            print("Switched to CL stage #1")
+
+    def _on_step(self) -> bool:
         return True
 
 
