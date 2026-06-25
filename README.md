@@ -1,5 +1,6 @@
 # DRL for Swimmer Robot - AgnathaX
 
+![til](./docs/media/demo_short.gif)
 This repository contains the reinforcement-learning and simulation pipeline used to study feedback policies for an undulatory AgnathaX swimmer. It combines FARMS/MuJoCo simulation, a CPG-based limbless robot controller, and Stable-Baselines training for policies that modulate feedback terms such as stretch coupling and drive.
 
 The public demo path is designed to show that the code can:
