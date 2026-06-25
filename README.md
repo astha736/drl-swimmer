@@ -1,4 +1,4 @@
-# RL Obstacle-Based Locomotion for AgnathaX
+# DRL for Swimmer Robot - AgnathaX
 
 This repository contains the reinforcement-learning and simulation pipeline used to study feedback policies for an undulatory AgnathaX swimmer. It combines FARMS/MuJoCo simulation, a CPG-based limbless robot controller, and Stable-Baselines training for policies that modulate feedback terms such as stretch coupling and drive.
 
@@ -14,8 +14,8 @@ The public demo path is designed to show that the code can:
 Create an environment and install dependencies:
 
 ```bash
-python3 -m venv obstacle
-source obstacle/bin/activate
+python3 -m venv env_drl_swimmer
+source env_drl_swimmer/bin/activate
 pip install -r requirements.txt
 bash setup.sh
 ```
