@@ -2,6 +2,7 @@
 *.pdf
 *.mp4
 *.txt
+!requirements.txt
 *.pkl
 *.zip
 *.csv
@@ -20,6 +21,7 @@ experiments/*/logs/*
 
 # env
 obstacle/*
+env_drl_swimmer/
 venv_*/*
 
 
