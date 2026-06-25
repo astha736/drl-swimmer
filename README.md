@@ -14,7 +14,7 @@ The public demo path is designed to show that the code can:
 Create an environment and install dependencies:
 
 ```bash
-python3 -m venv env_drl_swimmer
+python3 -m env env_drl_swimmer
 source env_drl_swimmer/bin/activate
 pip install -r requirements.txt
 bash setup.sh
@@ -66,3 +66,9 @@ The demo training is intentionally small and is meant to verify the pipeline, no
 Use `headless: true` for server or CI runs. Viewer mode requires a working OpenGL/display setup and may fail with GLFW window errors on headless machines.
 
 Old paper-scale experiments and checkpoints should be archived outside the public repository. Keep only curated examples and small reproducible demo outputs in git.
+
+## License
+
+This repository is released under the MIT License. See [LICENSE](LICENSE).
+
+Parts of this repository may include or depend on third-party software, including Stable-Baselines3, FARMS, MuJoCo, and related simulation components. Third-party components remain under their respective licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
