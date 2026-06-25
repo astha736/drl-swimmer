@@ -16,7 +16,6 @@ Create an environment and install dependencies:
 ```bash
 python3 -m env env_drl_swimmer
 source env_drl_swimmer/bin/activate
-pip install -r requirements.txt
 bash setup.sh
 ```
 
@@ -28,14 +27,20 @@ python scripts/smoke_test.py
 
 Run the short architecture test:
 
+Headless mode:
 ```bash
 python main.py -c config/_EXPERIMENT/demo.yaml -e demo_arch_test -d demo -s 999
+```
+
+With GUI: 
+```bash
+python main.py -c config/_EXPERIMENT/demo.yaml -e demo_arch_viewer -d demo -s 999
 ```
 
 Run a tiny PPO training demo:
 
 ```bash
-python main.py -c config/_EXPERIMENT/demo.yaml -e demo_short_train -d demo -s 999
+python main.py -c config/_EXPERIMENT/demo.yaml -e demo_drl_short_train -d demo -s 999
 ```
 
 The demo training is intentionally small and is meant to verify the pipeline, not reproduce final paper performance.
