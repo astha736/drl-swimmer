@@ -28,7 +28,6 @@ from stable_baselines3.common.callbacks import (
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize, SubprocVecEnv
 
-from farms_sim.simulation import postprocessing_from_clargs
 from farms_core.utils import profile
 from . import utils
 from .evaluation import evaluate_policy_with_metrics
@@ -312,8 +311,11 @@ class TrainTestClass:
         ) as f:
             yaml.dump(metrics, f)
 
-        # record for single test_env
-        self.sim_options.record = False
+        # Optionally record the single deterministic test episode.
+        # ``record`` controls saving; ``video`` creates the camera callback.
+        record_video = conf.CONF.get("post_training", {}).get("record_video", False)
+        self.sim_options.record = record_video
+        self.sim_options.video = record_video
 
         # reset animat_options (required because random sampling of init cond. during training)
         RobotInitialState.set_initial_conditions_parallel(
@@ -443,6 +445,7 @@ class TrainTestClass:
             os.rmdir(_temp_dir)
 
         self.sim_options.record = False
+        self.sim_options.video = False
 
         print("#######################")
         print("MODEL TESTING FINISHED")

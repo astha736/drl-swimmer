@@ -22,7 +22,6 @@ from farms_core import pylog
 from farms_mujoco.simulation.application import FarmsApplication
 from farms_mujoco.simulation.task import TaskCallback
 from farms_mujoco.simulation.mjcf import euler2mjcquat
-from farms_sim.simulation import postprocessing_from_clargs
 
 
 import gym
@@ -43,6 +42,7 @@ from utils.limbless_spawn import RobotInitialState
 from utils.limbless_oscillator import RobotInitialOscillator
 
 from utils import utils
+from utils.camera import save_video
 import conf
 
 
@@ -1188,10 +1188,18 @@ class FarmsGym(gym.Env):
                     pdf.savefig(plot.figure, bbox_inches="tight")
 
             if self.sim_options.record == True:
-                postprocessing_from_clargs(
-                    sim=self.sim,
-                    video_name=os.path.join(conf.LOG_DIR_RESULTS, "best_model.mp4"),
+                video_name = conf.CONF.get("post_training", {}).get(
+                    "video_name", "best_model.mp4"
                 )
+                video_path = os.path.join(conf.LOG_DIR_RESULTS, video_name)
+                video_stem = os.path.splitext(video_path)[0]
+                camera = getattr(self.sim, "camera", None)
+                if camera is None:
+                    raise RuntimeError(
+                        "Video recording was requested, but no camera callback was "
+                        "created. Check that sim_options.video is enabled."
+                    )
+                save_video(camera, self.sim.task.iteration, video_stem)
 
         return self.observation, self.reward, self.done, self.info
 

@@ -145,5 +145,6 @@ def setup_simulation(animat_options, arena_options, sim_options, simulator, call
         simulator=simulator,
         **options,
     )
+    sim.camera = camera
 
     return sim, animat_data
