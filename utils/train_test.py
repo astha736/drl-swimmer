@@ -33,7 +33,7 @@ from farms_core.utils import profile
 from . import utils
 from .evaluation import evaluate_policy_with_metrics
 
-from utils.networks import CustomActorCriticPolicy
+from rlgym.policies import CustomActorCriticPolicy
 from utils.limbless_spawn import RobotInitialState
 import conf
 
