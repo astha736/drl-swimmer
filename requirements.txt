@@ -42,7 +42,7 @@ networkx==3.2.1
 nptyping==2.5.0
 numpy==1.26.4
 onnx
-packaging==23.2
+packaging>=24.0
 pandas==2.2.1
 pillow==10.2.0
 protobuf==4.25.3
